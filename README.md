@@ -20,4 +20,4 @@ Features
 
 Examples
 ====
-[main.go](http://github.com/antchfx/gxpath/example) : you can test XPath expr supported. 
+[main.go](https://github.com/antchfx/gxpath/tree/master/example) : you can test XPath expr supported. 
