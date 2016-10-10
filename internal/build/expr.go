@@ -94,13 +94,13 @@ func cmpBooleanBooleanF(op string, a, b bool) bool {
 
 func cmpNumeric_Numeric(t query.Iterator, op string, m, n interface{}) bool {
 	a := m.(float64)
-	b := m.(float64)
+	b := n.(float64)
 	return cmpNumberNumberF(op, a, b)
 }
 
 func cmpNumeric_String(t query.Iterator, op string, m, n interface{}) bool {
 	a := m.(float64)
-	b := m.(string)
+	b := n.(string)
 	num, err := strconv.ParseFloat(b, 64)
 	if err != nil {
 		panic(err)
@@ -199,7 +199,7 @@ func cmpString_NodeSet(t query.Iterator, op string, m, n interface{}) bool {
 
 func cmpBoolean_Boolean(t query.Iterator, op string, m, n interface{}) bool {
 	a := m.(bool)
-	b := m.(bool)
+	b := n.(bool)
 	return cmpBooleanBooleanF(op, a, b)
 }
 
