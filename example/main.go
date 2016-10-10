@@ -193,14 +193,10 @@ func main() {
 	scan := bufio.NewScanner(os.Stdin)
 	for {
 		scan.Scan()
-		iter, err := gxpath.Select(nav, strings.TrimSpace(scan.Text()))
-		if err != nil {
-			fmt.Println(fmt.Sprintf("got error: %v", err))
-		} else {
-			for iter.MoveNext() {
-				fmt.Println(">>")
-				fmt.Println(iter.Current().Value())
-			}
+		iter := gxpath.Select(nav, strings.TrimSpace(scan.Text()))
+		for iter.MoveNext() {
+			fmt.Println(">>")
+			fmt.Println(iter.Current().Value())
 		}
 		fmt.Println("==========")
 	}
