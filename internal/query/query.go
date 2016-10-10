@@ -15,7 +15,7 @@ type Query interface {
 	Evaluate(Iterator) interface{}
 
 	// Test checks a specified xpath.NodeNavigator can passed by the current query.
-	Test(xpath.NodeNavigator) bool
+	//Test(xpath.NodeNavigator) bool
 }
 
 // ContextQuery is returns current node on the Iterator object query.
@@ -38,10 +38,6 @@ func (c *ContextQuery) Select(t Iterator) (n xpath.NodeNavigator) {
 func (c *ContextQuery) Evaluate(Iterator) interface{} {
 	c.count = 0
 	return c
-}
-
-func (c *ContextQuery) Test(xpath.NodeNavigator) bool {
-	return true
 }
 
 // AncestorQuery is an XPath ancestor node query.(ancestor::*|ancestor-self::*)
@@ -499,10 +495,6 @@ func (f *FilterQuery) Evaluate(t Iterator) interface{} {
 	return f
 }
 
-func (f *FilterQuery) Test(n xpath.NodeNavigator) bool {
-	return true
-}
-
 // FunctionQuery is an XPath function that call a function to returns
 // value of current xpath.NodeNavigator node.
 type XPathFunction struct {
@@ -520,10 +512,6 @@ func (f *XPathFunction) Evaluate(t Iterator) interface{} {
 	return f.Func(f.Input, t)
 }
 
-func (f *XPathFunction) Test(n xpath.NodeNavigator) bool {
-	return true
-}
-
 // XPathConstant is an XPath constant operand.
 type XPathConstant struct {
 	Val interface{}
@@ -535,10 +523,6 @@ func (c *XPathConstant) Select(t Iterator) xpath.NodeNavigator {
 
 func (c *XPathConstant) Evaluate(t Iterator) interface{} {
 	return c.Val
-}
-
-func (c *XPathConstant) Test(n xpath.NodeNavigator) bool {
-	return true
 }
 
 // LogicalExpr is an XPath logical expression.
@@ -558,10 +542,6 @@ func (l *LogicalExpr) Evaluate(t Iterator) interface{} {
 	return l.Do(t, m, n)
 }
 
-func (l *LogicalExpr) Test(n xpath.NodeNavigator) bool {
-	return true
-}
-
 // NumericExpr is an XPath numeric operator expression.
 type NumericExpr struct {
 	Left, Right Query
@@ -579,10 +559,6 @@ func (n *NumericExpr) Evaluate(t Iterator) interface{} {
 	return n.Do(m, k)
 }
 
-func (n *NumericExpr) Test(i xpath.NodeNavigator) bool {
-	return true
-}
-
 type BooleanExpr struct {
 	IsOr        bool
 	Left, Right Query
@@ -598,10 +574,6 @@ func (b *BooleanExpr) Evaluate(t Iterator) interface{} {
 		return m
 	}
 	return b.Right.Evaluate(t)
-}
-
-func (b *BooleanExpr) Test(xpath.NodeNavigator) bool {
-	return true
 }
 
 func getNodePosition(q Query) int {
