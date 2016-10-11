@@ -17,7 +17,3 @@ Features
     - last()
     - count()
     - coming more
-
-Examples
-====
-[main.go](https://github.com/antchfx/gxpath/tree/master/example) : you can test XPath expr supported. 
