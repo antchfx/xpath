@@ -17,15 +17,17 @@ func predicate(q query.Query) func(xpath.NodeNavigator) bool {
 
 // positionFunc is a XPath Node Set functions postion().
 var positionFunc = func(q query.Query, t query.Iterator) interface{} {
-	count := 0
-	node := t.Current()
-	curr := node.Current()
+	var (
+		count = 0
+		node  = t.Current()
+		val   = node
+	)
 	node.MoveToFirst()
 	test := predicate(q)
 	for {
 		if test(node) {
 			count++
-			if node.Current() == curr {
+			if node.Current() == val {
 				break
 			}
 		}
@@ -38,8 +40,10 @@ var positionFunc = func(q query.Query, t query.Iterator) interface{} {
 
 // lastFunc is a XPath Node Set functions last().
 var lastFunc = func(q query.Query, t query.Iterator) interface{} {
-	count := 0
-	node := t.Current()
+	var (
+		count = 0
+		node  = t.Current()
+	)
 	node.MoveToFirst()
 	test := predicate(q)
 	for {
@@ -55,8 +59,10 @@ var lastFunc = func(q query.Query, t query.Iterator) interface{} {
 
 // countFunc is a XPath Node Set functions count(node-set).
 var countFunc = func(q query.Query, t query.Iterator) interface{} {
-	count := 0
-	node := t.Current()
+	var (
+		count = 0
+		node  = t.Current()
+	)
 	node.MoveToFirst()
 	test := predicate(q)
 	for {
