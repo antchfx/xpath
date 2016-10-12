@@ -109,7 +109,7 @@ func (b *builder) processAxisNode(root *parse.AxisNode) (query.Query, error) {
 	case "preceding-sibling":
 		qyOutput = &query.PrecedingQuery{Input: qyInput, Predicate: predicate, Sibling: true}
 	case "self":
-		qyOutput = &query.SelfQuery{Input: qyInput}
+		qyOutput = &query.SelfQuery{Input: qyInput, Predicate: predicate}
 	case "namespace":
 		// haha,what will you do someting??
 	default:

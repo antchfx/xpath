@@ -329,12 +329,12 @@ Loop:
 func (p *parser) parseStep(n Node) Node {
 	axeTyp := "child" // default axes value.
 	if p.r.typ == itemDot || p.r.typ == itemDotDot {
-		p.next()
 		if p.r.typ == itemDot {
 			axeTyp = "self"
 		} else {
 			axeTyp = "parent"
 		}
+		p.next()
 		return newAxisNode(axeTyp, "", "", "", n)
 	}
 	switch p.r.typ {
