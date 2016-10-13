@@ -128,6 +128,7 @@ func (a *AttributeQuery) Select(t Iterator) xpath.NodeNavigator {
 
 func (a *AttributeQuery) Evaluate(t Iterator) interface{} {
 	a.Input.Evaluate(t)
+	a.iterator = nil
 	return a
 }
 

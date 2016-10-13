@@ -20,7 +20,7 @@ var positionFunc = func(q query.Query, t query.Iterator) interface{} {
 	var (
 		count = 0
 		node  = t.Current()
-		val   = node
+		val   = node.Current()
 	)
 	node.MoveToFirst()
 	test := predicate(q)

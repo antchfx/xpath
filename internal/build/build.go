@@ -93,7 +93,19 @@ func (b *builder) processAxisNode(root *parse.AxisNode) (query.Query, error) {
 	case "attribute":
 		qyOutput = &query.AttributeQuery{Input: qyInput, Predicate: predicate}
 	case "child":
-		qyOutput = &query.ChildQuery{Input: qyInput, Predicate: predicate}
+		filter := func(n xpath.NodeNavigator) bool {
+			v := predicate(n)
+			switch root.Prop {
+			case "text":
+				v = v && n.NodeType() == xpath.TextNode
+			case "node":
+				v = v && (n.NodeType() == xpath.ElementNode || n.NodeType() == xpath.TextNode)
+			case "comment":
+				v = v && n.NodeType() == xpath.CommentNode
+			}
+			return v
+		}
+		qyOutput = &query.ChildQuery{Input: qyInput, Predicate: filter}
 	case "descendant":
 		qyOutput = &query.DescendantQuery{Input: qyInput, Predicate: predicate}
 	case "descendant-or-self":
@@ -199,6 +211,7 @@ func (b *builder) processOperatorNode(root *parse.OperatorNode) (query.Query, er
 		case "<=":
 			exprFunc = leFunc
 		case "!=":
+			exprFunc = neFunc
 		}
 		qyOutput = &query.LogicalExpr{Left: left, Right: right, Do: exprFunc}
 	case "or", "and":
