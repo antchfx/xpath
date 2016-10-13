@@ -17,19 +17,9 @@ const (
 	// An attribute, such as id='123'.
 	AttributeNode
 
-	// A namespace, such as xmlns="namespace".
-	NamespaceNode
-
 	// The text content of a node.
 	TextNode
 
 	// A comment node, such as <!-- my comment -->
 	CommentNode
-
-	// A node with only white space characters and no significant
-	// white space. White space characters are #x20, #x9, #xD, or #xA.
-	//WhitespaceNode
-
-	// A processing instruction, such as <?pi test?>.
-	ProcessingInstructionNode
 )

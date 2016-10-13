@@ -342,8 +342,8 @@ func (p *parser) parseStep(n Node) Node {
 		p.next()
 		axeTyp = "attribute"
 	case itemAxe:
-		p.next()
 		axeTyp = p.r.name
+		p.next()
 	}
 	opnd := p.parseNodeTest(n, axeTyp)
 	if p.r.typ == itemLBracket {

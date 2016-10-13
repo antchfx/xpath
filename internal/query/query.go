@@ -533,6 +533,15 @@ type LogicalExpr struct {
 }
 
 func (l *LogicalExpr) Select(t Iterator) xpath.NodeNavigator {
+	// When a XPath expr is logical expression.
+	node := t.Current().Copy()
+	val := l.Evaluate(t)
+	switch val.(type) {
+	case bool:
+		if val.(bool) == true {
+			return node
+		}
+	}
 	return nil
 }
 

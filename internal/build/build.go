@@ -35,8 +35,8 @@ func axisPredicate(root *parse.AxisNode) func(xpath.NodeNavigator) bool {
 			typ = xpath.CommentNode
 		case "text":
 			typ = xpath.TextNode
-		case "processing-instruction":
-			typ = xpath.ProcessingInstructionNode
+			//	case "processing-instruction":
+		//	typ = xpath.ProcessingInstructionNode
 		case "node":
 			typ = xpath.ElementNode
 		}
