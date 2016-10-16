@@ -298,10 +298,6 @@ func (n *TNodeNavigator) Copy() xpath.NodeNavigator {
 	return &n2
 }
 
-func (n *TNodeNavigator) Current() xpath.Node {
-	return n.curr
-}
-
 func (n *TNodeNavigator) MoveToRoot() {
 	n.curr = n.root
 }

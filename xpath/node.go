@@ -2,7 +2,7 @@ package xpath
 
 // A Node is an element node that can navigating to
 // an node attribute and another node.
-type Node interface{}
+//type Node interface{}
 
 // A type of XPath node.
 type NodeType int
