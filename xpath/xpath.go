@@ -17,9 +17,6 @@ type NodeNavigator interface {
 	// Copy does a deep copy of the NodeNavigator and all its components.
 	Copy() NodeNavigator
 
-	// Current returns a current node.
-	Current() Node
-
 	// MoveToRoot moves the NodeNavigator to the root node of the current node.
 	MoveToRoot()
 

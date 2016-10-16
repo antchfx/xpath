@@ -18,21 +18,13 @@ func predicate(q query.Query) func(xpath.NodeNavigator) bool {
 // positionFunc is a XPath Node Set functions postion().
 var positionFunc = func(q query.Query, t query.Iterator) interface{} {
 	var (
-		count = 0
+		count = 1
 		node  = t.Current()
-		val   = node.Current()
 	)
-	node.MoveToFirst()
 	test := predicate(q)
-	for {
+	for node.MoveToPrevious() {
 		if test(node) {
 			count++
-			if node.Current() == val {
-				break
-			}
-		}
-		if !node.MoveToNext() {
-			break
 		}
 	}
 	return float64(count)

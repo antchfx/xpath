@@ -180,7 +180,7 @@ func testXPath3(t *testing.T, root *TNode, expr string, expected *TNode) {
 func selectNode(root *TNode, expr string) (n *TNode) {
 	t := Select(createNavigator(root), expr)
 	if t.MoveNext() {
-		n = t.Current().Current().(*TNode)
+		n = (t.Current().(*TNodeNavigator)).curr
 	}
 	return n
 }
@@ -189,7 +189,7 @@ func selectNodes(root *TNode, expr string) []*TNode {
 	t := Select(createNavigator(root), expr)
 	var nodes []*TNode
 	for t.MoveNext() {
-		node := t.Current().Current().(*TNode)
+		node := (t.Current().(*TNodeNavigator)).curr
 		nodes = append(nodes, node)
 	}
 	return nodes
