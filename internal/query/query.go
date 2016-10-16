@@ -466,7 +466,7 @@ func (f *FilterQuery) do(t Iterator) bool {
 		return len(val.String()) > 0
 	case reflect.Float64:
 		pt := float64(getNodePosition(f.Input))
-		return val.Float() == pt
+		return int(val.Float()) == int(pt)
 	default:
 		if q, ok := f.Predicate.(Query); ok {
 			return q.Select(t) != nil
