@@ -88,15 +88,31 @@ func TestFollowingSibling(t *testing.T) {
 		}
 	}
 	testXPath(t, html, "//ul/following-sibling::footer", "footer")
+	list = selectNodes(html, "//h1/following::*") // ul>li>a,p,footer
+	if list[0].Data != "ul" {
+		t.Fatal("expected node is not ul")
+	}
+	if list[1].Data != "li" {
+		t.Fatal("expected node is not li")
+	}
+	if list[len(list)-1].Data != "footer" {
+		t.Fatal("expected node is not footer")
+	}
 }
 
 func TestPrecedingSibling(t *testing.T) {
 	testXPath(t, html, "/body/footer/preceding-sibling::*", "p")
 	testXPath2(t, html, "/body/footer/preceding-sibling::*", 3) // p,ul,h1
-}
-
-func TestFollowing(t *testing.T) {
-	//testXPath2(t, html, "//ul/following:*", 9)
+	list := selectNodes(html, "//h1/preceding::*")              // head>title>meta
+	if list[0].Data != "head" {
+		t.Fatal("expected is not head")
+	}
+	if list[1].Data != "title" {
+		t.Fatal("expected is not title")
+	}
+	if list[2].Data != "meta" {
+		t.Fatal("expected is not meta")
+	}
 }
 
 func TestStar(t *testing.T) {
@@ -134,19 +150,19 @@ func TestPredicate(t *testing.T) {
 }
 
 func TestFunction(t *testing.T) {
-	// count(Node-Set)
-	//
+
 }
 
 func TestOperationOrLogical(t *testing.T) {
 	testXPath3(t, html, "//li[1+1]", selectNode(html, "//li[2]"))
-	testXPath3(t, html, "//li[4 div 2]", selectNode(html, "//li[2]"))
+	testXPath3(t, html, "//li[5 div 2]", selectNode(html, "//li[2]"))
 	testXPath3(t, html, "//li[3 mod 2]", selectNode(html, "//li[1]"))
 	testXPath3(t, html, "//li[3 - 2]", selectNode(html, "//li[1]"))
-	testXPath2(t, html, "//a[@id>=1]", 3)         // //a[@id>=1] == a[1],a[2],a[3]
-	testXPath2(t, html, "//a[@id<2]", 1)          // //a[@id>=1] == a[1]
-	testXPath2(t, html, "//a[@id!=2]", 2)         // //a[@id>=1] == a[1],a[3]
-	testXPath2(t, html, "//a[@id=1 or @id=3]", 2) // //a[@id>=1] == a[1],a[3]
+	testXPath2(t, html, "//li[position() mod 2 = 0 ]", 2) // //li[2],li[4]
+	testXPath2(t, html, "//a[@id>=1]", 3)                 // //a[@id>=1] == a[1],a[2],a[3]
+	testXPath2(t, html, "//a[@id<2]", 1)                  // //a[@id>=1] == a[1]
+	testXPath2(t, html, "//a[@id!=2]", 2)                 // //a[@id>=1] == a[1],a[3]
+	testXPath2(t, html, "//a[@id=1 or @id=3]", 2)         // //a[@id>=1] == a[1],a[3]
 	testXPath3(t, html, "//a[@id=1 and @href='/']", selectNode(html, "//a[1]"))
 }
 
