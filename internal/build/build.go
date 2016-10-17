@@ -214,8 +214,11 @@ func (b *builder) processOperatorNode(root *parse.OperatorNode) (query.Query, er
 			exprFunc = neFunc
 		}
 		qyOutput = &query.LogicalExpr{Left: left, Right: right, Do: exprFunc}
-	case "or", "and":
-		isOr := root.Op == "or"
+	case "or", "and", "|":
+		isOr := false
+		if root.Op == "or" || root.Op == "|" {
+			isOr = true
+		}
 		qyOutput = &query.BooleanExpr{Left: left, Right: right, IsOr: isOr}
 	}
 	return qyOutput, nil

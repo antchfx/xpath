@@ -572,10 +572,71 @@ func (n *NumericExpr) Evaluate(t Iterator) interface{} {
 type BooleanExpr struct {
 	IsOr        bool
 	Left, Right Query
+	iterator    func() xpath.NodeNavigator
 }
 
 func (b *BooleanExpr) Select(t Iterator) xpath.NodeNavigator {
-	return nil
+	if b.iterator == nil {
+		var list []xpath.NodeNavigator
+		i := 0
+		root := t.Current().Copy()
+		if b.IsOr {
+			for {
+				node := b.Left.Select(t)
+				if node == nil {
+					break
+				}
+				node = node.Copy()
+				list = append(list, node)
+			}
+			t.Current().MoveTo(root)
+			for {
+				node := b.Right.Select(t)
+				if node == nil {
+					break
+				}
+				node = node.Copy()
+				list = append(list, node)
+			}
+		} else {
+			var m []xpath.NodeNavigator
+			var n []xpath.NodeNavigator
+			for {
+				node := b.Left.Select(t)
+				if node == nil {
+					break
+				}
+				node = node.Copy()
+				list = append(m, node)
+			}
+			t.Current().MoveTo(root)
+			for {
+				node := b.Right.Select(t)
+				if node == nil {
+					break
+				}
+				node = node.Copy()
+				list = append(n, node)
+			}
+			for _, k := range m {
+				for _, j := range n {
+					if k == j {
+						list = append(list, k)
+					}
+				}
+			}
+		}
+
+		b.iterator = func() xpath.NodeNavigator {
+			if i >= len(list) {
+				return nil
+			}
+			node := list[i]
+			i++
+			return node
+		}
+	}
+	return b.iterator()
 }
 
 func (b *BooleanExpr) Evaluate(t Iterator) interface{} {

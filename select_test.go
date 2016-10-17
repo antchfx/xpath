@@ -42,7 +42,7 @@ func TestAttribute(t *testing.T) {
 func TestRelativePath(t *testing.T) {
 	testXPath(t, html, "head", "head")
 	testXPath(t, html, "/head", "head")
-
+	testXPath(t, html, "body//li", "li")
 	testXPath(t, html, "/head/title", "title")
 
 	testXPath2(t, html, "/body/ul/li/a", 3)
@@ -115,7 +115,7 @@ func TestPrecedingSibling(t *testing.T) {
 	}
 }
 
-func TestStar(t *testing.T) {
+func TestStarWide(t *testing.T) {
 	testXPath(t, html, "/head/*", "title")
 	testXPath2(t, html, "//ul/*", 4)
 	testXPath(t, html, "@*", "html")
@@ -147,6 +147,28 @@ func TestPredicate(t *testing.T) {
 	testXPath3(t, html, "//li[position()=4]", ul.LastChild)
 	testXPath3(t, html, "//li[position()=1]", ul.FirstChild)
 	testXPath2(t, html, "//li[position()>0]", 4)
+}
+
+func TestOr_And(t *testing.T) {
+	list := selectNodes(html, "//h1|//footer")
+	if len(list) == 0 {
+		t.Fatal("//h1|//footer no any node found")
+	}
+	if list[0].Data != "h1" {
+		t.Fatalf("expected first node of node-set is h1,but got %s", list[0].Data)
+	}
+	if list[1].Data != "footer" {
+		t.Fatalf("expected first node of node-set is footer,but got %s", list[1].Data)
+	}
+
+	list = selectNodes(html, "//a[@id=1 or @id=2]")
+	if list[0] != selectNode(html, "//a[@id=1]") {
+		t.Fatal("node is not equal")
+	}
+	if list[1] != selectNode(html, "//a[@id=2]") {
+		t.Fatal("node is not equal")
+	}
+	testXPath3(t, html, "//a[@id=1 and @href='/']", selectNode(html, "//a[1]"))
 }
 
 func TestFunction(t *testing.T) {
