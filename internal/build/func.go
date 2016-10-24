@@ -1,6 +1,9 @@
 package build
 
 import (
+	"errors"
+	"strings"
+
 	"github.com/antchfx/gxpath/internal/query"
 	"github.com/antchfx/gxpath/xpath"
 )
@@ -66,4 +69,38 @@ var countFunc = func(q query.Query, t query.Iterator) interface{} {
 		}
 	}
 	return float64(count)
+}
+
+// nameFunc is a XPath functions name([node-set]).
+var nameFunc = func(q query.Query, t query.Iterator) interface{} {
+	return t.Current().LocalName()
+}
+
+// startwithFunc is a XPath functions starts-with(string, string).
+type startwithFunc struct {
+	arg1, arg2 query.Query
+}
+
+func (s *startwithFunc) do(q query.Query, t query.Iterator) interface{} {
+	var (
+		m, n string
+		ok   bool
+	)
+	switch typ := s.arg1.Evaluate(t).(type) {
+	case string:
+		m = typ
+	case query.Query:
+		node := typ.Select(t)
+		if node == nil {
+			return false
+		}
+		m = node.Value()
+	default:
+		panic(errors.New("starts-with() function argument type must be string"))
+	}
+	n, ok = s.arg2.Evaluate(t).(string)
+	if !ok {
+		panic(errors.New("starts-with() function argument type must be string"))
+	}
+	return strings.HasPrefix(m, n)
 }

@@ -151,6 +151,19 @@ func (b *builder) processFilterNode(root *parse.FilterNode) (query.Query, error)
 func (b *builder) processFunctionNode(root *parse.FunctionNode) (query.Query, error) {
 	var qyOutput query.Query
 	switch root.FuncName {
+	case "starts-with":
+		arg1, err := b.processNode(root.Args[0])
+		if err != nil {
+			return nil, err
+		}
+		arg2, err := b.processNode(root.Args[1])
+		if err != nil {
+			return nil, err
+		}
+		startwith := &startwithFunc{arg1, arg2}
+		qyOutput = &query.XPathFunction{Input: b.firstInput, Func: startwith.do}
+	case "name":
+		qyOutput = &query.XPathFunction{Input: b.firstInput, Func: nameFunc}
 	case "last":
 		qyOutput = &query.XPathFunction{Input: b.firstInput, Func: lastFunc}
 	case "position":

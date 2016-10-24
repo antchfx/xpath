@@ -18,7 +18,7 @@ gxpath is XPath packages for the Go, that lets you extract data from the custom 
 
 - `@*` : Selects all attributes.
 
-- ~~`node()`~~ : Matches an org.w3c.dom.Node.
+- `node()` : Matches an org.w3c.dom.Node.
 
 - `text()` : Matches a org.w3c.dom.Text node.
 
@@ -99,6 +99,8 @@ gxpath is XPath packages for the Go, that lets you extract data from the custom 
     * position()
     * last()
     * count(node-set)
+    * name()
+    * starts-with(string,string)
     * come more
 
 - `a or b` : Boolean or.

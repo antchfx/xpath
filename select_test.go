@@ -13,7 +13,6 @@ var html *TNode = example()
 /*
 testXPath2(t, html, "//title/node()", 1) still have some error,will fix in future.
 testXPath(t, html, "//*[count(*)=3]", "ul")
-testXPath3(t, html, "//li[floor(3 div 2)]", selectNode(html, "//li[1]"))
 */
 
 func TestSelf(t *testing.T) {
@@ -127,7 +126,7 @@ func TestNodeTestType(t *testing.T) {
 	testXPath(t, html, "//title/text()", "Hello")
 	testXPath(t, html, "//a[@href='/']/text()", "Home")
 	testXPath2(t, html, "//head/node()", 2)
-
+	testXPath2(t, html, "//ul/node()", 4)
 }
 
 func TestPosition(t *testing.T) {
@@ -172,7 +171,9 @@ func TestOr_And(t *testing.T) {
 }
 
 func TestFunction(t *testing.T) {
-
+	testXPath2(t, html, "//*[name()='a']", 3)
+	testXPath(t, html, "//*[starts-with(name(),'h1')]", "h1")
+	testXPath2(t, html, "//*[starts-with(@href,'/a')]", 2) // a links: `/account`,`/about`
 }
 
 func TestOperationOrLogical(t *testing.T) {
