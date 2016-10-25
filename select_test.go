@@ -146,6 +146,7 @@ func TestPredicate(t *testing.T) {
 	testXPath3(t, html, "//li[position()=4]", ul.LastChild)
 	testXPath3(t, html, "//li[position()=1]", ul.FirstChild)
 	testXPath2(t, html, "//li[position()>0]", 4)
+	testXPath3(t, html, "//a[text()='Home']", selectNode(html, "//a[1]"))
 }
 
 func TestOr_And(t *testing.T) {
@@ -168,6 +169,7 @@ func TestOr_And(t *testing.T) {
 		t.Fatal("node is not equal")
 	}
 	testXPath3(t, html, "//a[@id=1 and @href='/']", selectNode(html, "//a[1]"))
+	testXPath3(t, html, "//a[text()='Home' and @id='1']", selectNode(html, "//a[1]"))
 }
 
 func TestFunction(t *testing.T) {
