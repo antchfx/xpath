@@ -101,6 +101,7 @@ gxpath is XPath packages for the Go, that lets you extract data from the custom 
     * count(node-set)
     * name()
     * starts-with(string,string)
+    * normalize-space(string)
     * come more
 
 - `a or b` : Boolean or.

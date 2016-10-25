@@ -162,6 +162,15 @@ func (b *builder) processFunctionNode(root *parse.FunctionNode) (query.Query, er
 		}
 		startwith := &startwithFunc{arg1, arg2}
 		qyOutput = &query.XPathFunction{Input: b.firstInput, Func: startwith.do}
+	case "normalize-space":
+		if len(root.Args) == 0 {
+			return nil, errors.New("xpath: normalize-space function should have parameter")
+		}
+		argQuery, err := b.processNode(root.Args[0])
+		if err != nil {
+			return nil, err
+		}
+		qyOutput = &query.XPathFunction{Input: argQuery, Func: normalizespaceFunc}
 	case "name":
 		qyOutput = &query.XPathFunction{Input: b.firstInput, Func: nameFunc}
 	case "last":

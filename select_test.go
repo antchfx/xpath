@@ -176,6 +176,7 @@ func TestFunction(t *testing.T) {
 	testXPath2(t, html, "//*[name()='a']", 3)
 	testXPath(t, html, "//*[starts-with(name(),'h1')]", "h1")
 	testXPath2(t, html, "//*[starts-with(@href,'/a')]", 2) // a links: `/account`,`/about`
+	testXPath3(t, html, "//h1[normalize-space(text())='This is a H1']", selectNode(html, "//h1"))
 }
 
 func TestOperationOrLogical(t *testing.T) {
@@ -436,7 +437,7 @@ func example() *TNode {
 			   <meta name="language" content="en"/>
 		   </head>
 		   <body>
-				<h1>This is a H1</h1>
+				<h1> This is a H1 </h1>
 				<ul>
 					<li><a id="1" href="/">Home</a></li>
 					<li><a id="2" href="/about">about</a></li>
@@ -464,7 +465,7 @@ func example() *TNode {
 	// The HTML body section.
 	body := xhtml.createChildNode("body", xpath.ElementNode)
 	n = body.createChildNode("h1", xpath.ElementNode)
-	n = n.createChildNode("Hello", xpath.TextNode)
+	n = n.createChildNode(" This is a H1 ", xpath.TextNode)
 	ul := body.createChildNode("ul", xpath.ElementNode)
 	n = ul.createChildNode("li", xpath.ElementNode)
 	n = n.createChildNode("a", xpath.ElementNode)

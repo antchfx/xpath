@@ -104,3 +104,19 @@ func (s *startwithFunc) do(q query.Query, t query.Iterator) interface{} {
 	}
 	return strings.HasPrefix(m, n)
 }
+
+// normalizespaceFunc is XPath functions normalize-space(string?)
+var normalizespaceFunc = func(q query.Query, t query.Iterator) interface{} {
+	var m string
+	switch typ := q.Evaluate(t).(type) {
+	case string:
+		m = typ
+	case query.Query:
+		node := typ.Select(t)
+		if node == nil {
+			return false
+		}
+		m = node.Value()
+	}
+	return strings.TrimSpace(m)
+}
