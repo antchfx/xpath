@@ -2,7 +2,7 @@ gxpath
 ====
 gxpath is XPath packages for the Go, that lets you extract data from the custom documents using XPath expression.
 
-**[XQuery](https://github.com/antchfx/xquery)** : gxpath implementation, lets you extract data from HTML/XML documents using XPath.
+**[XQuery](https://github.com/antchfx/xquery)** : gxpath implemented, lets you extract data from HTML/XML documents using XPath.
 
 ### Features
 
