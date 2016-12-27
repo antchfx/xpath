@@ -177,6 +177,8 @@ func TestFunction(t *testing.T) {
 	testXPath(t, html, "//*[starts-with(name(),'h1')]", "h1")
 	testXPath2(t, html, "//*[starts-with(@href,'/a')]", 2) // a links: `/account`,`/about`
 	testXPath3(t, html, "//h1[normalize-space(text())='This is a H1']", selectNode(html, "//h1"))
+	testXPath3(t, html, "//title[substring(.,0)='Hello']", selectNode(html, "//title"))
+	testXPath3(t, html, "//title[substring(text(),0,4)='Hell']", selectNode(html, "//title"))
 }
 
 func TestOperationOrLogical(t *testing.T) {
