@@ -162,9 +162,31 @@ func (b *builder) processFunctionNode(root *parse.FunctionNode) (query.Query, er
 		}
 		startwith := &startwithFunc{arg1, arg2}
 		qyOutput = &query.XPathFunction{Input: b.firstInput, Func: startwith.do}
+	case "substring":
+		//substring( string , start [, length] )
+		if len(root.Args) < 2 {
+			return nil, errors.New("xpath: substring function must have at least two parameter")
+		}
+		var (
+			arg1, arg2, arg3 query.Query
+			err              error
+		)
+		if arg1, err = b.processNode(root.Args[0]); err != nil {
+			return nil, err
+		}
+		if arg2, err = b.processNode(root.Args[1]); err != nil {
+			return nil, err
+		}
+		if len(root.Args) == 3 {
+			if arg3, err = b.processNode(root.Args[2]); err != nil {
+				return nil, err
+			}
+		}
+		substring := &substringFunc{arg1, arg2, arg3}
+		qyOutput = &query.XPathFunction{Input: b.firstInput, Func: substring.do}
 	case "normalize-space":
 		if len(root.Args) == 0 {
-			return nil, errors.New("xpath: normalize-space function should have parameter")
+			return nil, errors.New("xpath: normalize-space function must have at least one parameter")
 		}
 		argQuery, err := b.processNode(root.Args[0])
 		if err != nil {

@@ -120,3 +120,41 @@ var normalizespaceFunc = func(q query.Query, t query.Iterator) interface{} {
 	}
 	return strings.TrimSpace(m)
 }
+
+// substringFunc is XPath functions substring function returns a part of a given string.
+type substringFunc struct {
+	arg1, arg2, arg3 query.Query
+}
+
+func (f *substringFunc) do(q query.Query, t query.Iterator) interface{} {
+	var m string
+	switch typ := f.arg1.Evaluate(t).(type) {
+	case string:
+		m = typ
+	case query.Query:
+		node := typ.Select(t)
+		if node == nil {
+			return false
+		}
+		m = node.Value()
+	}
+
+	var start, length float64
+	var ok bool
+
+	if start, ok = f.arg2.Evaluate(t).(float64); !ok {
+		panic(errors.New("substring() function first argument type must be int"))
+	}
+	if f.arg3 != nil {
+		if length, ok = f.arg3.Evaluate(t).(float64); !ok {
+			panic(errors.New("substring() function second argument type must be int"))
+		}
+	}
+	if (len(m) - int(start)) < int(length) {
+		panic(errors.New("substring() function start and length argument out of range"))
+	}
+	if length > 0 {
+		return m[int(start):int(length+start)]
+	}
+	return m[int(start):]
+}
