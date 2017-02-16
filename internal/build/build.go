@@ -193,6 +193,15 @@ func (b *builder) processFunctionNode(root *parse.FunctionNode) (query.Query, er
 			return nil, err
 		}
 		qyOutput = &query.XPathFunction{Input: argQuery, Func: normalizespaceFunc}
+	case "not":
+		if len(root.Args) == 0 {
+			return nil, errors.New("xpath: not function must have at least one parameter")
+		}
+		argQuery, err := b.processNode(root.Args[0])
+		if err != nil {
+			return nil, err
+		}
+		qyOutput = &query.XPathFunction{Input: argQuery, Func: notFunc}
 	case "name":
 		qyOutput = &query.XPathFunction{Input: b.firstInput, Func: nameFunc}
 	case "last":

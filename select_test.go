@@ -179,6 +179,8 @@ func TestFunction(t *testing.T) {
 	testXPath3(t, html, "//h1[normalize-space(text())='This is a H1']", selectNode(html, "//h1"))
 	testXPath3(t, html, "//title[substring(.,0)='Hello']", selectNode(html, "//title"))
 	testXPath3(t, html, "//title[substring(text(),0,4)='Hell']", selectNode(html, "//title"))
+	testXPath3(t, html, "//li[not(a)]", selectNode(html, "//ul/li[4]"))
+	testXPath2(t, html, "//li/a[not(@id='1')]", 2) //  //li/a[@id!=1]
 }
 
 func TestOperationOrLogical(t *testing.T) {

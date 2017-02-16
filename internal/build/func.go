@@ -158,3 +158,16 @@ func (f *substringFunc) do(q query.Query, t query.Iterator) interface{} {
 	}
 	return m[int(start):]
 }
+
+// notFunc is XPATH functions not(expression) function operation.
+var notFunc = func(q query.Query, t query.Iterator) interface{} {
+	switch v := q.Evaluate(t).(type) {
+	case bool:
+		return !v
+	case query.Query:
+		node := v.Select(t)
+		return node == nil
+	default:
+		return false
+	}
+}

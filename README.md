@@ -103,6 +103,7 @@ gxpath is XPath packages for the Go, that lets you extract data from the custom 
     * starts-with(string,string)
     * normalize-space(string)
     * substring(string,start[,length])
+    * not(expression)
     * come more
 
 - `a or b` : Boolean or.
