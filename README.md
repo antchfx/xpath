@@ -104,6 +104,7 @@ gxpath is XPath packages for the Go, that lets you extract data from the custom 
     * normalize-space(string)
     * substring(string,start[,length])
     * not(expression)
+    * string-length([string])
     * come more
 
 - `a or b` : Boolean or.

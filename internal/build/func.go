@@ -159,6 +159,26 @@ func (f *substringFunc) do(q query.Query, t query.Iterator) interface{} {
 	return m[int(start):]
 }
 
+// stringLengthFunc is XPATH string-length( [string] ) function that returns a number
+// equal to the number of characters in a given string.
+type stringLengthFunc struct {
+	arg1 query.Query
+}
+
+func (f *stringLengthFunc) do(q query.Query, t query.Iterator) interface{} {
+	switch v := f.arg1.Evaluate(t).(type) {
+	case string:
+		return float64(len(v))
+	case query.Query:
+		node := v.Select(t)
+		if node == nil {
+			break
+		}
+		return float64(len(node.Value()))
+	}
+	return float64(0)
+}
+
 // notFunc is XPATH functions not(expression) function operation.
 var notFunc = func(q query.Query, t query.Iterator) interface{} {
 	switch v := q.Evaluate(t).(type) {

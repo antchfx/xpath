@@ -181,6 +181,8 @@ func TestFunction(t *testing.T) {
 	testXPath3(t, html, "//title[substring(text(),0,4)='Hell']", selectNode(html, "//title"))
 	testXPath3(t, html, "//li[not(a)]", selectNode(html, "//ul/li[4]"))
 	testXPath2(t, html, "//li/a[not(@id='1')]", 2) //  //li/a[@id!=1]
+	testXPath2(t, html, "//h1[string-length(normalize-space(' abc ')) = 3]", 1)
+	testXPath2(t, html, "//h1[string-length(normalize-space(self::text())) = 12]", 1)
 }
 
 func TestOperationOrLogical(t *testing.T) {

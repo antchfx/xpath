@@ -42,7 +42,7 @@ func axisPredicate(root *parse.AxisNode) func(xpath.NodeNavigator) bool {
 		}
 	}
 	predicate := func(n xpath.NodeNavigator) bool {
-		if typ == n.NodeType() {
+		if typ == n.NodeType() || typ == xpath.TextNode {
 			if root.LocalName == "" || (root.LocalName == n.LocalName() && root.Prefix == n.Prefix()) {
 				return true
 			}
@@ -184,6 +184,17 @@ func (b *builder) processFunctionNode(root *parse.FunctionNode) (query.Query, er
 		}
 		substring := &substringFunc{arg1, arg2, arg3}
 		qyOutput = &query.XPathFunction{Input: b.firstInput, Func: substring.do}
+	case "string-length":
+		// string-length( [string] )
+		if len(root.Args) < 1 {
+			return nil, errors.New("xpath: string-length function must have at least one parameter")
+		}
+		arg1, err := b.processNode(root.Args[0])
+		if err != nil {
+			return nil, err
+		}
+		f := stringLengthFunc{arg1}
+		qyOutput = &query.XPathFunction{Input: b.firstInput, Func: f.do}
 	case "normalize-space":
 		if len(root.Args) == 0 {
 			return nil, errors.New("xpath: normalize-space function must have at least one parameter")
