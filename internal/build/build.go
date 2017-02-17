@@ -160,8 +160,7 @@ func (b *builder) processFunctionNode(root *parse.FunctionNode) (query.Query, er
 		if err != nil {
 			return nil, err
 		}
-		startwith := &startwithFunc{arg1, arg2}
-		qyOutput = &query.XPathFunction{Input: b.firstInput, Func: startwith.do}
+		qyOutput = &query.XPathFunction{Input: b.firstInput, Func: startwithFunc(arg1, arg2)}
 	case "substring":
 		//substring( string , start [, length] )
 		if len(root.Args) < 2 {
@@ -182,8 +181,7 @@ func (b *builder) processFunctionNode(root *parse.FunctionNode) (query.Query, er
 				return nil, err
 			}
 		}
-		substring := &substringFunc{arg1, arg2, arg3}
-		qyOutput = &query.XPathFunction{Input: b.firstInput, Func: substring.do}
+		qyOutput = &query.XPathFunction{Input: b.firstInput, Func: substringFunc(arg1, arg2, arg3)}
 	case "string-length":
 		// string-length( [string] )
 		if len(root.Args) < 1 {
@@ -193,8 +191,7 @@ func (b *builder) processFunctionNode(root *parse.FunctionNode) (query.Query, er
 		if err != nil {
 			return nil, err
 		}
-		f := stringLengthFunc{arg1}
-		qyOutput = &query.XPathFunction{Input: b.firstInput, Func: f.do}
+		qyOutput = &query.XPathFunction{Input: b.firstInput, Func: stringLengthFunc(arg1)}
 	case "normalize-space":
 		if len(root.Args) == 0 {
 			return nil, errors.New("xpath: normalize-space function must have at least one parameter")

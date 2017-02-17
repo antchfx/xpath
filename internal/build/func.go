@@ -19,7 +19,7 @@ func predicate(q query.Query) func(xpath.NodeNavigator) bool {
 }
 
 // positionFunc is a XPath Node Set functions postion().
-var positionFunc = func(q query.Query, t query.Iterator) interface{} {
+func positionFunc(q query.Query, t query.Iterator) interface{} {
 	var (
 		count = 1
 		node  = t.Current()
@@ -34,7 +34,7 @@ var positionFunc = func(q query.Query, t query.Iterator) interface{} {
 }
 
 // lastFunc is a XPath Node Set functions last().
-var lastFunc = func(q query.Query, t query.Iterator) interface{} {
+func lastFunc(q query.Query, t query.Iterator) interface{} {
 	var (
 		count = 0
 		node  = t.Current()
@@ -53,7 +53,7 @@ var lastFunc = func(q query.Query, t query.Iterator) interface{} {
 }
 
 // countFunc is a XPath Node Set functions count(node-set).
-var countFunc = func(q query.Query, t query.Iterator) interface{} {
+func countFunc(q query.Query, t query.Iterator) interface{} {
 	var (
 		count = 0
 		node  = t.Current()
@@ -72,41 +72,39 @@ var countFunc = func(q query.Query, t query.Iterator) interface{} {
 }
 
 // nameFunc is a XPath functions name([node-set]).
-var nameFunc = func(q query.Query, t query.Iterator) interface{} {
+func nameFunc(q query.Query, t query.Iterator) interface{} {
 	return t.Current().LocalName()
 }
 
 // startwithFunc is a XPath functions starts-with(string, string).
-type startwithFunc struct {
-	arg1, arg2 query.Query
-}
-
-func (s *startwithFunc) do(q query.Query, t query.Iterator) interface{} {
-	var (
-		m, n string
-		ok   bool
-	)
-	switch typ := s.arg1.Evaluate(t).(type) {
-	case string:
-		m = typ
-	case query.Query:
-		node := typ.Select(t)
-		if node == nil {
-			return false
+func startwithFunc(arg1, arg2 query.Query) func(query.Query, query.Iterator) interface{} {
+	return func(q query.Query, t query.Iterator) interface{} {
+		var (
+			m, n string
+			ok   bool
+		)
+		switch typ := arg1.Evaluate(t).(type) {
+		case string:
+			m = typ
+		case query.Query:
+			node := typ.Select(t)
+			if node == nil {
+				return false
+			}
+			m = node.Value()
+		default:
+			panic(errors.New("starts-with() function argument type must be string"))
 		}
-		m = node.Value()
-	default:
-		panic(errors.New("starts-with() function argument type must be string"))
+		n, ok = arg2.Evaluate(t).(string)
+		if !ok {
+			panic(errors.New("starts-with() function argument type must be string"))
+		}
+		return strings.HasPrefix(m, n)
 	}
-	n, ok = s.arg2.Evaluate(t).(string)
-	if !ok {
-		panic(errors.New("starts-with() function argument type must be string"))
-	}
-	return strings.HasPrefix(m, n)
 }
 
 // normalizespaceFunc is XPath functions normalize-space(string?)
-var normalizespaceFunc = func(q query.Query, t query.Iterator) interface{} {
+func normalizespaceFunc(q query.Query, t query.Iterator) interface{} {
 	var m string
 	switch typ := q.Evaluate(t).(type) {
 	case string:
@@ -122,65 +120,61 @@ var normalizespaceFunc = func(q query.Query, t query.Iterator) interface{} {
 }
 
 // substringFunc is XPath functions substring function returns a part of a given string.
-type substringFunc struct {
-	arg1, arg2, arg3 query.Query
-}
-
-func (f *substringFunc) do(q query.Query, t query.Iterator) interface{} {
-	var m string
-	switch typ := f.arg1.Evaluate(t).(type) {
-	case string:
-		m = typ
-	case query.Query:
-		node := typ.Select(t)
-		if node == nil {
-			return false
+func substringFunc(arg1, arg2, arg3 query.Query) func(query.Query, query.Iterator) interface{} {
+	return func(q query.Query, t query.Iterator) interface{} {
+		var m string
+		switch typ := arg1.Evaluate(t).(type) {
+		case string:
+			m = typ
+		case query.Query:
+			node := typ.Select(t)
+			if node == nil {
+				return false
+			}
+			m = node.Value()
 		}
-		m = node.Value()
-	}
 
-	var start, length float64
-	var ok bool
+		var start, length float64
+		var ok bool
 
-	if start, ok = f.arg2.Evaluate(t).(float64); !ok {
-		panic(errors.New("substring() function first argument type must be int"))
-	}
-	if f.arg3 != nil {
-		if length, ok = f.arg3.Evaluate(t).(float64); !ok {
-			panic(errors.New("substring() function second argument type must be int"))
+		if start, ok = arg2.Evaluate(t).(float64); !ok {
+			panic(errors.New("substring() function first argument type must be int"))
 		}
+		if arg3 != nil {
+			if length, ok = arg3.Evaluate(t).(float64); !ok {
+				panic(errors.New("substring() function second argument type must be int"))
+			}
+		}
+		if (len(m) - int(start)) < int(length) {
+			panic(errors.New("substring() function start and length argument out of range"))
+		}
+		if length > 0 {
+			return m[int(start):int(length+start)]
+		}
+		return m[int(start):]
 	}
-	if (len(m) - int(start)) < int(length) {
-		panic(errors.New("substring() function start and length argument out of range"))
-	}
-	if length > 0 {
-		return m[int(start):int(length+start)]
-	}
-	return m[int(start):]
 }
 
 // stringLengthFunc is XPATH string-length( [string] ) function that returns a number
 // equal to the number of characters in a given string.
-type stringLengthFunc struct {
-	arg1 query.Query
-}
-
-func (f *stringLengthFunc) do(q query.Query, t query.Iterator) interface{} {
-	switch v := f.arg1.Evaluate(t).(type) {
-	case string:
-		return float64(len(v))
-	case query.Query:
-		node := v.Select(t)
-		if node == nil {
-			break
+func stringLengthFunc(arg1 query.Query) func(query.Query, query.Iterator) interface{} {
+	return func(q query.Query, t query.Iterator) interface{} {
+		switch v := arg1.Evaluate(t).(type) {
+		case string:
+			return float64(len(v))
+		case query.Query:
+			node := v.Select(t)
+			if node == nil {
+				break
+			}
+			return float64(len(node.Value()))
 		}
-		return float64(len(node.Value()))
+		return float64(0)
 	}
-	return float64(0)
 }
 
 // notFunc is XPATH functions not(expression) function operation.
-var notFunc = func(q query.Query, t query.Iterator) interface{} {
+func notFunc(q query.Query, t query.Iterator) interface{} {
 	switch v := q.Evaluate(t).(type) {
 	case bool:
 		return !v
