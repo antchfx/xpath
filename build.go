@@ -1,12 +1,8 @@
-package build
+package xpath
 
 import (
 	"errors"
 	"fmt"
-
-	"github.com/antchfx/gxpath/internal/parse"
-	"github.com/antchfx/gxpath/internal/query"
-	"github.com/antchfx/gxpath/xpath"
 )
 
 type flag int
@@ -20,29 +16,29 @@ const (
 type builder struct {
 	depth      int
 	flag       flag
-	firstInput query.Query
+	firstInput query
 }
 
 // axisPredicate creates a predicate to predicating for this axis node.
-func axisPredicate(root *parse.AxisNode) func(xpath.NodeNavigator) bool {
+func axisPredicate(root *axisNode) func(NodeNavigator) bool {
 	// get current axix node type.
-	typ := xpath.ElementNode
+	typ := ElementNode
 	if root.AxeType == "attribute" {
-		typ = xpath.AttributeNode
+		typ = AttributeNode
 	} else {
 		switch root.Prop {
 		case "comment":
-			typ = xpath.CommentNode
+			typ = CommentNode
 		case "text":
-			typ = xpath.TextNode
+			typ = TextNode
 			//	case "processing-instruction":
-		//	typ = xpath.ProcessingInstructionNode
+		//	typ = ProcessingInstructionNode
 		case "node":
-			typ = xpath.ElementNode
+			typ = ElementNode
 		}
 	}
-	predicate := func(n xpath.NodeNavigator) bool {
-		if typ == n.NodeType() || typ == xpath.TextNode {
+	predicate := func(n NodeNavigator) bool {
+		if typ == n.NodeType() || typ == TextNode {
 			if root.LocalName == "" || (root.LocalName == n.LocalName() && root.Prefix == n.Prefix()) {
 				return true
 			}
@@ -54,27 +50,27 @@ func axisPredicate(root *parse.AxisNode) func(xpath.NodeNavigator) bool {
 }
 
 // processAxisNode buildes a query for the XPath axis node.
-func (b *builder) processAxisNode(root *parse.AxisNode) (query.Query, error) {
+func (b *builder) processAxisNode(root *axisNode) (query, error) {
 	var (
 		err       error
-		qyInput   query.Query
-		qyOutput  query.Query
+		qyInput   query
+		qyOutput  query
 		predicate = axisPredicate(root)
 	)
 
 	if root.Input == nil {
-		qyInput = &query.ContextQuery{}
+		qyInput = &contextQuery{}
 	} else {
 		if b.flag&filterFlag == 0 {
-			if root.AxeType == "child" && (root.Input.Type() == parse.NodeAxis) {
-				if input := root.Input.(*parse.AxisNode); input.AxeType == "descendant-or-self" {
-					var qyGrandInput query.Query
+			if root.AxeType == "child" && (root.Input.Type() == nodeAxis) {
+				if input := root.Input.(*axisNode); input.AxeType == "descendant-or-self" {
+					var qyGrandInput query
 					if input.Input != nil {
 						qyGrandInput, _ = b.processNode(input.Input)
 					} else {
-						qyGrandInput = &query.ContextQuery{}
+						qyGrandInput = &contextQuery{}
 					}
-					qyOutput = &query.DescendantQuery{Input: qyGrandInput, Predicate: predicate, Self: true}
+					qyOutput = &descendantQuery{Input: qyGrandInput, Predicate: predicate, Self: true}
 					return qyOutput, nil
 				}
 			}
@@ -87,41 +83,41 @@ func (b *builder) processAxisNode(root *parse.AxisNode) (query.Query, error) {
 
 	switch root.AxeType {
 	case "ancestor":
-		qyOutput = &query.AncestorQuery{Input: qyInput, Predicate: predicate}
+		qyOutput = &ancestorQuery{Input: qyInput, Predicate: predicate}
 	case "ancestor-or-self":
-		qyOutput = &query.AncestorQuery{Input: qyInput, Predicate: predicate, Self: true}
+		qyOutput = &ancestorQuery{Input: qyInput, Predicate: predicate, Self: true}
 	case "attribute":
-		qyOutput = &query.AttributeQuery{Input: qyInput, Predicate: predicate}
+		qyOutput = &attributeQuery{Input: qyInput, Predicate: predicate}
 	case "child":
-		filter := func(n xpath.NodeNavigator) bool {
+		filter := func(n NodeNavigator) bool {
 			v := predicate(n)
 			switch root.Prop {
 			case "text":
-				v = v && n.NodeType() == xpath.TextNode
+				v = v && n.NodeType() == TextNode
 			case "node":
-				v = v && (n.NodeType() == xpath.ElementNode || n.NodeType() == xpath.TextNode)
+				v = v && (n.NodeType() == ElementNode || n.NodeType() == TextNode)
 			case "comment":
-				v = v && n.NodeType() == xpath.CommentNode
+				v = v && n.NodeType() == CommentNode
 			}
 			return v
 		}
-		qyOutput = &query.ChildQuery{Input: qyInput, Predicate: filter}
+		qyOutput = &childQuery{Input: qyInput, Predicate: filter}
 	case "descendant":
-		qyOutput = &query.DescendantQuery{Input: qyInput, Predicate: predicate}
+		qyOutput = &descendantQuery{Input: qyInput, Predicate: predicate}
 	case "descendant-or-self":
-		qyOutput = &query.DescendantQuery{Input: qyInput, Predicate: predicate, Self: true}
+		qyOutput = &descendantQuery{Input: qyInput, Predicate: predicate, Self: true}
 	case "following":
-		qyOutput = &query.FollowingQuery{Input: qyInput, Predicate: predicate}
+		qyOutput = &followingQuery{Input: qyInput, Predicate: predicate}
 	case "following-sibling":
-		qyOutput = &query.FollowingQuery{Input: qyInput, Predicate: predicate, Sibling: true}
+		qyOutput = &followingQuery{Input: qyInput, Predicate: predicate, Sibling: true}
 	case "parent":
-		qyOutput = &query.ParentQuery{Input: qyInput, Predicate: predicate}
+		qyOutput = &parentQuery{Input: qyInput, Predicate: predicate}
 	case "preceding":
-		qyOutput = &query.PrecedingQuery{Input: qyInput, Predicate: predicate}
+		qyOutput = &precedingQuery{Input: qyInput, Predicate: predicate}
 	case "preceding-sibling":
-		qyOutput = &query.PrecedingQuery{Input: qyInput, Predicate: predicate, Sibling: true}
+		qyOutput = &precedingQuery{Input: qyInput, Predicate: predicate, Sibling: true}
 	case "self":
-		qyOutput = &query.SelfQuery{Input: qyInput, Predicate: predicate}
+		qyOutput = &selfQuery{Input: qyInput, Predicate: predicate}
 	case "namespace":
 		// haha,what will you do someting??
 	default:
@@ -131,8 +127,8 @@ func (b *builder) processAxisNode(root *parse.AxisNode) (query.Query, error) {
 	return qyOutput, nil
 }
 
-// processFilterNode builds query.Query for the XPath filter predicate.
-func (b *builder) processFilterNode(root *parse.FilterNode) (query.Query, error) {
+// processFilterNode builds query for the XPath filter predicate.
+func (b *builder) processFilterNode(root *filterNode) (query, error) {
 	b.flag |= filterFlag
 
 	qyInput, err := b.processNode(root.Input)
@@ -143,13 +139,13 @@ func (b *builder) processFilterNode(root *parse.FilterNode) (query.Query, error)
 	if err != nil {
 		return nil, err
 	}
-	qyOutput := &query.FilterQuery{Input: qyInput, Predicate: qyCond}
+	qyOutput := &filterQuery{Input: qyInput, Predicate: qyCond}
 	return qyOutput, nil
 }
 
-// processFunctionNode buildes query.Query for the XPath function node.
-func (b *builder) processFunctionNode(root *parse.FunctionNode) (query.Query, error) {
-	var qyOutput query.Query
+// processFunctionNode buildes query for the XPath function node.
+func (b *builder) processFunctionNode(root *functionNode) (query, error) {
+	var qyOutput query
 	switch root.FuncName {
 	case "starts-with":
 		arg1, err := b.processNode(root.Args[0])
@@ -160,14 +156,14 @@ func (b *builder) processFunctionNode(root *parse.FunctionNode) (query.Query, er
 		if err != nil {
 			return nil, err
 		}
-		qyOutput = &query.XPathFunction{Input: b.firstInput, Func: startwithFunc(arg1, arg2)}
+		qyOutput = &functionQuery{Input: b.firstInput, Func: startwithFunc(arg1, arg2)}
 	case "substring":
 		//substring( string , start [, length] )
 		if len(root.Args) < 2 {
 			return nil, errors.New("xpath: substring function must have at least two parameter")
 		}
 		var (
-			arg1, arg2, arg3 query.Query
+			arg1, arg2, arg3 query
 			err              error
 		)
 		if arg1, err = b.processNode(root.Args[0]); err != nil {
@@ -181,7 +177,7 @@ func (b *builder) processFunctionNode(root *parse.FunctionNode) (query.Query, er
 				return nil, err
 			}
 		}
-		qyOutput = &query.XPathFunction{Input: b.firstInput, Func: substringFunc(arg1, arg2, arg3)}
+		qyOutput = &functionQuery{Input: b.firstInput, Func: substringFunc(arg1, arg2, arg3)}
 	case "string-length":
 		// string-length( [string] )
 		if len(root.Args) < 1 {
@@ -191,7 +187,7 @@ func (b *builder) processFunctionNode(root *parse.FunctionNode) (query.Query, er
 		if err != nil {
 			return nil, err
 		}
-		qyOutput = &query.XPathFunction{Input: b.firstInput, Func: stringLengthFunc(arg1)}
+		qyOutput = &functionQuery{Input: b.firstInput, Func: stringLengthFunc(arg1)}
 	case "normalize-space":
 		if len(root.Args) == 0 {
 			return nil, errors.New("xpath: normalize-space function must have at least one parameter")
@@ -200,7 +196,7 @@ func (b *builder) processFunctionNode(root *parse.FunctionNode) (query.Query, er
 		if err != nil {
 			return nil, err
 		}
-		qyOutput = &query.XPathFunction{Input: argQuery, Func: normalizespaceFunc}
+		qyOutput = &functionQuery{Input: argQuery, Func: normalizespaceFunc}
 	case "not":
 		if len(root.Args) == 0 {
 			return nil, errors.New("xpath: not function must have at least one parameter")
@@ -209,13 +205,13 @@ func (b *builder) processFunctionNode(root *parse.FunctionNode) (query.Query, er
 		if err != nil {
 			return nil, err
 		}
-		qyOutput = &query.XPathFunction{Input: argQuery, Func: notFunc}
+		qyOutput = &functionQuery{Input: argQuery, Func: notFunc}
 	case "name":
-		qyOutput = &query.XPathFunction{Input: b.firstInput, Func: nameFunc}
+		qyOutput = &functionQuery{Input: b.firstInput, Func: nameFunc}
 	case "last":
-		qyOutput = &query.XPathFunction{Input: b.firstInput, Func: lastFunc}
+		qyOutput = &functionQuery{Input: b.firstInput, Func: lastFunc}
 	case "position":
-		qyOutput = &query.XPathFunction{Input: b.firstInput, Func: positionFunc}
+		qyOutput = &functionQuery{Input: b.firstInput, Func: positionFunc}
 	case "count":
 		if b.firstInput == nil {
 			return nil, errors.New("xpath: expression must evaluate to node-set")
@@ -227,14 +223,14 @@ func (b *builder) processFunctionNode(root *parse.FunctionNode) (query.Query, er
 		if err != nil {
 			return nil, err
 		}
-		qyOutput = &query.XPathFunction{Input: argQuery, Func: countFunc}
+		qyOutput = &functionQuery{Input: argQuery, Func: countFunc}
 	default:
 		return nil, fmt.Errorf("not yet support this function %s()", root.FuncName)
 	}
 	return qyOutput, nil
 }
 
-func (b *builder) processOperatorNode(root *parse.OperatorNode) (query.Query, error) {
+func (b *builder) processOperatorNode(root *operatorNode) (query, error) {
 	left, err := b.processNode(root.Left)
 	if err != nil {
 		return nil, err
@@ -243,7 +239,7 @@ func (b *builder) processOperatorNode(root *parse.OperatorNode) (query.Query, er
 	if err != nil {
 		return nil, err
 	}
-	var qyOutput query.Query
+	var qyOutput query
 	switch root.Op {
 	case "+", "-", "div", "mod": // Numeric operator
 		var exprFunc func(interface{}, interface{}) interface{}
@@ -257,9 +253,9 @@ func (b *builder) processOperatorNode(root *parse.OperatorNode) (query.Query, er
 		case "mod":
 			exprFunc = modFunc
 		}
-		qyOutput = &query.NumericExpr{Left: left, Right: right, Do: exprFunc}
+		qyOutput = &numericQuery{Left: left, Right: right, Do: exprFunc}
 	case "=", ">", ">=", "<", "<=", "!=":
-		var exprFunc func(query.Iterator, interface{}, interface{}) interface{}
+		var exprFunc func(iterator, interface{}, interface{}) interface{}
 		switch root.Op {
 		case "=":
 			exprFunc = eqFunc
@@ -274,45 +270,45 @@ func (b *builder) processOperatorNode(root *parse.OperatorNode) (query.Query, er
 		case "!=":
 			exprFunc = neFunc
 		}
-		qyOutput = &query.LogicalExpr{Left: left, Right: right, Do: exprFunc}
+		qyOutput = &logicalQuery{Left: left, Right: right, Do: exprFunc}
 	case "or", "and", "|":
 		isOr := false
 		if root.Op == "or" || root.Op == "|" {
 			isOr = true
 		}
-		qyOutput = &query.BooleanExpr{Left: left, Right: right, IsOr: isOr}
+		qyOutput = &booleanQuery{Left: left, Right: right, IsOr: isOr}
 	}
 	return qyOutput, nil
 }
 
-func (b *builder) processNode(root parse.Node) (q query.Query, err error) {
+func (b *builder) processNode(root node) (q query, err error) {
 	if b.depth = b.depth + 1; b.depth > 1024 {
 		err = errors.New("the xpath expressions is too complex")
 		return
 	}
 
 	switch root.Type() {
-	case parse.NodeConstantOperand:
-		n := root.(*parse.OperandNode)
-		q = &query.XPathConstant{Val: n.Val}
-	case parse.NodeRoot:
-		q = &query.ContextQuery{Root: true}
-	case parse.NodeAxis:
-		q, err = b.processAxisNode(root.(*parse.AxisNode))
+	case nodeConstantOperand:
+		n := root.(*operandNode)
+		q = &constantQuery{Val: n.Val}
+	case nodeRoot:
+		q = &contextQuery{Root: true}
+	case nodeAxis:
+		q, err = b.processAxisNode(root.(*axisNode))
 		b.firstInput = q
-	case parse.NodeFilter:
-		q, err = b.processFilterNode(root.(*parse.FilterNode))
-	case parse.NodeFunction:
-		q, err = b.processFunctionNode(root.(*parse.FunctionNode))
-	case parse.NodeOperator:
-		q, err = b.processOperatorNode(root.(*parse.OperatorNode))
+	case nodeFilter:
+		q, err = b.processFilterNode(root.(*filterNode))
+	case nodeFunction:
+		q, err = b.processFunctionNode(root.(*functionNode))
+	case nodeOperator:
+		q, err = b.processOperatorNode(root.(*operatorNode))
 	}
 	return
 }
 
-// Build builds a specified XPath expressions expr.
-func Build(expr string) (query.Query, error) {
-	root := parse.Parse(expr)
+// build builds a specified XPath expressions expr.
+func build(expr string) (query, error) {
+	root := parse(expr)
 	b := &builder{}
 	return b.processNode(root)
 }

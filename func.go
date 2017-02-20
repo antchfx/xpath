@@ -1,25 +1,24 @@
-package build
+package xpath
 
 import (
 	"errors"
 	"strings"
-
-	"github.com/antchfx/gxpath/internal/query"
-	"github.com/antchfx/gxpath/xpath"
 )
 
-func predicate(q query.Query) func(xpath.NodeNavigator) bool {
+// The XPath function list.
+
+func predicate(q query) func(NodeNavigator) bool {
 	type Predicater interface {
-		Test(xpath.NodeNavigator) bool
+		Test(NodeNavigator) bool
 	}
 	if p, ok := q.(Predicater); ok {
 		return p.Test
 	}
-	return func(xpath.NodeNavigator) bool { return true }
+	return func(NodeNavigator) bool { return true }
 }
 
 // positionFunc is a XPath Node Set functions postion().
-func positionFunc(q query.Query, t query.Iterator) interface{} {
+func positionFunc(q query, t iterator) interface{} {
 	var (
 		count = 1
 		node  = t.Current()
@@ -34,7 +33,7 @@ func positionFunc(q query.Query, t query.Iterator) interface{} {
 }
 
 // lastFunc is a XPath Node Set functions last().
-func lastFunc(q query.Query, t query.Iterator) interface{} {
+func lastFunc(q query, t iterator) interface{} {
 	var (
 		count = 0
 		node  = t.Current()
@@ -53,7 +52,7 @@ func lastFunc(q query.Query, t query.Iterator) interface{} {
 }
 
 // countFunc is a XPath Node Set functions count(node-set).
-func countFunc(q query.Query, t query.Iterator) interface{} {
+func countFunc(q query, t iterator) interface{} {
 	var (
 		count = 0
 		node  = t.Current()
@@ -72,13 +71,13 @@ func countFunc(q query.Query, t query.Iterator) interface{} {
 }
 
 // nameFunc is a XPath functions name([node-set]).
-func nameFunc(q query.Query, t query.Iterator) interface{} {
+func nameFunc(q query, t iterator) interface{} {
 	return t.Current().LocalName()
 }
 
 // startwithFunc is a XPath functions starts-with(string, string).
-func startwithFunc(arg1, arg2 query.Query) func(query.Query, query.Iterator) interface{} {
-	return func(q query.Query, t query.Iterator) interface{} {
+func startwithFunc(arg1, arg2 query) func(query, iterator) interface{} {
+	return func(q query, t iterator) interface{} {
 		var (
 			m, n string
 			ok   bool
@@ -86,7 +85,7 @@ func startwithFunc(arg1, arg2 query.Query) func(query.Query, query.Iterator) int
 		switch typ := arg1.Evaluate(t).(type) {
 		case string:
 			m = typ
-		case query.Query:
+		case query:
 			node := typ.Select(t)
 			if node == nil {
 				return false
@@ -104,12 +103,12 @@ func startwithFunc(arg1, arg2 query.Query) func(query.Query, query.Iterator) int
 }
 
 // normalizespaceFunc is XPath functions normalize-space(string?)
-func normalizespaceFunc(q query.Query, t query.Iterator) interface{} {
+func normalizespaceFunc(q query, t iterator) interface{} {
 	var m string
 	switch typ := q.Evaluate(t).(type) {
 	case string:
 		m = typ
-	case query.Query:
+	case query:
 		node := typ.Select(t)
 		if node == nil {
 			return false
@@ -120,13 +119,13 @@ func normalizespaceFunc(q query.Query, t query.Iterator) interface{} {
 }
 
 // substringFunc is XPath functions substring function returns a part of a given string.
-func substringFunc(arg1, arg2, arg3 query.Query) func(query.Query, query.Iterator) interface{} {
-	return func(q query.Query, t query.Iterator) interface{} {
+func substringFunc(arg1, arg2, arg3 query) func(query, iterator) interface{} {
+	return func(q query, t iterator) interface{} {
 		var m string
 		switch typ := arg1.Evaluate(t).(type) {
 		case string:
 			m = typ
-		case query.Query:
+		case query:
 			node := typ.Select(t)
 			if node == nil {
 				return false
@@ -157,12 +156,12 @@ func substringFunc(arg1, arg2, arg3 query.Query) func(query.Query, query.Iterato
 
 // stringLengthFunc is XPATH string-length( [string] ) function that returns a number
 // equal to the number of characters in a given string.
-func stringLengthFunc(arg1 query.Query) func(query.Query, query.Iterator) interface{} {
-	return func(q query.Query, t query.Iterator) interface{} {
+func stringLengthFunc(arg1 query) func(query, iterator) interface{} {
+	return func(q query, t iterator) interface{} {
 		switch v := arg1.Evaluate(t).(type) {
 		case string:
 			return float64(len(v))
-		case query.Query:
+		case query:
 			node := v.Select(t)
 			if node == nil {
 				break
@@ -174,11 +173,11 @@ func stringLengthFunc(arg1 query.Query) func(query.Query, query.Iterator) interf
 }
 
 // notFunc is XPATH functions not(expression) function operation.
-func notFunc(q query.Query, t query.Iterator) interface{} {
+func notFunc(q query, t iterator) interface{} {
 	switch v := q.Evaluate(t).(type) {
 	case bool:
 		return !v
-	case query.Query:
+	case query:
 		node := v.Select(t)
 		return node == nil
 	default:

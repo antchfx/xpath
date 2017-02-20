@@ -1,12 +1,12 @@
-package build
+package xpath
 
 import (
 	"fmt"
 	"reflect"
 	"strconv"
-
-	"github.com/antchfx/gxpath/internal/query"
 )
+
+// The XPath number operator function list.
 
 // valueType is a return value type.
 type valueType int
@@ -28,14 +28,14 @@ func getValueType(i interface{}) valueType {
 	case reflect.Bool:
 		return booleanType
 	default:
-		if _, ok := i.(query.Query); ok {
+		if _, ok := i.(query); ok {
 			return nodeSetType
 		}
 	}
 	panic(fmt.Errorf("xpath unknown value type: %v", v.Kind()))
 }
 
-type logical func(query.Iterator, string, interface{}, interface{}) bool
+type logical func(iterator, string, interface{}, interface{}) bool
 
 var logicalFuncs = [][]logical{
 	[]logical{cmpBoolean_Boolean, nil, nil, nil},
@@ -92,13 +92,13 @@ func cmpBooleanBooleanF(op string, a, b bool) bool {
 	return false
 }
 
-func cmpNumeric_Numeric(t query.Iterator, op string, m, n interface{}) bool {
+func cmpNumeric_Numeric(t iterator, op string, m, n interface{}) bool {
 	a := m.(float64)
 	b := n.(float64)
 	return cmpNumberNumberF(op, a, b)
 }
 
-func cmpNumeric_String(t query.Iterator, op string, m, n interface{}) bool {
+func cmpNumeric_String(t iterator, op string, m, n interface{}) bool {
 	a := m.(float64)
 	b := n.(string)
 	num, err := strconv.ParseFloat(b, 64)
@@ -108,9 +108,9 @@ func cmpNumeric_String(t query.Iterator, op string, m, n interface{}) bool {
 	return cmpNumberNumberF(op, a, num)
 }
 
-func cmpNumeric_NodeSet(t query.Iterator, op string, m, n interface{}) bool {
+func cmpNumeric_NodeSet(t iterator, op string, m, n interface{}) bool {
 	a := m.(float64)
-	b := n.(query.Query)
+	b := n.(query)
 
 	for {
 		node := b.Select(t)
@@ -128,8 +128,8 @@ func cmpNumeric_NodeSet(t query.Iterator, op string, m, n interface{}) bool {
 	return false
 }
 
-func cmpNodeSet_Numeric(t query.Iterator, op string, m, n interface{}) bool {
-	a := m.(query.Query)
+func cmpNodeSet_Numeric(t iterator, op string, m, n interface{}) bool {
+	a := m.(query)
 	b := n.(float64)
 	for {
 		node := a.Select(t)
@@ -147,8 +147,8 @@ func cmpNodeSet_Numeric(t query.Iterator, op string, m, n interface{}) bool {
 	return false
 }
 
-func cmpNodeSet_String(t query.Iterator, op string, m, n interface{}) bool {
-	a := m.(query.Query)
+func cmpNodeSet_String(t iterator, op string, m, n interface{}) bool {
+	a := m.(query)
 	b := n.(string)
 	for {
 		node := a.Select(t)
@@ -162,11 +162,11 @@ func cmpNodeSet_String(t query.Iterator, op string, m, n interface{}) bool {
 	return false
 }
 
-func cmpNodeSet_NodeSet(t query.Iterator, op string, m, n interface{}) bool {
+func cmpNodeSet_NodeSet(t iterator, op string, m, n interface{}) bool {
 	return false
 }
 
-func cmpString_Numeric(t query.Iterator, op string, m, n interface{}) bool {
+func cmpString_Numeric(t iterator, op string, m, n interface{}) bool {
 	a := m.(string)
 	b := n.(float64)
 	num, err := strconv.ParseFloat(a, 64)
@@ -176,15 +176,15 @@ func cmpString_Numeric(t query.Iterator, op string, m, n interface{}) bool {
 	return cmpNumberNumberF(op, b, num)
 }
 
-func cmpString_String(t query.Iterator, op string, m, n interface{}) bool {
+func cmpString_String(t iterator, op string, m, n interface{}) bool {
 	a := m.(string)
 	b := n.(string)
 	return cmpStringStringF(op, a, b)
 }
 
-func cmpString_NodeSet(t query.Iterator, op string, m, n interface{}) bool {
+func cmpString_NodeSet(t iterator, op string, m, n interface{}) bool {
 	a := m.(string)
-	b := n.(query.Query)
+	b := n.(query)
 	for {
 		node := b.Select(t)
 		if node == nil {
@@ -197,56 +197,56 @@ func cmpString_NodeSet(t query.Iterator, op string, m, n interface{}) bool {
 	return false
 }
 
-func cmpBoolean_Boolean(t query.Iterator, op string, m, n interface{}) bool {
+func cmpBoolean_Boolean(t iterator, op string, m, n interface{}) bool {
 	a := m.(bool)
 	b := n.(bool)
 	return cmpBooleanBooleanF(op, a, b)
 }
 
 // eqFunc is an `=` operator.
-func eqFunc(t query.Iterator, m, n interface{}) interface{} {
+func eqFunc(t iterator, m, n interface{}) interface{} {
 	t1 := getValueType(m)
 	t2 := getValueType(n)
 	return logicalFuncs[t1][t2](t, "=", m, n)
 }
 
 // gtFunc is an `>` operator.
-func gtFunc(t query.Iterator, m, n interface{}) interface{} {
+func gtFunc(t iterator, m, n interface{}) interface{} {
 	t1 := getValueType(m)
 	t2 := getValueType(n)
 	return logicalFuncs[t1][t2](t, ">", m, n)
 }
 
 // geFunc is an `>=` operator.
-func geFunc(t query.Iterator, m, n interface{}) interface{} {
+func geFunc(t iterator, m, n interface{}) interface{} {
 	t1 := getValueType(m)
 	t2 := getValueType(n)
 	return logicalFuncs[t1][t2](t, ">=", m, n)
 }
 
 // ltFunc is an `<` operator.
-func ltFunc(t query.Iterator, m, n interface{}) interface{} {
+func ltFunc(t iterator, m, n interface{}) interface{} {
 	t1 := getValueType(m)
 	t2 := getValueType(n)
 	return logicalFuncs[t1][t2](t, "<", m, n)
 }
 
 // leFunc is an `<=` operator.
-func leFunc(t query.Iterator, m, n interface{}) interface{} {
+func leFunc(t iterator, m, n interface{}) interface{} {
 	t1 := getValueType(m)
 	t2 := getValueType(n)
 	return logicalFuncs[t1][t2](t, "<=", m, n)
 }
 
 // neFunc is an `!=` operator.
-func neFunc(t query.Iterator, m, n interface{}) interface{} {
+func neFunc(t iterator, m, n interface{}) interface{} {
 	t1 := getValueType(m)
 	t2 := getValueType(n)
 	return logicalFuncs[t1][t2](t, "!=", m, n)
 }
 
 // orFunc is an `or` operator.
-var orFunc = func(t query.Iterator, m, n interface{}) interface{} {
+var orFunc = func(t iterator, m, n interface{}) interface{} {
 	t1 := getValueType(m)
 	t2 := getValueType(n)
 	return logicalFuncs[t1][t2](t, "or", m, n)

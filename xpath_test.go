@@ -1,19 +1,12 @@
-package gxpath
+package xpath
 
 import (
 	"bytes"
 	"strings"
 	"testing"
-
-	"github.com/antchfx/gxpath/xpath"
 )
 
 var html *TNode = example()
-
-/*
-testXPath2(t, html, "//title/node()", 1) still have some error,will fix in future.
-testXPath(t, html, "//*[count(*)=3]", "ul")
-*/
 
 func TestSelf(t *testing.T) {
 	testXPath(t, html, ".", "html")
@@ -254,20 +247,20 @@ type Attribute struct {
 type TNode struct {
 	Parent, FirstChild, LastChild, PrevSibling, NextSibling *TNode
 
-	Type xpath.NodeType
+	Type NodeType
 	Data string
 	Attr []Attribute
 }
 
 func (n *TNode) Value() string {
-	if n.Type == xpath.TextNode {
+	if n.Type == TextNode {
 		return n.Data
 	}
 
 	var buff bytes.Buffer
 	var output func(*TNode)
 	output = func(node *TNode) {
-		if node.Type == xpath.TextNode {
+		if node.Type == TextNode {
 			buff.WriteString(node.Data)
 		}
 		for child := node.FirstChild; child != nil; child = child.NextSibling {
@@ -284,9 +277,9 @@ type TNodeNavigator struct {
 	attr       int
 }
 
-func (n *TNodeNavigator) NodeType() xpath.NodeType {
-	if n.curr.Type == xpath.ElementNode && n.attr != -1 {
-		return xpath.AttributeNode
+func (n *TNodeNavigator) NodeType() NodeType {
+	if n.curr.Type == ElementNode && n.attr != -1 {
+		return AttributeNode
 	}
 	return n.curr.Type
 }
@@ -304,28 +297,28 @@ func (n *TNodeNavigator) Prefix() string {
 
 func (n *TNodeNavigator) Value() string {
 	switch n.curr.Type {
-	case xpath.CommentNode:
+	case CommentNode:
 		return n.curr.Data
-	case xpath.ElementNode:
+	case ElementNode:
 		if n.attr != -1 {
 			return n.curr.Attr[n.attr].Value
 		}
 		var buf bytes.Buffer
 		node := n.curr.FirstChild
 		for node != nil {
-			if node.Type == xpath.TextNode {
+			if node.Type == TextNode {
 				buf.WriteString(strings.TrimSpace(node.Data))
 			}
 			node = node.NextSibling
 		}
 		return buf.String()
-	case xpath.TextNode:
+	case TextNode:
 		return n.curr.Data
 	}
 	return ""
 }
 
-func (n *TNodeNavigator) Copy() xpath.NodeNavigator {
+func (n *TNodeNavigator) Copy() NodeNavigator {
 	n2 := *n
 	return &n2
 }
@@ -392,7 +385,7 @@ func (n *TNodeNavigator) MoveToPrevious() bool {
 	return false
 }
 
-func (n *TNodeNavigator) MoveTo(other xpath.NodeNavigator) bool {
+func (n *TNodeNavigator) MoveTo(other NodeNavigator) bool {
 	node, ok := other.(*TNodeNavigator)
 	if !ok || node.root != n.root {
 		return false
@@ -403,11 +396,11 @@ func (n *TNodeNavigator) MoveTo(other xpath.NodeNavigator) bool {
 	return true
 }
 
-func createNode(data string, typ xpath.NodeType) *TNode {
+func createNode(data string, typ NodeType) *TNode {
 	return &TNode{Data: data, Type: typ, Attr: make([]Attribute, 0)}
 }
 
-func (t *TNode) createChildNode(data string, typ xpath.NodeType) *TNode {
+func (t *TNode) createChildNode(data string, typ NodeType) *TNode {
 	n := createNode(data, typ)
 	n.Parent = t
 	if t.FirstChild == nil {
@@ -420,7 +413,7 @@ func (t *TNode) createChildNode(data string, typ xpath.NodeType) *TNode {
 	return n
 }
 
-func (t *TNode) appendNode(data string, typ xpath.NodeType) *TNode {
+func (t *TNode) appendNode(data string, typ NodeType) *TNode {
 	n := createNode(data, typ)
 	n.Parent = t.Parent
 	t.NextSibling = n
@@ -457,44 +450,44 @@ func example() *TNode {
 		   </body>
 		</html>
 	*/
-	doc := createNode("", xpath.RootNode)
-	xhtml := doc.createChildNode("html", xpath.ElementNode)
+	doc := createNode("", RootNode)
+	xhtml := doc.createChildNode("html", ElementNode)
 	xhtml.addAttribute("lang", "en")
 
 	// The HTML head section.
-	head := xhtml.createChildNode("head", xpath.ElementNode)
-	n := head.createChildNode("title", xpath.ElementNode)
-	n = n.createChildNode("Hello", xpath.TextNode)
-	n = head.createChildNode("meta", xpath.ElementNode)
+	head := xhtml.createChildNode("head", ElementNode)
+	n := head.createChildNode("title", ElementNode)
+	n = n.createChildNode("Hello", TextNode)
+	n = head.createChildNode("meta", ElementNode)
 	n.addAttribute("name", "language")
 	n.addAttribute("content", "en")
 	// The HTML body section.
-	body := xhtml.createChildNode("body", xpath.ElementNode)
-	n = body.createChildNode("h1", xpath.ElementNode)
-	n = n.createChildNode(" This is a H1 ", xpath.TextNode)
-	ul := body.createChildNode("ul", xpath.ElementNode)
-	n = ul.createChildNode("li", xpath.ElementNode)
-	n = n.createChildNode("a", xpath.ElementNode)
+	body := xhtml.createChildNode("body", ElementNode)
+	n = body.createChildNode("h1", ElementNode)
+	n = n.createChildNode(" This is a H1 ", TextNode)
+	ul := body.createChildNode("ul", ElementNode)
+	n = ul.createChildNode("li", ElementNode)
+	n = n.createChildNode("a", ElementNode)
 	n.addAttribute("id", "1")
 	n.addAttribute("href", "/")
-	n = n.createChildNode("Home", xpath.TextNode)
-	n = ul.createChildNode("li", xpath.ElementNode)
-	n = n.createChildNode("a", xpath.ElementNode)
+	n = n.createChildNode("Home", TextNode)
+	n = ul.createChildNode("li", ElementNode)
+	n = n.createChildNode("a", ElementNode)
 	n.addAttribute("id", "2")
 	n.addAttribute("href", "/about")
-	n = n.createChildNode("about", xpath.TextNode)
-	n = ul.createChildNode("li", xpath.ElementNode)
-	n = n.createChildNode("a", xpath.ElementNode)
+	n = n.createChildNode("about", TextNode)
+	n = ul.createChildNode("li", ElementNode)
+	n = n.createChildNode("a", ElementNode)
 	n.addAttribute("id", "3")
 	n.addAttribute("href", "/account")
-	n = n.createChildNode("login", xpath.TextNode)
-	n = ul.createChildNode("li", xpath.ElementNode)
+	n = n.createChildNode("login", TextNode)
+	n = ul.createChildNode("li", ElementNode)
 
-	n = body.createChildNode("p", xpath.ElementNode)
-	n = n.createChildNode("Hello,This is an example for gxpath.", xpath.TextNode)
+	n = body.createChildNode("p", ElementNode)
+	n = n.createChildNode("Hello,This is an example for gxpath.", TextNode)
 
-	n = body.createChildNode("footer", xpath.ElementNode)
-	n = n.createChildNode("footer script", xpath.TextNode)
+	n = body.createChildNode("footer", ElementNode)
+	n = n.createChildNode("footer script", TextNode)
 
 	return xhtml
 }

@@ -1,6 +1,6 @@
-gxpath
+xpath
 ====
-gxpath is XPath package for golang, support most of XPath features(syntax).
+xpath is XPath package for golang, support most of XPath features(syntax).
 
 xquery
 ===
@@ -112,3 +112,26 @@ xquery
 - `a or b` : Boolean or.
 
 - `a and b` : Boolean and.
+
+TODO
+===
+
+Provides a Compile() method for evaluate value for specified the XPath expr, similar to follow example:
+
+```golang
+expr:=Compile("//h1/test()")
+val:=expr.Evaluate(node)
+fmt.Println(val)
+
+> string,outout text of h1
+
+or 
+
+expr:=Compile("//h1")
+val:=expr.Evaluate(node)
+fmt.Println(val)
+
+> iterator type.
+```
+
+Another benefit of this method is we can reuse expr object.
