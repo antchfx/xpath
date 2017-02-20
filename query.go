@@ -1,30 +1,29 @@
-package query
+package xpath
 
 import (
 	"reflect"
-
-	"github.com/antchfx/gxpath/xpath"
 )
 
+type iterator interface {
+	Current() NodeNavigator
+}
+
 // An XPath query interface.
-type Query interface {
-	// Select traversing Iterator returns a query matched node xpath.NodeNavigator.
-	Select(Iterator) xpath.NodeNavigator
+type query interface {
+	// Select traversing iterator returns a query matched node NodeNavigator.
+	Select(iterator) NodeNavigator
 
 	// Evaluate evaluates query and returns values of the current query.
-	Evaluate(Iterator) interface{}
-
-	// Test checks a specified xpath.NodeNavigator can passed by the current query.
-	//Test(xpath.NodeNavigator) bool
+	Evaluate(iterator) interface{}
 }
 
-// ContextQuery is returns current node on the Iterator object query.
-type ContextQuery struct {
+// contextQuery is returns current node on the iterator object query.
+type contextQuery struct {
 	count int
-	Root  bool // Moving to root-level node in the current context Iterator.
+	Root  bool // Moving to root-level node in the current context iterator.
 }
 
-func (c *ContextQuery) Select(t Iterator) (n xpath.NodeNavigator) {
+func (c *contextQuery) Select(t iterator) (n NodeNavigator) {
 	if c.count == 0 {
 		c.count++
 		n = t.Current().Copy()
@@ -35,21 +34,21 @@ func (c *ContextQuery) Select(t Iterator) (n xpath.NodeNavigator) {
 	return n
 }
 
-func (c *ContextQuery) Evaluate(Iterator) interface{} {
+func (c *contextQuery) Evaluate(iterator) interface{} {
 	c.count = 0
 	return c
 }
 
-// AncestorQuery is an XPath ancestor node query.(ancestor::*|ancestor-self::*)
-type AncestorQuery struct {
-	iterator func() xpath.NodeNavigator
+// ancestorQuery is an XPath ancestor node query.(ancestor::*|ancestor-self::*)
+type ancestorQuery struct {
+	iterator func() NodeNavigator
 
 	Self      bool
-	Input     Query
-	Predicate func(xpath.NodeNavigator) bool
+	Input     query
+	Predicate func(NodeNavigator) bool
 }
 
-func (a *AncestorQuery) Select(t Iterator) xpath.NodeNavigator {
+func (a *ancestorQuery) Select(t iterator) NodeNavigator {
 	for {
 		if a.iterator == nil {
 			node := a.Input.Select(t)
@@ -57,7 +56,7 @@ func (a *AncestorQuery) Select(t Iterator) xpath.NodeNavigator {
 				return nil
 			}
 			first := true
-			a.iterator = func() xpath.NodeNavigator {
+			a.iterator = func() NodeNavigator {
 				if first && a.Self {
 					first = false
 					if a.Predicate(node) {
@@ -81,24 +80,24 @@ func (a *AncestorQuery) Select(t Iterator) xpath.NodeNavigator {
 	}
 }
 
-func (a *AncestorQuery) Evaluate(t Iterator) interface{} {
+func (a *ancestorQuery) Evaluate(t iterator) interface{} {
 	a.Input.Evaluate(t)
 	return a
 }
 
-func (a *AncestorQuery) Test(n xpath.NodeNavigator) bool {
+func (a *ancestorQuery) Test(n NodeNavigator) bool {
 	return a.Predicate(n)
 }
 
-// AttributeQuery is an XPath attribute node query.(@*)
-type AttributeQuery struct {
-	iterator func() xpath.NodeNavigator
+// attributeQuery is an XPath attribute node query.(@*)
+type attributeQuery struct {
+	iterator func() NodeNavigator
 
-	Input     Query
-	Predicate func(xpath.NodeNavigator) bool
+	Input     query
+	Predicate func(NodeNavigator) bool
 }
 
-func (a *AttributeQuery) Select(t Iterator) xpath.NodeNavigator {
+func (a *attributeQuery) Select(t iterator) NodeNavigator {
 	for {
 		if a.iterator == nil {
 			node := a.Input.Select(t)
@@ -106,7 +105,7 @@ func (a *AttributeQuery) Select(t Iterator) xpath.NodeNavigator {
 				return nil
 			}
 			node = node.Copy()
-			a.iterator = func() xpath.NodeNavigator {
+			a.iterator = func() NodeNavigator {
 				for {
 					onAttr := node.MoveToNextAttribute()
 					if !onAttr {
@@ -126,26 +125,26 @@ func (a *AttributeQuery) Select(t Iterator) xpath.NodeNavigator {
 	}
 }
 
-func (a *AttributeQuery) Evaluate(t Iterator) interface{} {
+func (a *attributeQuery) Evaluate(t iterator) interface{} {
 	a.Input.Evaluate(t)
 	a.iterator = nil
 	return a
 }
 
-func (a *AttributeQuery) Test(n xpath.NodeNavigator) bool {
+func (a *attributeQuery) Test(n NodeNavigator) bool {
 	return a.Predicate(n)
 }
 
-// ChildQuery is an XPath child node query.(child::*)
-type ChildQuery struct {
+// childQuery is an XPath child node query.(child::*)
+type childQuery struct {
 	posit    int
-	iterator func() xpath.NodeNavigator
+	iterator func() NodeNavigator
 
-	Input     Query
-	Predicate func(xpath.NodeNavigator) bool
+	Input     query
+	Predicate func(NodeNavigator) bool
 }
 
-func (c *ChildQuery) Select(t Iterator) xpath.NodeNavigator {
+func (c *childQuery) Select(t iterator) NodeNavigator {
 	for {
 		if c.iterator == nil {
 			c.posit = 0
@@ -155,7 +154,7 @@ func (c *ChildQuery) Select(t Iterator) xpath.NodeNavigator {
 			}
 			node = node.Copy()
 			first := true
-			c.iterator = func() xpath.NodeNavigator {
+			c.iterator = func() NodeNavigator {
 				for {
 					if (first && !node.MoveToChild()) || (!first && !node.MoveToNext()) {
 						return nil
@@ -176,31 +175,31 @@ func (c *ChildQuery) Select(t Iterator) xpath.NodeNavigator {
 	}
 }
 
-func (c *ChildQuery) Evaluate(t Iterator) interface{} {
+func (c *childQuery) Evaluate(t iterator) interface{} {
 	c.Input.Evaluate(t)
 	c.iterator = nil
 	return c
 }
 
-func (c *ChildQuery) Test(n xpath.NodeNavigator) bool {
+func (c *childQuery) Test(n NodeNavigator) bool {
 	return c.Predicate(n)
 }
 
-// position returns a position of current xpath.NodeNavigator.
-func (c *ChildQuery) position() int {
+// position returns a position of current NodeNavigator.
+func (c *childQuery) position() int {
 	return c.posit
 }
 
-// DescendantQuery is an XPath descendant node query.(descendant::* | descendant-or-self::*)
-type DescendantQuery struct {
-	iterator func() xpath.NodeNavigator
+// descendantQuery is an XPath descendant node query.(descendant::* | descendant-or-self::*)
+type descendantQuery struct {
+	iterator func() NodeNavigator
 
 	Self      bool
-	Input     Query
-	Predicate func(xpath.NodeNavigator) bool
+	Input     query
+	Predicate func(NodeNavigator) bool
 }
 
-func (d *DescendantQuery) Select(t Iterator) xpath.NodeNavigator {
+func (d *descendantQuery) Select(t iterator) NodeNavigator {
 	for {
 		if d.iterator == nil {
 			node := d.Input.Select(t)
@@ -210,7 +209,7 @@ func (d *DescendantQuery) Select(t Iterator) xpath.NodeNavigator {
 			node = node.Copy()
 			level := 0
 			first := true
-			d.iterator = func() xpath.NodeNavigator {
+			d.iterator = func() NodeNavigator {
 				if first && d.Self {
 					first = false
 					if d.Predicate(node) {
@@ -247,26 +246,26 @@ func (d *DescendantQuery) Select(t Iterator) xpath.NodeNavigator {
 	}
 }
 
-func (d *DescendantQuery) Evaluate(t Iterator) interface{} {
+func (d *descendantQuery) Evaluate(t iterator) interface{} {
 	d.Input.Evaluate(t)
 	d.iterator = nil
 	return d
 }
 
-func (d *DescendantQuery) Test(n xpath.NodeNavigator) bool {
+func (d *descendantQuery) Test(n NodeNavigator) bool {
 	return d.Predicate(n)
 }
 
-// FollowingQuery is an XPath following node query.(following::*|following-sibling::*)
-type FollowingQuery struct {
-	iterator func() xpath.NodeNavigator
+// followingQuery is an XPath following node query.(following::*|following-sibling::*)
+type followingQuery struct {
+	iterator func() NodeNavigator
 
-	Input     Query
+	Input     query
 	Sibling   bool // The matching sibling node of current node.
-	Predicate func(xpath.NodeNavigator) bool
+	Predicate func(NodeNavigator) bool
 }
 
-func (f *FollowingQuery) Select(t Iterator) xpath.NodeNavigator {
+func (f *followingQuery) Select(t iterator) NodeNavigator {
 	for {
 		if f.iterator == nil {
 			node := f.Input.Select(t)
@@ -275,7 +274,7 @@ func (f *FollowingQuery) Select(t Iterator) xpath.NodeNavigator {
 			}
 			node = node.Copy()
 			if f.Sibling {
-				f.iterator = func() xpath.NodeNavigator {
+				f.iterator = func() NodeNavigator {
 					for {
 						if !node.MoveToNext() {
 							return nil
@@ -286,8 +285,8 @@ func (f *FollowingQuery) Select(t Iterator) xpath.NodeNavigator {
 					}
 				}
 			} else {
-				var q Query // descendant query
-				f.iterator = func() xpath.NodeNavigator {
+				var q query // descendant query
+				f.iterator = func() NodeNavigator {
 					for {
 						if q == nil {
 							for !node.MoveToNext() {
@@ -295,9 +294,9 @@ func (f *FollowingQuery) Select(t Iterator) xpath.NodeNavigator {
 									return nil
 								}
 							}
-							q = &DescendantQuery{
+							q = &descendantQuery{
 								Self:      true,
-								Input:     &ContextQuery{},
+								Input:     &contextQuery{},
 								Predicate: f.Predicate,
 							}
 							t.Current().MoveTo(node)
@@ -318,24 +317,24 @@ func (f *FollowingQuery) Select(t Iterator) xpath.NodeNavigator {
 	}
 }
 
-func (f *FollowingQuery) Evaluate(t Iterator) interface{} {
+func (f *followingQuery) Evaluate(t iterator) interface{} {
 	f.Input.Evaluate(t)
 	return f
 }
 
-func (f *FollowingQuery) Test(n xpath.NodeNavigator) bool {
+func (f *followingQuery) Test(n NodeNavigator) bool {
 	return f.Predicate(n)
 }
 
-// PrecedingQuery is an XPath preceding node query.(preceding::*)
-type PrecedingQuery struct {
-	iterator  func() xpath.NodeNavigator
-	Input     Query
+// precedingQuery is an XPath preceding node query.(preceding::*)
+type precedingQuery struct {
+	iterator  func() NodeNavigator
+	Input     query
 	Sibling   bool // The matching sibling node of current node.
-	Predicate func(xpath.NodeNavigator) bool
+	Predicate func(NodeNavigator) bool
 }
 
-func (p *PrecedingQuery) Select(t Iterator) xpath.NodeNavigator {
+func (p *precedingQuery) Select(t iterator) NodeNavigator {
 	for {
 		if p.iterator == nil {
 			node := p.Input.Select(t)
@@ -344,7 +343,7 @@ func (p *PrecedingQuery) Select(t Iterator) xpath.NodeNavigator {
 			}
 			node = node.Copy()
 			if p.Sibling {
-				p.iterator = func() xpath.NodeNavigator {
+				p.iterator = func() NodeNavigator {
 					for {
 						for !node.MoveToPrevious() {
 							return nil
@@ -355,8 +354,8 @@ func (p *PrecedingQuery) Select(t Iterator) xpath.NodeNavigator {
 					}
 				}
 			} else {
-				var q Query
-				p.iterator = func() xpath.NodeNavigator {
+				var q query
+				p.iterator = func() NodeNavigator {
 					for {
 						if q == nil {
 							for !node.MoveToPrevious() {
@@ -364,9 +363,9 @@ func (p *PrecedingQuery) Select(t Iterator) xpath.NodeNavigator {
 									return nil
 								}
 							}
-							q = &DescendantQuery{
+							q = &descendantQuery{
 								Self:      true,
-								Input:     &ContextQuery{},
+								Input:     &contextQuery{},
 								Predicate: p.Predicate,
 							}
 							t.Current().MoveTo(node)
@@ -386,22 +385,22 @@ func (p *PrecedingQuery) Select(t Iterator) xpath.NodeNavigator {
 	}
 }
 
-func (p *PrecedingQuery) Evaluate(t Iterator) interface{} {
+func (p *precedingQuery) Evaluate(t iterator) interface{} {
 	p.Input.Evaluate(t)
 	return p
 }
 
-func (p *PrecedingQuery) Test(n xpath.NodeNavigator) bool {
+func (p *precedingQuery) Test(n NodeNavigator) bool {
 	return p.Predicate(n)
 }
 
-// ParentQuery is an XPath parent node query.(parent::*)
-type ParentQuery struct {
-	Input     Query
-	Predicate func(xpath.NodeNavigator) bool
+// parentQuery is an XPath parent node query.(parent::*)
+type parentQuery struct {
+	Input     query
+	Predicate func(NodeNavigator) bool
 }
 
-func (p *ParentQuery) Select(t Iterator) xpath.NodeNavigator {
+func (p *parentQuery) Select(t iterator) NodeNavigator {
 	for {
 		node := p.Input.Select(t)
 		if node == nil {
@@ -414,22 +413,22 @@ func (p *ParentQuery) Select(t Iterator) xpath.NodeNavigator {
 	}
 }
 
-func (p *ParentQuery) Evaluate(t Iterator) interface{} {
+func (p *parentQuery) Evaluate(t iterator) interface{} {
 	p.Input.Evaluate(t)
 	return p
 }
 
-func (p *ParentQuery) Test(n xpath.NodeNavigator) bool {
+func (p *parentQuery) Test(n NodeNavigator) bool {
 	return p.Predicate(n)
 }
 
-// SelfQuery is an Self node query.(self::*)
-type SelfQuery struct {
-	Input     Query
-	Predicate func(xpath.NodeNavigator) bool
+// selfQuery is an Self node query.(self::*)
+type selfQuery struct {
+	Input     query
+	Predicate func(NodeNavigator) bool
 }
 
-func (s *SelfQuery) Select(t Iterator) xpath.NodeNavigator {
+func (s *selfQuery) Select(t iterator) NodeNavigator {
 	for {
 		node := s.Input.Select(t)
 		if node == nil {
@@ -442,22 +441,22 @@ func (s *SelfQuery) Select(t Iterator) xpath.NodeNavigator {
 	}
 }
 
-func (s *SelfQuery) Evaluate(t Iterator) interface{} {
+func (s *selfQuery) Evaluate(t iterator) interface{} {
 	s.Input.Evaluate(t)
 	return s
 }
 
-func (s *SelfQuery) Test(n xpath.NodeNavigator) bool {
+func (s *selfQuery) Test(n NodeNavigator) bool {
 	return s.Predicate(n)
 }
 
-// FilterQuery is an XPath query for predicate filter.
-type FilterQuery struct {
-	Input     Query
-	Predicate Query
+// filterQuery is an XPath query for predicate filter.
+type filterQuery struct {
+	Input     query
+	Predicate query
 }
 
-func (f *FilterQuery) do(t Iterator) bool {
+func (f *filterQuery) do(t iterator) bool {
 	val := reflect.ValueOf(f.Predicate.Evaluate(t))
 	switch val.Kind() {
 	case reflect.Bool:
@@ -468,14 +467,14 @@ func (f *FilterQuery) do(t Iterator) bool {
 		pt := float64(getNodePosition(f.Input))
 		return int(val.Float()) == int(pt)
 	default:
-		if q, ok := f.Predicate.(Query); ok {
+		if q, ok := f.Predicate.(query); ok {
 			return q.Select(t) != nil
 		}
 	}
 	return false
 }
 
-func (f *FilterQuery) Select(t Iterator) xpath.NodeNavigator {
+func (f *filterQuery) Select(t iterator) NodeNavigator {
 	for {
 		node := f.Input.Select(t)
 		if node == nil {
@@ -491,49 +490,49 @@ func (f *FilterQuery) Select(t Iterator) xpath.NodeNavigator {
 	}
 }
 
-func (f *FilterQuery) Evaluate(t Iterator) interface{} {
+func (f *filterQuery) Evaluate(t iterator) interface{} {
 	f.Input.Evaluate(t)
 	return f
 }
 
-// FunctionQuery is an XPath function that call a function to returns
-// value of current xpath.NodeNavigator node.
-type XPathFunction struct {
-	Input Query                             // Node Set
-	Func  func(Query, Iterator) interface{} // The xpath function.
+// functionQuery is an XPath function that call a function to returns
+// value of current NodeNavigator node.
+type functionQuery struct {
+	Input query                             // Node Set
+	Func  func(query, iterator) interface{} // The xpath function.
 }
 
-func (f *XPathFunction) Select(t Iterator) xpath.NodeNavigator {
+func (f *functionQuery) Select(t iterator) NodeNavigator {
 	return nil
 }
 
 // Evaluate call a specified function that will returns the
 // following value type: number,string,boolean.
-func (f *XPathFunction) Evaluate(t Iterator) interface{} {
+func (f *functionQuery) Evaluate(t iterator) interface{} {
 	return f.Func(f.Input, t)
 }
 
-// XPathConstant is an XPath constant operand.
-type XPathConstant struct {
+// constantQuery is an XPath constant operand.
+type constantQuery struct {
 	Val interface{}
 }
 
-func (c *XPathConstant) Select(t Iterator) xpath.NodeNavigator {
+func (c *constantQuery) Select(t iterator) NodeNavigator {
 	return nil
 }
 
-func (c *XPathConstant) Evaluate(t Iterator) interface{} {
+func (c *constantQuery) Evaluate(t iterator) interface{} {
 	return c.Val
 }
 
-// LogicalExpr is an XPath logical expression.
-type LogicalExpr struct {
-	Left, Right Query
+// logicalQuery is an XPath logical expression.
+type logicalQuery struct {
+	Left, Right query
 
-	Do func(Iterator, interface{}, interface{}) interface{}
+	Do func(iterator, interface{}, interface{}) interface{}
 }
 
-func (l *LogicalExpr) Select(t Iterator) xpath.NodeNavigator {
+func (l *logicalQuery) Select(t iterator) NodeNavigator {
 	// When a XPath expr is logical expression.
 	node := t.Current().Copy()
 	val := l.Evaluate(t)
@@ -546,38 +545,38 @@ func (l *LogicalExpr) Select(t Iterator) xpath.NodeNavigator {
 	return nil
 }
 
-func (l *LogicalExpr) Evaluate(t Iterator) interface{} {
+func (l *logicalQuery) Evaluate(t iterator) interface{} {
 	m := l.Left.Evaluate(t)
 	n := l.Right.Evaluate(t)
 	return l.Do(t, m, n)
 }
 
-// NumericExpr is an XPath numeric operator expression.
-type NumericExpr struct {
-	Left, Right Query
+// numericQuery is an XPath numeric operator expression.
+type numericQuery struct {
+	Left, Right query
 
 	Do func(interface{}, interface{}) interface{}
 }
 
-func (n *NumericExpr) Select(t Iterator) xpath.NodeNavigator {
+func (n *numericQuery) Select(t iterator) NodeNavigator {
 	return nil
 }
 
-func (n *NumericExpr) Evaluate(t Iterator) interface{} {
+func (n *numericQuery) Evaluate(t iterator) interface{} {
 	m := n.Left.Evaluate(t)
 	k := n.Right.Evaluate(t)
 	return n.Do(m, k)
 }
 
-type BooleanExpr struct {
+type booleanQuery struct {
 	IsOr        bool
-	Left, Right Query
-	iterator    func() xpath.NodeNavigator
+	Left, Right query
+	iterator    func() NodeNavigator
 }
 
-func (b *BooleanExpr) Select(t Iterator) xpath.NodeNavigator {
+func (b *booleanQuery) Select(t iterator) NodeNavigator {
 	if b.iterator == nil {
-		var list []xpath.NodeNavigator
+		var list []NodeNavigator
 		i := 0
 		root := t.Current().Copy()
 		if b.IsOr {
@@ -599,8 +598,8 @@ func (b *BooleanExpr) Select(t Iterator) xpath.NodeNavigator {
 				list = append(list, node)
 			}
 		} else {
-			var m []xpath.NodeNavigator
-			var n []xpath.NodeNavigator
+			var m []NodeNavigator
+			var n []NodeNavigator
 			for {
 				node := b.Left.Select(t)
 				if node == nil {
@@ -627,7 +626,7 @@ func (b *BooleanExpr) Select(t Iterator) xpath.NodeNavigator {
 			}
 		}
 
-		b.iterator = func() xpath.NodeNavigator {
+		b.iterator = func() NodeNavigator {
 			if i >= len(list) {
 				return nil
 			}
@@ -639,7 +638,7 @@ func (b *BooleanExpr) Select(t Iterator) xpath.NodeNavigator {
 	return b.iterator()
 }
 
-func (b *BooleanExpr) Evaluate(t Iterator) interface{} {
+func (b *booleanQuery) Evaluate(t iterator) interface{} {
 	m := b.Left.Evaluate(t)
 	if m.(bool) == b.IsOr {
 		return m
@@ -647,7 +646,7 @@ func (b *BooleanExpr) Evaluate(t Iterator) interface{} {
 	return b.Right.Evaluate(t)
 }
 
-func getNodePosition(q Query) int {
+func getNodePosition(q query) int {
 	type Position interface {
 		position() int
 	}
