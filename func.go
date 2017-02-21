@@ -102,6 +102,36 @@ func startwithFunc(arg1, arg2 query) func(query, iterator) interface{} {
 	}
 }
 
+// containsFunc is a XPath functions contains(string or @attr, string).
+func containsFunc(arg1, arg2 query) func(query, iterator) interface{} {
+	return func(q query, t iterator) interface{} {
+		var (
+			m, n string
+			ok   bool
+		)
+
+		switch typ := arg1.Evaluate(t).(type) {
+		case string:
+			m = typ
+		case query:
+			node := typ.Select(t)
+			if node == nil {
+				return false
+			}
+			m = node.Value()
+		default:
+			panic(errors.New("contains() function argument type must be string"))
+		}
+
+		n, ok = arg2.Evaluate(t).(string)
+		if !ok {
+			panic(errors.New("contains() function argument type must be string"))
+		}
+
+		return strings.Contains(m, n)
+	}
+}
+
 // normalizespaceFunc is XPath functions normalize-space(string?)
 func normalizespaceFunc(q query, t iterator) interface{} {
 	var m string
