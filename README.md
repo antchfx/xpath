@@ -107,6 +107,7 @@ xquery
     * substring(string,start[,length])
     * not(expression)
     * string-length([string])
+    * contains(string,string)
     * come more
 
 - `a or b` : Boolean or.
