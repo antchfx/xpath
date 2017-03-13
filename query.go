@@ -193,6 +193,7 @@ func (c *childQuery) position() int {
 // descendantQuery is an XPath descendant node query.(descendant::* | descendant-or-self::*)
 type descendantQuery struct {
 	iterator func() NodeNavigator
+	posit    int
 
 	Self      bool
 	Input     query
@@ -202,6 +203,7 @@ type descendantQuery struct {
 func (d *descendantQuery) Select(t iterator) NodeNavigator {
 	for {
 		if d.iterator == nil {
+			d.posit = 0
 			node := d.Input.Select(t)
 			if node == nil {
 				return nil
@@ -240,6 +242,7 @@ func (d *descendantQuery) Select(t iterator) NodeNavigator {
 		}
 
 		if node := d.iterator(); node != nil {
+			d.posit++
 			return node
 		}
 		d.iterator = nil
@@ -254,6 +257,11 @@ func (d *descendantQuery) Evaluate(t iterator) interface{} {
 
 func (d *descendantQuery) Test(n NodeNavigator) bool {
 	return d.Predicate(n)
+}
+
+// position returns a position of current NodeNavigator.
+func (d *descendantQuery) position() int {
+	return d.posit
 }
 
 // followingQuery is an XPath following node query.(following::*|following-sibling::*)
