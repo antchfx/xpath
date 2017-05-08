@@ -38,10 +38,10 @@ func getValueType(i interface{}) valueType {
 type logical func(iterator, string, interface{}, interface{}) bool
 
 var logicalFuncs = [][]logical{
-	[]logical{cmpBoolean_Boolean, nil, nil, nil},
-	[]logical{nil, cmpNumeric_Numeric, cmpNumeric_String, cmpNumeric_NodeSet},
-	[]logical{nil, cmpString_Numeric, cmpString_String, cmpString_NodeSet},
-	[]logical{nil, cmpNodeSet_Numeric, cmpNodeSet_String, cmpNodeSet_NodeSet},
+	{cmpBoolean_Boolean, nil, nil, nil},
+	{nil, cmpNumeric_Numeric, cmpNumeric_String, cmpNumeric_NodeSet},
+	{nil, cmpString_Numeric, cmpString_String, cmpString_NodeSet},
+	{nil, cmpNodeSet_Numeric, cmpNodeSet_String, cmpNodeSet_NodeSet},
 }
 
 // number vs number

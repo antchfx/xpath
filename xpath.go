@@ -1,22 +1,22 @@
 package xpath
 
-// A type of XPath node.
+// NodeType represents a type of XPath node.
 type NodeType int
 
 const (
-	// A root node of the XML document or node tree.
+	// RootNode is a root node of the XML document or node tree.
 	RootNode NodeType = iota
 
-	// An element, such as <element>.
+	// ElementNode is an element, such as <element>.
 	ElementNode
 
-	// An attribute, such as id='123'.
+	// AttributeNode is an attribute, such as id='123'.
 	AttributeNode
 
-	// The text content of a node.
+	// TextNode is the text content of a node.
 	TextNode
 
-	// A comment node, such as <!-- my comment -->
+	// CommentNode is a comment node, such as <!-- my comment -->
 	CommentNode
 )
 

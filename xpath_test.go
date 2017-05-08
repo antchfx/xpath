@@ -403,32 +403,32 @@ func createNode(data string, typ NodeType) *TNode {
 	return &TNode{Data: data, Type: typ, Attr: make([]Attribute, 0)}
 }
 
-func (t *TNode) createChildNode(data string, typ NodeType) *TNode {
-	n := createNode(data, typ)
-	n.Parent = t
-	if t.FirstChild == nil {
-		t.FirstChild = n
+func (n *TNode) createChildNode(data string, typ NodeType) *TNode {
+	m := createNode(data, typ)
+	m.Parent = n
+	if n.FirstChild == nil {
+		n.FirstChild = m
 	} else {
-		t.LastChild.NextSibling = n
-		n.PrevSibling = t.LastChild
+		n.LastChild.NextSibling = m
+		m.PrevSibling = n.LastChild
 	}
-	t.LastChild = n
-	return n
+	n.LastChild = m
+	return m
 }
 
-func (t *TNode) appendNode(data string, typ NodeType) *TNode {
-	n := createNode(data, typ)
-	n.Parent = t.Parent
-	t.NextSibling = n
-	n.PrevSibling = t
-	if t.Parent != nil {
-		t.Parent.LastChild = n
+func (n *TNode) appendNode(data string, typ NodeType) *TNode {
+	m := createNode(data, typ)
+	m.Parent = n.Parent
+	n.NextSibling = m
+	m.PrevSibling = n
+	if n.Parent != nil {
+		n.Parent.LastChild = m
 	}
-	return n
+	return m
 }
 
-func (t *TNode) addAttribute(k, v string) {
-	t.Attr = append(t.Attr, Attribute{k, v})
+func (n *TNode) addAttribute(k, v string) {
+	n.Attr = append(n.Attr, Attribute{k, v})
 }
 
 func example() *TNode {

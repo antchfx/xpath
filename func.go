@@ -17,7 +17,7 @@ func predicate(q query) func(NodeNavigator) bool {
 	return func(NodeNavigator) bool { return true }
 }
 
-// positionFunc is a XPath Node Set functions postion().
+// positionFunc is a XPath Node Set functions position().
 func positionFunc(q query, t iterator) interface{} {
 	var (
 		count = 1

@@ -49,7 +49,7 @@ func axisPredicate(root *axisNode) func(NodeNavigator) bool {
 	return predicate
 }
 
-// processAxisNode buildes a query for the XPath axis node.
+// processAxisNode processes a query for the XPath axis node.
 func (b *builder) processAxisNode(root *axisNode) (query, error) {
 	var (
 		err       error
@@ -143,7 +143,7 @@ func (b *builder) processFilterNode(root *filterNode) (query, error) {
 	return qyOutput, nil
 }
 
-// processFunctionNode buildes query for the XPath function node.
+// processFunctionNode processes query for the XPath function node.
 func (b *builder) processFunctionNode(root *functionNode) (query, error) {
 	var qyOutput query
 	switch root.FuncName {
