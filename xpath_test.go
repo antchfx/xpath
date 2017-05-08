@@ -62,6 +62,7 @@ func TestDescendant(t *testing.T) {
 func TestAncestor(t *testing.T) {
 	testXPath2(t, html, "/body/footer/ancestor::*", 2) // body>html
 	testXPath2(t, html, "/body/ul/li/a/ancestor::li", 3)
+	testXPath2(t, html, "/body/ul/li/a/ancestor-or-self::li", 3)
 }
 
 func TestFollowingSibling(t *testing.T) {
@@ -186,6 +187,7 @@ func TestOperationOrLogical(t *testing.T) {
 	testXPath3(t, html, "//li[3 - 2]", selectNode(html, "//li[1]"))
 	testXPath2(t, html, "//li[position() mod 2 = 0 ]", 2) // //li[2],li[4]
 	testXPath2(t, html, "//a[@id>=1]", 3)                 // //a[@id>=1] == a[1],a[2],a[3]
+	testXPath2(t, html, "//a[@id<=2]", 2)                 // //a[@id<=2] == a[1],a[1]
 	testXPath2(t, html, "//a[@id<2]", 1)                  // //a[@id>=1] == a[1]
 	testXPath2(t, html, "//a[@id!=2]", 2)                 // //a[@id>=1] == a[1],a[3]
 	testXPath2(t, html, "//a[@id=1 or @id=3]", 2)         // //a[@id>=1] == a[1],a[3]
