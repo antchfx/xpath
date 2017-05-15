@@ -38,10 +38,10 @@ func getValueType(i interface{}) valueType {
 type logical func(iterator, string, interface{}, interface{}) bool
 
 var logicalFuncs = [][]logical{
-	{cmpBoolean_Boolean, nil, nil, nil},
-	{nil, cmpNumeric_Numeric, cmpNumeric_String, cmpNumeric_NodeSet},
-	{nil, cmpString_Numeric, cmpString_String, cmpString_NodeSet},
-	{nil, cmpNodeSet_Numeric, cmpNodeSet_String, cmpNodeSet_NodeSet},
+	{cmpBooleanBoolean, nil, nil, nil},
+	{nil, cmpNumericNumeric, cmpNumericString, cmpNumericNodeSet},
+	{nil, cmpStringNumeric, cmpStringString, cmpStringNodeSet},
+	{nil, cmpNodeSetNumeric, cmpNodeSetString, cmpNodeSetNodeSet},
 }
 
 // number vs number
@@ -92,13 +92,13 @@ func cmpBooleanBooleanF(op string, a, b bool) bool {
 	return false
 }
 
-func cmpNumeric_Numeric(t iterator, op string, m, n interface{}) bool {
+func cmpNumericNumeric(t iterator, op string, m, n interface{}) bool {
 	a := m.(float64)
 	b := n.(float64)
 	return cmpNumberNumberF(op, a, b)
 }
 
-func cmpNumeric_String(t iterator, op string, m, n interface{}) bool {
+func cmpNumericString(t iterator, op string, m, n interface{}) bool {
 	a := m.(float64)
 	b := n.(string)
 	num, err := strconv.ParseFloat(b, 64)
@@ -108,7 +108,7 @@ func cmpNumeric_String(t iterator, op string, m, n interface{}) bool {
 	return cmpNumberNumberF(op, a, num)
 }
 
-func cmpNumeric_NodeSet(t iterator, op string, m, n interface{}) bool {
+func cmpNumericNodeSet(t iterator, op string, m, n interface{}) bool {
 	a := m.(float64)
 	b := n.(query)
 
@@ -128,7 +128,7 @@ func cmpNumeric_NodeSet(t iterator, op string, m, n interface{}) bool {
 	return false
 }
 
-func cmpNodeSet_Numeric(t iterator, op string, m, n interface{}) bool {
+func cmpNodeSetNumeric(t iterator, op string, m, n interface{}) bool {
 	a := m.(query)
 	b := n.(float64)
 	for {
@@ -147,7 +147,7 @@ func cmpNodeSet_Numeric(t iterator, op string, m, n interface{}) bool {
 	return false
 }
 
-func cmpNodeSet_String(t iterator, op string, m, n interface{}) bool {
+func cmpNodeSetString(t iterator, op string, m, n interface{}) bool {
 	a := m.(query)
 	b := n.(string)
 	for {
@@ -162,11 +162,11 @@ func cmpNodeSet_String(t iterator, op string, m, n interface{}) bool {
 	return false
 }
 
-func cmpNodeSet_NodeSet(t iterator, op string, m, n interface{}) bool {
+func cmpNodeSetNodeSet(t iterator, op string, m, n interface{}) bool {
 	return false
 }
 
-func cmpString_Numeric(t iterator, op string, m, n interface{}) bool {
+func cmpStringNumeric(t iterator, op string, m, n interface{}) bool {
 	a := m.(string)
 	b := n.(float64)
 	num, err := strconv.ParseFloat(a, 64)
@@ -176,13 +176,13 @@ func cmpString_Numeric(t iterator, op string, m, n interface{}) bool {
 	return cmpNumberNumberF(op, b, num)
 }
 
-func cmpString_String(t iterator, op string, m, n interface{}) bool {
+func cmpStringString(t iterator, op string, m, n interface{}) bool {
 	a := m.(string)
 	b := n.(string)
 	return cmpStringStringF(op, a, b)
 }
 
-func cmpString_NodeSet(t iterator, op string, m, n interface{}) bool {
+func cmpStringNodeSet(t iterator, op string, m, n interface{}) bool {
 	a := m.(string)
 	b := n.(query)
 	for {
@@ -197,7 +197,7 @@ func cmpString_NodeSet(t iterator, op string, m, n interface{}) bool {
 	return false
 }
 
-func cmpBoolean_Boolean(t iterator, op string, m, n interface{}) bool {
+func cmpBooleanBoolean(t iterator, op string, m, n interface{}) bool {
 	a := m.(bool)
 	b := n.(bool)
 	return cmpBooleanBooleanF(op, a, b)
