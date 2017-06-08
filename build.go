@@ -224,9 +224,9 @@ func (b *builder) processFunctionNode(root *functionNode) (query, error) {
 	case "position":
 		qyOutput = &functionQuery{Input: b.firstInput, Func: positionFunc}
 	case "count":
-		if b.firstInput == nil {
-			return nil, errors.New("xpath: expression must evaluate to node-set")
-		}
+		//if b.firstInput == nil {
+		//	return nil, errors.New("xpath: expression must evaluate to node-set")
+		//}
 		if len(root.Args) == 0 {
 			return nil, fmt.Errorf("xpath: count(node-sets) function must with have parameters node-sets")
 		}

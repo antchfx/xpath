@@ -181,6 +181,24 @@ func TestFunction(t *testing.T) {
 	testXPath2(t, html, "//ul[count(li)=4]", 1)
 }
 
+func TestEvaluate(t *testing.T) {
+	if MustCompile("count(//ul/li)").Evaluate(createNavigator(html)).(float64) != 4 {
+		t.Fatal("count(//ul/li) != 4")
+	}
+	if iter, ok := MustCompile("//html/@lang").Evaluate(createNavigator(html)).(*NodeIterator); ok {
+		iter.MoveNext()
+		if iter.Current().Value() != "en" {
+			t.Fatal("//html/@lang value not equal en")
+		}
+	}
+	if iter, ok := MustCompile("//title/text()").Evaluate(createNavigator(html)).(*NodeIterator); ok {
+		iter.MoveNext()
+		if iter.Current().Value() != "Hello" {
+			t.Fatal("//title/text() != Hello")
+		}
+	}
+}
+
 func TestOperationOrLogical(t *testing.T) {
 	testXPath3(t, html, "//li[1+1]", selectNode(html, "//li[2]"))
 	testXPath3(t, html, "//li[5 div 2]", selectNode(html, "//li[2]"))
