@@ -178,6 +178,7 @@ func TestFunction(t *testing.T) {
 	testXPath2(t, html, "//li/a[not(@id='1')]", 2) //  //li/a[@id!=1]
 	testXPath2(t, html, "//h1[string-length(normalize-space(' abc ')) = 3]", 1)
 	testXPath2(t, html, "//h1[string-length(normalize-space(self::text())) = 12]", 1)
+	testXPath2(t, html, "//ul[count(li)=4]", 1)
 }
 
 func TestOperationOrLogical(t *testing.T) {

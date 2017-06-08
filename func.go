@@ -53,18 +53,14 @@ func lastFunc(q query, t iterator) interface{} {
 
 // countFunc is a XPath Node Set functions count(node-set).
 func countFunc(q query, t iterator) interface{} {
-	var (
-		count = 0
-		node  = t.Current()
-	)
-	node.MoveToFirst()
+	var count = 0
 	test := predicate(q)
-	for {
-		if test(node) {
-			count++
-		}
-		if !node.MoveToNext() {
-			break
+	switch typ := q.Evaluate(t).(type) {
+	case query:
+		for node := typ.Select(t); node != nil; node = typ.Select(t) {
+			if test(node) {
+				count++
+			}
 		}
 	}
 	return float64(count)
