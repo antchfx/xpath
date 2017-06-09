@@ -2,6 +2,7 @@ package xpath
 
 import (
 	"errors"
+	"strconv"
 	"strings"
 )
 
@@ -64,6 +65,26 @@ func countFunc(q query, t iterator) interface{} {
 		}
 	}
 	return float64(count)
+}
+
+// sumFunc is a XPath Node Set functions sum(node-set).
+func sumFunc(q query, t iterator) interface{} {
+	var sum float64
+	switch typ := q.Evaluate(t).(type) {
+	case query:
+		for node := typ.Select(t); node != nil; node = typ.Select(t) {
+			if v, err := strconv.ParseFloat(node.Value(), 64); err == nil {
+				sum += v
+			}
+		}
+	case float64:
+		sum = typ
+	case string:
+		if v, err := strconv.ParseFloat(typ, 64); err != nil {
+			sum = v
+		}
+	}
+	return sum
 }
 
 // nameFunc is a XPath functions name([node-set]).

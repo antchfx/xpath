@@ -179,6 +179,12 @@ func TestFunction(t *testing.T) {
 	testXPath2(t, html, "//h1[string-length(normalize-space(' abc ')) = 3]", 1)
 	testXPath2(t, html, "//h1[string-length(normalize-space(self::text())) = 12]", 1)
 	testXPath2(t, html, "//ul[count(li)=4]", 1)
+	if MustCompile("sum(1+2)").Evaluate(createNavigator(html)).(float64) != 3 { // 1+2+3
+		t.Fatal("sum(1+2) != 3")
+	}
+	if MustCompile("sum(//a/@id)").Evaluate(createNavigator(html)).(float64) != 6 { // 1+2+3
+		t.Fatal("sum(//a/@id) != 6")
+	}
 }
 
 func TestEvaluate(t *testing.T) {
