@@ -327,7 +327,19 @@ func (b *builder) processNode(root node) (q query, err error) {
 }
 
 // build builds a specified XPath expressions expr.
-func build(expr string) (query, error) {
+func build(expr string) (q query, err error) {
+	defer func() {
+		if e := recover(); e != nil {
+			switch x := e.(type) {
+			case string:
+				err = errors.New(x)
+			case error:
+				err = x
+			default:
+				err = errors.New("unknown panic")
+			}
+		}
+	}()
 	root := parse(expr)
 	b := &builder{}
 	return b.processNode(root)
