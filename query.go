@@ -15,6 +15,8 @@ type query interface {
 
 	// Evaluate evaluates query and returns values of the current query.
 	Evaluate(iterator) interface{}
+
+	Clone() query
 }
 
 // contextQuery is returns current node on the iterator object query.
@@ -37,6 +39,10 @@ func (c *contextQuery) Select(t iterator) (n NodeNavigator) {
 func (c *contextQuery) Evaluate(iterator) interface{} {
 	c.count = 0
 	return c
+}
+
+func (c *contextQuery) Clone() query {
+	return &contextQuery{count: 0, Root: c.Root}
 }
 
 // ancestorQuery is an XPath ancestor node query.(ancestor::*|ancestor-self::*)
@@ -82,11 +88,16 @@ func (a *ancestorQuery) Select(t iterator) NodeNavigator {
 
 func (a *ancestorQuery) Evaluate(t iterator) interface{} {
 	a.Input.Evaluate(t)
+	a.iterator = nil
 	return a
 }
 
 func (a *ancestorQuery) Test(n NodeNavigator) bool {
 	return a.Predicate(n)
+}
+
+func (a *ancestorQuery) Clone() query {
+	return &ancestorQuery{Self: a.Self, Input: a.Input.Clone(), Predicate: a.Predicate}
 }
 
 // attributeQuery is an XPath attribute node query.(@*)
@@ -133,6 +144,10 @@ func (a *attributeQuery) Evaluate(t iterator) interface{} {
 
 func (a *attributeQuery) Test(n NodeNavigator) bool {
 	return a.Predicate(n)
+}
+
+func (a *attributeQuery) Clone() query {
+	return &attributeQuery{Input: a.Input.Clone(), Predicate: a.Predicate}
 }
 
 // childQuery is an XPath child node query.(child::*)
@@ -183,6 +198,10 @@ func (c *childQuery) Evaluate(t iterator) interface{} {
 
 func (c *childQuery) Test(n NodeNavigator) bool {
 	return c.Predicate(n)
+}
+
+func (c *childQuery) Clone() query {
+	return &childQuery{Input: c.Input.Clone(), Predicate: c.Predicate}
 }
 
 // position returns a position of current NodeNavigator.
@@ -264,6 +283,10 @@ func (d *descendantQuery) position() int {
 	return d.posit
 }
 
+func (d *descendantQuery) Clone() query {
+	return &descendantQuery{Self: d.Self, Input: d.Input.Clone(), Predicate: d.Predicate}
+}
+
 // followingQuery is an XPath following node query.(following::*|following-sibling::*)
 type followingQuery struct {
 	iterator func() NodeNavigator
@@ -334,6 +357,10 @@ func (f *followingQuery) Test(n NodeNavigator) bool {
 	return f.Predicate(n)
 }
 
+func (f *followingQuery) Clone() query {
+	return &followingQuery{Input: f.Input.Clone(), Sibling: f.Sibling, Predicate: f.Predicate}
+}
+
 // precedingQuery is an XPath preceding node query.(preceding::*)
 type precedingQuery struct {
 	iterator  func() NodeNavigator
@@ -402,6 +429,10 @@ func (p *precedingQuery) Test(n NodeNavigator) bool {
 	return p.Predicate(n)
 }
 
+func (p *precedingQuery) Clone() query {
+	return &precedingQuery{Input: p.Input.Clone(), Sibling: p.Sibling, Predicate: p.Predicate}
+}
+
 // parentQuery is an XPath parent node query.(parent::*)
 type parentQuery struct {
 	Input     query
@@ -424,6 +455,10 @@ func (p *parentQuery) Select(t iterator) NodeNavigator {
 func (p *parentQuery) Evaluate(t iterator) interface{} {
 	p.Input.Evaluate(t)
 	return p
+}
+
+func (p *parentQuery) Clone() query {
+	return &parentQuery{Input: p.Input.Clone(), Predicate: p.Predicate}
 }
 
 func (p *parentQuery) Test(n NodeNavigator) bool {
@@ -456,6 +491,10 @@ func (s *selfQuery) Evaluate(t iterator) interface{} {
 
 func (s *selfQuery) Test(n NodeNavigator) bool {
 	return s.Predicate(n)
+}
+
+func (s *selfQuery) Clone() query {
+	return &selfQuery{Input: s.Input.Clone(), Predicate: s.Predicate}
 }
 
 // filterQuery is an XPath query for predicate filter.
@@ -503,6 +542,10 @@ func (f *filterQuery) Evaluate(t iterator) interface{} {
 	return f
 }
 
+func (f *filterQuery) Clone() query {
+	return &filterQuery{Input: f.Input.Clone(), Predicate: f.Predicate.Clone()}
+}
+
 // functionQuery is an XPath function that call a function to returns
 // value of current NodeNavigator node.
 type functionQuery struct {
@@ -520,6 +563,10 @@ func (f *functionQuery) Evaluate(t iterator) interface{} {
 	return f.Func(f.Input, t)
 }
 
+func (f *functionQuery) Clone() query {
+	return &functionQuery{Input: f.Input.Clone(), Func: f.Func}
+}
+
 // constantQuery is an XPath constant operand.
 type constantQuery struct {
 	Val interface{}
@@ -531,6 +578,10 @@ func (c *constantQuery) Select(t iterator) NodeNavigator {
 
 func (c *constantQuery) Evaluate(t iterator) interface{} {
 	return c.Val
+}
+
+func (c *constantQuery) Clone() query {
+	return c
 }
 
 // logicalQuery is an XPath logical expression.
@@ -559,6 +610,10 @@ func (l *logicalQuery) Evaluate(t iterator) interface{} {
 	return l.Do(t, m, n)
 }
 
+func (l *logicalQuery) Clone() query {
+	return &logicalQuery{Left: l.Left.Clone(), Right: l.Right.Clone(), Do: l.Do}
+}
+
 // numericQuery is an XPath numeric operator expression.
 type numericQuery struct {
 	Left, Right query
@@ -574,6 +629,10 @@ func (n *numericQuery) Evaluate(t iterator) interface{} {
 	m := n.Left.Evaluate(t)
 	k := n.Right.Evaluate(t)
 	return n.Do(m, k)
+}
+
+func (n *numericQuery) Clone() query {
+	return &numericQuery{Left: n.Left.Clone(), Right: n.Right.Clone(), Do: n.Do}
 }
 
 type booleanQuery struct {
@@ -652,6 +711,10 @@ func (b *booleanQuery) Evaluate(t iterator) interface{} {
 		return m
 	}
 	return b.Right.Evaluate(t)
+}
+
+func (b *booleanQuery) Clone() query {
+	return &booleanQuery{IsOr: b.IsOr, Left: b.Left.Clone(), Right: b.Right.Clone()}
 }
 
 func getNodePosition(q query) int {
