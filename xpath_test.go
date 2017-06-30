@@ -201,6 +201,13 @@ func TestFunction(t *testing.T) {
 	if MustCompile("sum(//a/@id)").Evaluate(createNavigator(html)).(float64) != 6 { // 1+2+3
 		t.Fatal("sum(//a/@id) != 6")
 	}
+	if MustCompile(`concat("1","2","3")`).Evaluate(createNavigator(html)).(string) != "123" {
+		t.Fatal(`concat("1","2","3") != "123"`)
+	}
+
+	if MustCompile(`concat(" ",//a[@id='1']/@href," ")`).Evaluate(createNavigator(html)).(string) != " / " {
+		t.Fatal("concat()")
+	}
 }
 
 func TestEvaluate(t *testing.T) {

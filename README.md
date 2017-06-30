@@ -103,16 +103,16 @@ XPath is Go package provides selecting nodes from XML, HTML or other documents u
 
     * position()
     * last()
-    * count(node-set)
+    * count( node-set )
     * name()
-    * starts-with(string,string)
-    * normalize-space(string)
-    * substring(string,start[,length])
-    * not(expression)
-    * string-length([string])
-    * contains(string,string)
-    * sum(node-set)
-    * more coming
+    * starts-with( string, string )
+    * normalize-space( string )
+    * substring( string , start [, length] )
+    * not( expression )
+    * string-length( [string] )
+    * contains( string, string )
+    * sum( node-set )
+    * concat( string1 , string2 [, stringn]* )
 
 - `a or b` : Boolean or.
 

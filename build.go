@@ -244,6 +244,19 @@ func (b *builder) processFunctionNode(root *functionNode) (query, error) {
 			return nil, err
 		}
 		qyOutput = &functionQuery{Input: argQuery, Func: sumFunc}
+	case "concat":
+		if len(root.Args) < 2 {
+			return nil, fmt.Errorf("xpath: concat() must have at least two arguments")
+		}
+		var args []query
+		for _, v := range root.Args {
+			q, err := b.processNode(v)
+			if err != nil {
+				return nil, err
+			}
+			args = append(args, q)
+		}
+		qyOutput = &functionQuery{Input: b.firstInput, Func: concatFunc(args...)}
 	default:
 		return nil, fmt.Errorf("not yet support this function %s()", root.FuncName)
 	}

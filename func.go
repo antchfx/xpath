@@ -231,3 +231,24 @@ func notFunc(q query, t iterator) interface{} {
 		return false
 	}
 }
+
+// concatFunc is the concat function concatenates two or more
+// strings and returns the resulting string.
+// concat( string1 , string2 [, stringn]* )
+func concatFunc(args ...query) func(query, iterator) interface{} {
+	return func(q query, t iterator) interface{} {
+		var a []string
+		for _, v := range args {
+			switch v := v.Evaluate(t).(type) {
+			case string:
+				a = append(a, v)
+			case query:
+				node := v.Select(t)
+				if node != nil {
+					a = append(a, node.Value())
+				}
+			}
+		}
+		return strings.Join(a, "")
+	}
+}
