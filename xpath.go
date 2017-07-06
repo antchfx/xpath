@@ -1,5 +1,9 @@
 package xpath
 
+import (
+	"errors"
+)
+
 // NodeType represents a type of XPath node.
 type NodeType int
 
@@ -130,6 +134,9 @@ func (expr *Expr) String() string {
 
 // Compile compiles an XPath expression string.
 func Compile(expr string) (*Expr, error) {
+	if expr == "" {
+		return nil, errors.New("expr expression is nil")
+	}
 	qy, err := build(expr)
 	if err != nil {
 		return nil, err
