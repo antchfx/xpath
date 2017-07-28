@@ -409,7 +409,7 @@ func (p *parser) parseStep(n node) node {
 		p.next()
 	}
 	opnd := p.parseNodeTest(n, axeTyp)
-	if p.r.typ == itemLBracket {
+	for p.r.typ == itemLBracket {
 		opnd = newFilterNode(opnd, p.parsePredicate(opnd))
 	}
 	return opnd
