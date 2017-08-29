@@ -61,18 +61,16 @@ func (b *builder) processAxisNode(root *axisNode) (query, error) {
 	if root.Input == nil {
 		qyInput = &contextQuery{}
 	} else {
-		if b.flag&filterFlag == 0 {
-			if root.AxeType == "child" && (root.Input.Type() == nodeAxis) {
-				if input := root.Input.(*axisNode); input.AxeType == "descendant-or-self" {
-					var qyGrandInput query
-					if input.Input != nil {
-						qyGrandInput, _ = b.processNode(input.Input)
-					} else {
-						qyGrandInput = &contextQuery{}
-					}
-					qyOutput = &descendantQuery{Input: qyGrandInput, Predicate: predicate, Self: true}
-					return qyOutput, nil
+		if root.AxeType == "child" && (root.Input.Type() == nodeAxis) {
+			if input := root.Input.(*axisNode); input.AxeType == "descendant-or-self" {
+				var qyGrandInput query
+				if input.Input != nil {
+					qyGrandInput, _ = b.processNode(input.Input)
+				} else {
+					qyGrandInput = &contextQuery{}
 				}
+				qyOutput = &descendantQuery{Input: qyGrandInput, Predicate: predicate, Self: true}
+				return qyOutput, nil
 			}
 		}
 		qyInput, err = b.processNode(root.Input)
