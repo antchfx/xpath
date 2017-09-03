@@ -15,6 +15,17 @@ const XML1 = `
 	<li>
 		<a class="tag" href=""/>
 	</li>
+	<p class='meta'>
+		<span class='date-time'>
+			<span class='date'></span>
+			<span class='time'></span>
+		</span>
+		<span class='tags'>
+			<span class='tag'>
+				<a class="tag" href="../../../../../../../tags/en/index.html"></a>
+			</span>
+		</span>
+	</p>
 </root>
 `
 
@@ -120,5 +131,20 @@ func TestAll(t *testing.T, givenCreateFunc Create, enable Enable) {
 				t.Errorf("Find incorrect number of ./a nodes inside //li %v", len(subnodes))
 			}
 		}
+
+		nodes, ok = checkIterator(compilePath("//root/p[@class='meta']").Evaluate(create(XML1)))
+		if ok {
+			if len(nodes) != 1 {
+				t.Errorf("Find incorrect number of foo nodes %v", len(nodes))
+			}
+		}
+
+		nodes, ok = checkIterator(compilePath("./root").Evaluate(create(XML1)))
+		if ok {
+			if len(nodes) != 1 {
+				t.Errorf("Find incorrect number of foo nodes %v", len(nodes))
+			}
+		}
+
 	}
 }
