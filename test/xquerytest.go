@@ -26,6 +26,7 @@ const XML1 = `
 			</span>
 		</span>
 	</p>
+	<para>text <img/> text</para>
 </root>
 `
 
@@ -36,10 +37,18 @@ func EnableAll(markup string) bool {
 	return true
 }
 
+type debugStringer interface {
+	DebugString() string
+}
+
 func compilePathFunc(t *testing.T) func(path string) *xpath.Expr {
 	return func(path string) *xpath.Expr {
 		res := xpath.MustCompile(path)
-		t.Logf("Compile xpath %v", res.DebugString())
+		if s, ok := interface{}(res).(debugStringer); ok {
+			t.Logf("Compile xpath %v", s.DebugString())
+		} else {
+			t.Logf("Compile xpath %v", res.String())
+		}
 		return res
 	}
 }
@@ -135,14 +144,26 @@ func TestAll(t *testing.T, givenCreateFunc Create, enable Enable) {
 		nodes, ok = checkIterator(compilePath("//root/p[@class='meta']").Evaluate(create(XML1)))
 		if ok {
 			if len(nodes) != 1 {
-				t.Errorf("Find incorrect number of foo nodes %v", len(nodes))
+				t.Errorf("Find incorrect number of p nodes %v", len(nodes))
 			}
 		}
 
 		nodes, ok = checkIterator(compilePath("./root").Evaluate(create(XML1)))
 		if ok {
 			if len(nodes) != 1 {
-				t.Errorf("Find incorrect number of foo nodes %v", len(nodes))
+				t.Errorf("Find incorrect number of root nodes %v", len(nodes))
+			}
+		}
+
+		nodes, ok = checkIterator(compilePath("//para").Evaluate(create(XML1)))
+		if ok {
+			if len(nodes) != 1 {
+				t.Errorf("Find incorrect number of para nodes %v", len(nodes))
+			} else {
+				subnodes, _ := checkIterator(compilePath("./child::node()").Evaluate(nodes[0]))
+				if len(subnodes) != 3 {
+					t.Errorf("Find incorrect number of sub nodes inside //para %v", len(subnodes))
+				}
 			}
 		}
 
