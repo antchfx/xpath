@@ -19,17 +19,16 @@ type builder struct {
 	firstInput query
 }
 
-func truePredicate(NodeNavigator) bool {
-	return true
-}
-
 // axisPredicate creates a predicate to predicating for this axis node.
 func axisPredicate(root *axisNode) func(NodeNavigator) bool {
 	// get current axix node type.
 	typ := ElementNode
-	if root.AxeType == "attribute" {
+	switch root.AxeType {
+	case "attribute":
 		typ = AttributeNode
-	} else {
+	case "self", "parent":
+		typ = AllNode
+	default:
 		switch root.Prop {
 		case "comment":
 			typ = CommentNode
@@ -38,11 +37,11 @@ func axisPredicate(root *axisNode) func(NodeNavigator) bool {
 			//	case "processing-instruction":
 		//	typ = ProcessingInstructionNode
 		case "node":
-			typ = ElementNode
+			typ = AllNode
 		}
 	}
 	predicate := func(n NodeNavigator) bool {
-		if typ == n.NodeType() || typ == TextNode {
+		if typ == n.NodeType() || typ == AllNode || typ == TextNode {
 			if root.LocalName == "" || (root.LocalName == n.LocalName() && root.Prefix == n.Prefix()) {
 				return true
 			}
@@ -119,7 +118,7 @@ func (b *builder) processAxisNode(root *axisNode) (query, error) {
 	case "preceding-sibling":
 		qyOutput = &precedingQuery{Input: qyInput, Predicate: predicate, Sibling: true}
 	case "self":
-		qyOutput = &selfQuery{Input: qyInput, Predicate: truePredicate}
+		qyOutput = &selfQuery{Input: qyInput, Predicate: predicate}
 	case "namespace":
 		// haha,what will you do someting??
 	default:

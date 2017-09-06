@@ -22,6 +22,9 @@ const (
 
 	// CommentNode is a comment node, such as <!-- my comment -->
 	CommentNode
+
+	// AllNode is any types of node.
+	AllNode
 )
 
 // NodeNavigator provides cursor model for navigating XML data.
