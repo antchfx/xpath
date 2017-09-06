@@ -3,6 +3,7 @@ package xpath
 import (
 	"errors"
 	"fmt"
+	"strings"
 )
 
 type flag int
@@ -19,46 +20,141 @@ type builder struct {
 	firstInput query
 }
 
+type Predicate interface {
+	Test(n NodeNavigator) bool
+}
+
+type PredicateFunc func(NodeNavigator) bool
+
+func (f PredicateFunc) Test(n NodeNavigator) bool {
+	return f(n)
+}
+
+type BoolPredicate bool
+
+func (p BoolPredicate) Test(n NodeNavigator) bool {
+	return bool(p)
+}
+
+func (p *BoolPredicate) String() string {
+	if *p {
+		return "True"
+	} else {
+		return "False"
+	}
+}
+
+var TruePredicate BoolPredicate = BoolPredicate(true)
+var FalsePredicate BoolPredicate = BoolPredicate(false)
+
+type TypePredicate []NodeType
+
+func (p *TypePredicate) Test(n NodeNavigator) bool {
+	if len(*p) == 0 {
+		return true
+	}
+	typ := n.NodeType()
+	for _, t := range *p {
+		if typ == t {
+			return true
+		}
+	}
+	return false
+}
+
+func (p *TypePredicate) String() string {
+	return fmt.Sprintf("TypePredicate{%v}", []NodeType(*p))
+}
+
+type AndPredicate []Predicate
+
+func (p *AndPredicate) Test(n NodeNavigator) bool {
+	for _, pp := range *p {
+		if !pp.Test(n) {
+			return false
+		}
+	}
+	return true
+}
+
+func (p *AndPredicate) string() string {
+	var res []string
+	for _, p := range *p {
+		res = append(res, fmt.Sprintf("%s", p))
+	}
+	return strings.Join(res, " && ")
+}
+
+type OrPredicate []Predicate
+
+func (p *OrPredicate) Test(n NodeNavigator) bool {
+	for _, pp := range *p {
+		if pp.Test(n) {
+			return true
+		}
+	}
+	return false
+}
+
+func (p *OrPredicate) string() string {
+	var res []string
+	for _, p := range *p {
+		res = append(res, fmt.Sprintf("%s", p))
+	}
+	return strings.Join(res, " || ")
+}
+
+type NamePredicate struct {
+	Prefix    string
+	LocalName string
+}
+
+func (p *NamePredicate) Test(n NodeNavigator) bool {
+	return p.LocalName == "" || (p.LocalName == n.LocalName() && p.Prefix == n.Prefix())
+}
+
+func (p *NamePredicate) string() string {
+	return fmt.Sprintf("NamePredicate{%#v, %#v}", p.Prefix, p.LocalName)
+}
+
 // axisPredicate creates a predicate to predicating for this axis node.
-func axisPredicate(root *axisNode) func(NodeNavigator) bool {
+func axisPredicate(root *axisNode) (*TypePredicate, *NamePredicate) {
 	// get current axix node type.
-	typ := ElementNode
+	var typ *TypePredicate = &TypePredicate{}
+	var nam *NamePredicate = &NamePredicate{root.Prefix, root.LocalName}
+	var allNode bool = false
 	switch root.AxeType {
 	case "attribute":
-		typ = AttributeNode
+		*typ = append(*typ, AttributeNode)
 	case "self", "parent":
-		typ = AllNode
+		allNode = true
 	default:
 		switch root.Prop {
 		case "comment":
-			typ = CommentNode
+			*typ = append(*typ, CommentNode)
 		case "text":
-			typ = TextNode
+			allNode = true
+			//*typ = append(*typ, TextNode)
 			//	case "processing-instruction":
 		//	typ = ProcessingInstructionNode
 		case "node":
-			typ = AllNode
+			allNode = true
 		}
 	}
-	predicate := func(n NodeNavigator) bool {
-		if typ == n.NodeType() || typ == AllNode || typ == TextNode {
-			if root.LocalName == "" || (root.LocalName == n.LocalName() && root.Prefix == n.Prefix()) {
-				return true
-			}
-		}
-		return false
+	if len(*typ) == 0 && !allNode {
+		*typ = append(*typ, ElementNode)
 	}
-
-	return predicate
+	return typ, nam
 }
 
 // processAxisNode processes a query for the XPath axis node.
 func (b *builder) processAxisNode(root *axisNode) (query, error) {
 	var (
-		err       error
-		qyInput   query
-		qyOutput  query
-		predicate = axisPredicate(root)
+		err                error
+		qyInput            query
+		qyOutput           query
+		typePred, namePred = axisPredicate(root)
+		predicate          = &AndPredicate{typePred, namePred}
 	)
 
 	if root.Input == nil {
@@ -91,7 +187,7 @@ func (b *builder) processAxisNode(root *axisNode) (query, error) {
 		qyOutput = &attributeQuery{Input: qyInput, Predicate: predicate}
 	case "child":
 		filter := func(n NodeNavigator) bool {
-			v := predicate(n)
+			v := namePred.Test(n)
 			switch root.Prop {
 			case "text":
 				v = v && n.NodeType() == TextNode
@@ -99,10 +195,12 @@ func (b *builder) processAxisNode(root *axisNode) (query, error) {
 				v = v && (n.NodeType() == ElementNode || n.NodeType() == TextNode)
 			case "comment":
 				v = v && n.NodeType() == CommentNode
+			default:
+				return predicate.Test(n)
 			}
 			return v
 		}
-		qyOutput = &childQuery{Input: qyInput, Predicate: filter}
+		qyOutput = &childQuery{Input: qyInput, Predicate: PredicateFunc(filter)}
 	case "descendant":
 		qyOutput = &descendantQuery{Input: qyInput, Predicate: predicate}
 	case "descendant-or-self":
