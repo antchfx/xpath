@@ -27,7 +27,7 @@ func axisPredicate(root *axisNode) func(NodeNavigator) bool {
 	case "attribute":
 		typ = AttributeNode
 	case "self", "parent":
-		typ = AllNode
+		typ = allNode
 	default:
 		switch root.Prop {
 		case "comment":
@@ -37,11 +37,11 @@ func axisPredicate(root *axisNode) func(NodeNavigator) bool {
 			//	case "processing-instruction":
 		//	typ = ProcessingInstructionNode
 		case "node":
-			typ = AllNode
+			typ = allNode
 		}
 	}
 	predicate := func(n NodeNavigator) bool {
-		if typ == n.NodeType() || typ == AllNode || typ == TextNode {
+		if typ == n.NodeType() || typ == allNode || typ == TextNode {
 			if root.LocalName == "" || (root.LocalName == n.LocalName() && root.Prefix == n.Prefix()) {
 				return true
 			}
