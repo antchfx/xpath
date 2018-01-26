@@ -707,7 +707,7 @@ func (b *booleanQuery) Select(t iterator) NodeNavigator {
 
 func (b *booleanQuery) Evaluate(t iterator) interface{} {
 	m := b.Left.Evaluate(t)
-	if m.(bool) == b.IsOr {
+	if v, ok := m.(bool); !ok || v == b.IsOr {
 		return m
 	}
 	return b.Right.Evaluate(t)
