@@ -305,12 +305,14 @@ func (b *builder) processOperatorNode(root *operatorNode) (query, error) {
 			exprFunc = neFunc
 		}
 		qyOutput = &logicalQuery{Left: left, Right: right, Do: exprFunc}
-	case "or", "and", "|":
+	case "or", "and":
 		isOr := false
-		if root.Op == "or" || root.Op == "|" {
+		if root.Op == "or" {
 			isOr = true
 		}
 		qyOutput = &booleanQuery{Left: left, Right: right, IsOr: isOr}
+	case "|":
+		qyOutput = &unionQuery{Left: left, Right: right}
 	}
 	return qyOutput, nil
 }
