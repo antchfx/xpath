@@ -42,7 +42,7 @@ func axisPredicate(root *axisNode) func(NodeNavigator) bool {
 	}
 	predicate := func(n NodeNavigator) bool {
 		if typ == n.NodeType() || typ == allNode || typ == TextNode {
-			if root.LocalName == "" || (root.LocalName == n.LocalName() && root.Prefix == n.Prefix()) {
+			if root.LocalName == "" || (root.LocalName == n.LocalName() && (root.Prefix=="" || root.Prefix == n.Prefix())) {
 				return true
 			}
 		}
