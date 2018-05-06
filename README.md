@@ -112,6 +112,7 @@ Supported Features
     * count( node-set )
     * name()
     * starts-with( string, string )
+    * ends-with( string, string )
     * normalize-space( string )
     * substring( string , start [, length] )
     * not( expression )
