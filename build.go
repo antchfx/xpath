@@ -163,6 +163,16 @@ func (b *builder) processFunctionNode(root *functionNode) (query, error) {
 			return nil, err
 		}
 		qyOutput = &functionQuery{Input: b.firstInput, Func: startwithFunc(arg1, arg2)}
+	case "ends-with":
+		arg1, err := b.processNode(root.Args[0])
+		if err != nil {
+			return nil, err
+		}
+		arg2, err := b.processNode(root.Args[1])
+		if err != nil {
+			return nil, err
+		}
+		qyOutput = &functionQuery{Input: b.firstInput, Func: endwithFunc(arg1, arg2)}
 	case "contains":
 		arg1, err := b.processNode(root.Args[0])
 		if err != nil {
