@@ -204,7 +204,7 @@ func substringFunc(arg1, arg2, arg3 query) func(query, iterator) interface{} {
 		case query:
 			node := typ.Select(t)
 			if node == nil {
-				return false
+				return ""
 			}
 			m = node.Value()
 		}
