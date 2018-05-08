@@ -194,6 +194,7 @@ func TestFunction(t *testing.T) {
 	testXPath3(t, html, "//title[substring(text(),0,4)='Hell']", selectNode(html, "//title"))
 	testXPath3(t, html, "//title[substring(self::*,0,4)='Hell']", selectNode(html, "//title"))
 	testXPath2(t, html, "//title[substring(child::*,0)]", 0) // Here substring return boolen (false), should it?
+	testXPath2(t, html, "//title[substring(child::*,0) = '']", 1)
 	testXPath3(t, html, "//li[not(a)]", selectNode(html, "//ul/li[4]"))
 	testXPath2(t, html, "//li/a[not(@id='1')]", 2) //  //li/a[@id!=1]
 	testXPath2(t, html, "//h1[string-length(normalize-space(' abc ')) = 3]", 1)
@@ -233,7 +234,7 @@ func TestPanic(t *testing.T) {
 	assertPanic(t, func() { testXPath3(t, html, "//title[substring(.,'')=0]", nil) })
 	assertPanic(t, func() { testXPath3(t, html, "//title[substring(.,4,'')=0]", nil) })
 	assertPanic(t, func() { testXPath3(t, html, "//title[substring(.,4,4)=0]", nil) })
-	assertPanic(t, func() { testXPath2(t, html, "//title[substring(child::*,0) = '']", 0) }) // Here substring return boolen (false), should it?
+	//assertPanic(t, func() { testXPath2(t, html, "//title[substring(child::*,0) = '']", 0) }) // Here substring return boolen (false), should it?
 
 }
 
