@@ -80,9 +80,11 @@ func sumFunc(q query, t iterator) interface{} {
 	case float64:
 		sum = typ
 	case string:
-		if v, err := strconv.ParseFloat(typ, 64); err != nil {
-			sum = v
+		v, err := strconv.ParseFloat(typ, 64)
+		if err != nil {
+			panic(errors.New("sum() function argument type must be a node-set or number"))
 		}
+		sum = v
 	}
 	return sum
 }

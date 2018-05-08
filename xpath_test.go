@@ -201,7 +201,6 @@ func TestFunction(t *testing.T) {
 	testXPath2(t, html, "//title[string-length(normalize-space(child::*)) = 0]", 1)
 	testXPath2(t, html, "//title[string-length(self::text()) = 5]", 1) // Hello = 5
 	testXPath2(t, html, "//title[string-length(child::*) = 5]", 0)
-	testXPath2(t, html, "//title[sum('Hello') = 0]", 1) // Hello = 5. This test pass, but should it?
 	testXPath2(t, html, "//ul[count(li)=4]", 1)
 	if MustCompile("sum(1+2)").Evaluate(createNavigator(html)).(float64) != 3 { // 1+2+3
 		t.Fatal("sum(1+2) != 3")
@@ -228,6 +227,8 @@ func TestPanic(t *testing.T) {
 	// contains
 	assertPanic(t, func() { testXPath2(t, html, "//*[contains(0, 0)]", 0) })
 	assertPanic(t, func() { testXPath2(t, html, "//*[contains(@href, 0)]", 0) })
+	// sum
+	assertPanic(t, func() { testXPath3(t, html, "//title[sum('Hello') = 0]", nil) })
 	// substring
 	assertPanic(t, func() { testXPath3(t, html, "//title[substring(.,'')=0]", nil) })
 	assertPanic(t, func() { testXPath3(t, html, "//title[substring(.,4,'')=0]", nil) })
