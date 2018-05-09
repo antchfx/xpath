@@ -107,19 +107,19 @@ Supported Features
 
 - `fun(arg1, ..., argn)` : Function calls.
 
-    * position()
-    * last()
-    * count( node-set )
-    * name()
-    * starts-with( string, string )
-    * ends-with( string, string )
-    * normalize-space( string )
-    * substring( string , start [, length] )
-    * not( expression )
-    * string-length( [string] )
-    * contains( string, string )
-    * sum( node-set )
-    * concat( string1 , string2 [, stringn]* )
+    * position() float64
+    * last() float64
+    * count( node-set ) float64
+    * name() string
+    * starts-with( string, string ) boolean
+    * ends-with( string, string ) boolean
+    * normalize-space( string ) string
+    * substring( string , start : int [, length : int] ) string
+    * not( expression ) boolean
+    * string-length( [string] ) float64
+    * contains( string, string ) boolean
+    * sum( node-set ) float64
+    * concat( string1 , string2 [, stringn]* ) string
 
 - `a or b` : Boolean `or` operation.
 
