@@ -10,9 +10,11 @@ XPath is Go package provides selecting nodes from XML, HTML or other documents u
 Implementation
 ===
 
-- [HTMLQuery](https://github.com/antchfx/htmlquery) - Extract data from HTML documents using XPath.
+- [htmlquery](https://github.com/antchfx/htmlquery) - an XPath query package for HTML document
 
-- [XMLQuery](https://github.com/antchfx/xmlquery) - Extract data from XML documents using XPath.
+- [xmlquery](https://github.com/antchfx/xmlquery) - an XPath query package for XML document.
+
+- [jsonquery](https://github.com/antchfx/jsonquery) - an XPath query package for JSON document
 
 Supported Features
 ===
