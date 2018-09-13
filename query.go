@@ -707,10 +707,14 @@ func (b *booleanQuery) Select(t iterator) NodeNavigator {
 
 func (b *booleanQuery) Evaluate(t iterator) interface{} {
 	m := b.Left.Evaluate(t)
-	if m.(bool) == b.IsOr {
-		return m
+	left := asBool(t, m)
+	if b.IsOr && left {
+		return true
+	} else if !b.IsOr && !left {
+		return false
 	}
-	return b.Right.Evaluate(t)
+	m = b.Right.Evaluate(t)
+	return asBool(t, m)
 }
 
 func (b *booleanQuery) Clone() query {

@@ -239,6 +239,19 @@ func (b *builder) processFunctionNode(root *functionNode) (query, error) {
 		qyOutput = &functionQuery{Input: b.firstInput, Func: lastFunc}
 	case "position":
 		qyOutput = &functionQuery{Input: b.firstInput, Func: positionFunc}
+	case "boolean":
+		inp := b.firstInput
+		if len(root.Args) > 1 {
+			return nil, errors.New("xpath: boolean function must have at most one parameter")
+		}
+		if len(root.Args) == 1 {
+			argQuery, err := b.processNode(root.Args[0])
+			if err != nil {
+				return nil, err
+			}
+			inp = argQuery
+		}
+		qyOutput = &functionQuery{Input: inp, Func: booleanFunc}
 	case "count":
 		//if b.firstInput == nil {
 		//	return nil, errors.New("xpath: expression must evaluate to node-set")
