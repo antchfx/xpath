@@ -234,7 +234,18 @@ func (b *builder) processFunctionNode(root *functionNode) (query, error) {
 		}
 		qyOutput = &functionQuery{Input: argQuery, Func: notFunc}
 	case "name":
-		qyOutput = &functionQuery{Input: b.firstInput, Func: nameFunc}
+		inp := b.firstInput
+		if len(root.Args) > 1 {
+			return nil, errors.New("xpath: name function must have at most one parameter")
+		}
+		if len(root.Args) == 1 {
+			argQuery, err := b.processNode(root.Args[0])
+			if err != nil {
+				return nil, err
+			}
+			inp = argQuery
+		}
+		qyOutput = &functionQuery{Input: inp, Func: nameFunc}
 	case "last":
 		qyOutput = &functionQuery{Input: b.firstInput, Func: lastFunc}
 	case "position":

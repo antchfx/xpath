@@ -192,6 +192,7 @@ func TestOr_And(t *testing.T) {
 func TestFunction(t *testing.T) {
 	testEval(t, html, "boolean(//*[@id])", true)
 	testEval(t, html, "boolean(//*[@x])", false)
+	testEval(t, html, "name(//title)", "title")
 	testXPath2(t, html, "//*[name()='a']", 3)
 	testXPath(t, html, "//*[starts-with(name(),'h1')]", "h1")
 	testXPath(t, html, "//*[ends-with(name(),'itle')]", "title") // Head title
