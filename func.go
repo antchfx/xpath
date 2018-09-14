@@ -306,7 +306,10 @@ func substringFunc(arg1, arg2, arg3 query) func(query, iterator) interface{} {
 
 		if start, ok = arg2.Evaluate(t).(float64); !ok {
 			panic(errors.New("substring() function first argument type must be int"))
+		} else if start < 1 {
+			panic(errors.New("substring() function first argument type must be >= 1"))
 		}
+		start--
 		if arg3 != nil {
 			if length, ok = arg3.Evaluate(t).(float64); !ok {
 				panic(errors.New("substring() function second argument type must be int"))

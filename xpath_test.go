@@ -200,11 +200,11 @@ func TestFunction(t *testing.T) {
 	testXPath2(t, html, "//*[starts-with(@href,'/a')]", 2) // a links: `/account`,`/about`
 	testXPath2(t, html, "//*[ends-with(@href,'t')]", 2)    // a links: `/account`,`/about`
 	testXPath3(t, html, "//h1[normalize-space(text())='This is a H1']", selectNode(html, "//h1"))
-	testXPath3(t, html, "//title[substring(.,0)='Hello']", selectNode(html, "//title"))
-	testXPath3(t, html, "//title[substring(text(),0,4)='Hell']", selectNode(html, "//title"))
-	testXPath3(t, html, "//title[substring(self::*,0,4)='Hell']", selectNode(html, "//title"))
-	testXPath2(t, html, "//title[substring(child::*,0)]", 0) // Here substring return boolen (false), should it?
-	testXPath2(t, html, "//title[substring(child::*,0) = '']", 1)
+	testXPath3(t, html, "//title[substring(.,1)='Hello']", selectNode(html, "//title"))
+	testXPath3(t, html, "//title[substring(text(),1,4)='Hell']", selectNode(html, "//title"))
+	testXPath3(t, html, "//title[substring(self::*,1,4)='Hell']", selectNode(html, "//title"))
+	testXPath2(t, html, "//title[substring(child::*,1)]", 0) // Here substring return boolen (false), should it?
+	testXPath2(t, html, "//title[substring(child::*,1) = '']", 1)
 	testXPath3(t, html, "//li[not(a)]", selectNode(html, "//ul/li[4]"))
 	testXPath2(t, html, "//li/a[not(@id='1')]", 2) //  //li/a[@id!=1]
 	testXPath2(t, html, "//h1[string-length(normalize-space(' abc ')) = 3]", 1)
