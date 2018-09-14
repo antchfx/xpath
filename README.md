@@ -125,7 +125,7 @@ Supported Features
 `document()`| ✗ |
 `element-available()`| ✗ |
 `ends-with()`| ✓ |
-`false()`| ✗ |
+`false()`| ✓ |
 `floor()`| ✓ |
 `format-number()`| ✗ |
 `function-available()`| ✗ |
@@ -151,5 +151,5 @@ Supported Features
 `sum()`| ✓ |
 `system-property()`| ✗ |
 `translate()`| ✗ |
-`true()`| ✗ |
+`true()`| ✓ |
 `unparsed-entity-url()` | ✗ |

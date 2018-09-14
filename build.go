@@ -274,6 +274,14 @@ func (b *builder) processFunctionNode(root *functionNode) (query, error) {
 			f.Func = namespaceFunc
 		}
 		qyOutput = f
+	case "true", "false":
+		val := root.FuncName == "true"
+		qyOutput = &functionQuery{
+			Input: b.firstInput,
+			Func: func(_ query, _ iterator) interface{} {
+				return val
+			},
+		}
 	case "last":
 		qyOutput = &functionQuery{Input: b.firstInput, Func: lastFunc}
 	case "position":

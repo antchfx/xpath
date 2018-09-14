@@ -213,6 +213,8 @@ func TestFunction(t *testing.T) {
 	testXPath2(t, html, "//title[string-length(self::text()) = 5]", 1) // Hello = 5
 	testXPath2(t, html, "//title[string-length(child::*) = 5]", 0)
 	testXPath2(t, html, "//ul[count(li)=4]", 1)
+	testEval(t, html, "true()", true)
+	testEval(t, html, "false()", false)
 	testEval(t, html, "sum(1+2)", float64(3))
 	testEval(t, html, "string(sum(1+2))", "3")
 	testEval(t, html, "sum(1.1+2)", float64(3.1))
