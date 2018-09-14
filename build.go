@@ -276,7 +276,7 @@ func (b *builder) processFunctionNode(root *functionNode) (query, error) {
 		qyOutput = &functionQuery{Input: b.firstInput, Func: lastFunc}
 	case "position":
 		qyOutput = &functionQuery{Input: b.firstInput, Func: positionFunc}
-	case "boolean", "string":
+	case "boolean", "number", "string":
 		inp := b.firstInput
 		if len(root.Args) > 1 {
 			return nil, fmt.Errorf("xpath: %s function must have at most one parameter", root.FuncName)
@@ -294,6 +294,8 @@ func (b *builder) processFunctionNode(root *functionNode) (query, error) {
 			f.Func = booleanFunc
 		case "string":
 			f.Func = stringFunc
+		case "number":
+			f.Func = numberFunc
 		}
 		qyOutput = f
 	case "count":

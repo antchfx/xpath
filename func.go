@@ -190,6 +190,12 @@ func booleanFunc(q query, t iterator) interface{} {
 	return asBool(t, v)
 }
 
+// numberFunc is a XPath functions number([node-set]).
+func numberFunc(q query, t iterator) interface{} {
+	v := q.Evaluate(t)
+	return asNumber(t, v)
+}
+
 // stringFunc is a XPath functions string([node-set]).
 func stringFunc(q query, t iterator) interface{} {
 	v := q.Evaluate(t)

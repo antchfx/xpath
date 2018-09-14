@@ -139,7 +139,7 @@ Supported Features
 `namespace-uri()`| ✗ |
 `normalize-space()`| ✓ |
 `not()`| ✓ |
-`number()`| ✗ |
+`number()`| ✓ |
 `position()`| ✓ |
 `round()`| ✗ |
 `starts-with()`| ✓ |
