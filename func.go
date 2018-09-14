@@ -147,6 +147,15 @@ func localNameFunc(q query, t iterator) interface{} {
 	return v.LocalName()
 }
 
+// namespaceFunc is a XPath functions namespace-uri([node-set]).
+func namespaceFunc(q query, t iterator) interface{} {
+	v := q.Select(t)
+	if v == nil {
+		return ""
+	}
+	return v.Prefix()
+}
+
 func asBool(t iterator, v interface{}) bool {
 	switch v := v.(type) {
 	case nil:

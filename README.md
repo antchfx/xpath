@@ -136,7 +136,7 @@ Supported Features
 `last()`| ✓ |
 `local-name()`| ✓ |
 `name()`| ✓ |
-`namespace-uri()`| ✗ |
+`namespace-uri()`| ✓ |
 `normalize-space()`| ✓ |
 `not()`| ✓ |
 `number()`| ✓ |
