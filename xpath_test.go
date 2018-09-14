@@ -231,6 +231,14 @@ func TestFunction(t *testing.T) {
 	testEval(t, html, `substring-after('aa-bb','a')`, "a-bb")
 	testEval(t, html, `substring-after('aa-bb','b')`, "b")
 	testEval(t, html, `substring-after('aa-bb','q')`, "")
+	testEval(t, html,
+		`translate('The quick brown fox.', 'abcdefghijklmnopqrstuvwxyz', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ')`,
+		"THE QUICK BROWN FOX.",
+	)
+	testEval(t, html,
+		`translate('The quick brown fox.', 'brown', 'red')`,
+		"The quick red fdx.",
+	)
 }
 
 func TestPanic(t *testing.T) {

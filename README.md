@@ -150,6 +150,6 @@ Supported Features
 `substring-before()`| ✓ |
 `sum()`| ✓ |
 `system-property()`| ✗ |
-`translate()`| ✗ |
+`translate()`| ✓ |
 `true()`| ✓ |
 `unparsed-entity-url()` | ✗ |

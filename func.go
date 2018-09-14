@@ -408,6 +408,25 @@ func stringLengthFunc(arg1 query) func(query, iterator) interface{} {
 	}
 }
 
+// translateFunc is XPath functions translate() function returns a replaced string.
+func translateFunc(arg1, arg2, arg3 query) func(query, iterator) interface{} {
+	return func(q query, t iterator) interface{} {
+		str := asString(t, arg1.Evaluate(t))
+		src := asString(t, arg2.Evaluate(t))
+		dst := asString(t, arg3.Evaluate(t))
+
+		var replace []string
+		for i, s := range src {
+			d := ""
+			if i < len(dst) {
+				d = string(dst[i])
+			}
+			replace = append(replace, string(s), d)
+		}
+		return strings.NewReplacer(replace...).Replace(str)
+	}
+}
+
 // notFunc is XPATH functions not(expression) function operation.
 func notFunc(q query, t iterator) interface{} {
 	switch v := q.Evaluate(t).(type) {
