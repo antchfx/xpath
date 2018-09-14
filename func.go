@@ -2,6 +2,7 @@ package xpath
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 )
@@ -92,6 +93,31 @@ func sumFunc(q query, t iterator) interface{} {
 // nameFunc is a XPath functions name([node-set]).
 func nameFunc(q query, t iterator) interface{} {
 	return t.Current().LocalName()
+}
+
+func asBool(t iterator, v interface{}) bool {
+	switch v := v.(type) {
+	case nil:
+		return false
+	case *NodeIterator:
+		return v.MoveNext()
+	case bool:
+		return bool(v)
+	case float64:
+		return v == 0
+	case string:
+		return v != ""
+	case query:
+		return v.Select(t) != nil
+	default:
+		panic(fmt.Errorf("unexpected type: %T", v))
+	}
+}
+
+// booleanFunc is a XPath functions boolean([node-set]).
+func booleanFunc(q query, t iterator) interface{} {
+	v := q.Evaluate(t)
+	return asBool(t, v)
 }
 
 // startwithFunc is a XPath functions starts-with(string, string).

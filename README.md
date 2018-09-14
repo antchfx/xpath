@@ -122,6 +122,7 @@ Supported Features
     * contains( string, string ) boolean
     * sum( node-set ) float64
     * concat( string1 , string2 [, stringn]* ) string
+    * boolean(expression) boolean
 
 - `a or b` : Boolean `or` operation.
 

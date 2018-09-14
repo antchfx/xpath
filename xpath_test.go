@@ -178,11 +178,20 @@ func TestOr_And(t *testing.T) {
 	if list[1] != selectNode(html, "//a[@id=2]") {
 		t.Fatal("node is not equal")
 	}
+	list = selectNodes(html, "//a[@id or @href]")
+	if list[0] != selectNode(html, "//a[@id=1]") {
+		t.Fatal("node is not equal")
+	}
+	if list[1] != selectNode(html, "//a[@id=2]") {
+		t.Fatal("node is not equal")
+	}
 	testXPath3(t, html, "//a[@id=1 and @href='/']", selectNode(html, "//a[1]"))
 	testXPath3(t, html, "//a[text()='Home' and @id='1']", selectNode(html, "//a[1]"))
 }
 
 func TestFunction(t *testing.T) {
+	testEval(t, html, "boolean(//*[@id])", true)
+	testEval(t, html, "boolean(//*[@x])", false)
 	testXPath2(t, html, "//*[name()='a']", 3)
 	testXPath(t, html, "//*[starts-with(name(),'h1')]", "h1")
 	testXPath(t, html, "//*[ends-with(name(),'itle')]", "title") // Head title
@@ -248,21 +257,9 @@ func assertPanic(t *testing.T, f func()) {
 }
 
 func TestEvaluate(t *testing.T) {
-	if MustCompile("count(//ul/li)").Evaluate(createNavigator(html)).(float64) != 4 {
-		t.Fatal("count(//ul/li) != 4")
-	}
-	if iter, ok := MustCompile("//html/@lang").Evaluate(createNavigator(html)).(*NodeIterator); ok {
-		iter.MoveNext()
-		if iter.Current().Value() != "en" {
-			t.Fatal("//html/@lang value not equal en")
-		}
-	}
-	if iter, ok := MustCompile("//title/text()").Evaluate(createNavigator(html)).(*NodeIterator); ok {
-		iter.MoveNext()
-		if iter.Current().Value() != "Hello" {
-			t.Fatal("//title/text() != Hello")
-		}
-	}
+	testEval(t, html, "count(//ul/li)", float64(4))
+	testEval(t, html, "//html/@lang", []string{"en"})
+	testEval(t, html, "//title/text()", []string{"Hello"})
 }
 
 func TestOperationOrLogical(t *testing.T) {
@@ -277,6 +274,30 @@ func TestOperationOrLogical(t *testing.T) {
 	testXPath2(t, html, "//a[@id!=2]", 2)                 // //a[@id>=1] == a[1],a[3]
 	testXPath2(t, html, "//a[@id=1 or @id=3]", 2)         // //a[@id>=1] == a[1],a[3]
 	testXPath3(t, html, "//a[@id=1 and @href='/']", selectNode(html, "//a[1]"))
+}
+
+func testEval(t *testing.T, root *TNode, expr string, expected interface{}) {
+	v := MustCompile(expr).Evaluate(createNavigator(root))
+	if it, ok := v.(*NodeIterator); ok {
+		exp, ok := expected.([]string)
+		if !ok {
+			t.Fatalf("expected value, got: %#v", v)
+		}
+		got := iterateNavs(it)
+		if len(exp) != len(got) {
+			t.Fatalf("expected: %#v, got: %#v", exp, got)
+		}
+		for i, n1 := range exp {
+			n2 := got[i]
+			if n1 != n2.Value() {
+				t.Fatalf("expected: %#v, got: %#v", n1, n2)
+			}
+		}
+		return
+	}
+	if v != expected {
+		t.Fatalf("expected: %#v, got: %#v", expected, v)
+	}
 }
 
 func testXPath(t *testing.T, root *TNode, expr string, expected string) {
@@ -306,6 +327,24 @@ func testXPath3(t *testing.T, root *TNode, expr string, expected *TNode) {
 	}
 }
 
+func iterateNavs(t *NodeIterator) []*TNodeNavigator {
+	var nodes []*TNodeNavigator
+	for t.MoveNext() {
+		node := t.Current().(*TNodeNavigator)
+		nodes = append(nodes, node)
+	}
+	return nodes
+}
+
+func iterateNodes(t *NodeIterator) []*TNode {
+	var nodes []*TNode
+	for t.MoveNext() {
+		node := (t.Current().(*TNodeNavigator)).curr
+		nodes = append(nodes, node)
+	}
+	return nodes
+}
+
 func selectNode(root *TNode, expr string) (n *TNode) {
 	t := Select(createNavigator(root), expr)
 	if t.MoveNext() {
@@ -316,12 +355,7 @@ func selectNode(root *TNode, expr string) (n *TNode) {
 
 func selectNodes(root *TNode, expr string) []*TNode {
 	t := Select(createNavigator(root), expr)
-	var nodes []*TNode
-	for t.MoveNext() {
-		node := (t.Current().(*TNodeNavigator)).curr
-		nodes = append(nodes, node)
-	}
-	return nodes
+	return iterateNodes(t)
 }
 
 func createNavigator(n *TNode) *TNodeNavigator {
