@@ -213,19 +213,12 @@ func TestFunction(t *testing.T) {
 	testXPath2(t, html, "//title[string-length(self::text()) = 5]", 1) // Hello = 5
 	testXPath2(t, html, "//title[string-length(child::*) = 5]", 0)
 	testXPath2(t, html, "//ul[count(li)=4]", 1)
-	if MustCompile("sum(1+2)").Evaluate(createNavigator(html)).(float64) != 3 { // 1+2+3
-		t.Fatal("sum(1+2) != 3")
-	}
-	if MustCompile("sum(//a/@id)").Evaluate(createNavigator(html)).(float64) != 6 { // 1+2+3
-		t.Fatal("sum(//a/@id) != 6")
-	}
-	if MustCompile(`concat("1","2","3")`).Evaluate(createNavigator(html)).(string) != "123" {
-		t.Fatal(`concat("1","2","3") != "123"`)
-	}
-
-	if MustCompile(`concat(" ",//a[@id='1']/@href," ")`).Evaluate(createNavigator(html)).(string) != " / " {
-		t.Fatal("concat()")
-	}
+	testEval(t, html, "sum(1+2)", float64(3))
+	testEval(t, html, "sum(1.1+2)", float64(3.1))
+	testEval(t, html, "sum(//a/@id)", float64(6)) // 1+2+3
+	testEval(t, html, `concat("1","2","3")`, "123")
+	testEval(t, html, `concat(" ",//a[@id='1']/@href," ")`, " / ")
+	testEval(t, html, "ceiling(5.2)", float64(6))
 }
 
 func TestPanic(t *testing.T) {

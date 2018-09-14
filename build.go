@@ -291,6 +291,15 @@ func (b *builder) processFunctionNode(root *functionNode) (query, error) {
 			return nil, err
 		}
 		qyOutput = &functionQuery{Input: argQuery, Func: sumFunc}
+	case "ceiling":
+		if len(root.Args) == 0 {
+			return nil, fmt.Errorf("xpath: ceiling(node-sets) function must with have parameters node-sets")
+		}
+		argQuery, err := b.processNode(root.Args[0])
+		if err != nil {
+			return nil, err
+		}
+		qyOutput = &functionQuery{Input: argQuery, Func: ceilingFunc}
 	case "concat":
 		if len(root.Args) < 2 {
 			return nil, fmt.Errorf("xpath: concat() must have at least two arguments")

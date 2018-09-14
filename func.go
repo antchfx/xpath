@@ -3,6 +3,7 @@ package xpath
 import (
 	"errors"
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 )
@@ -88,6 +89,30 @@ func sumFunc(q query, t iterator) interface{} {
 		sum = v
 	}
 	return sum
+}
+
+// ceilingFunc is a XPath Node Set functions ceiling(node-set).
+func ceilingFunc(q query, t iterator) interface{} {
+	var val float64
+	switch typ := q.Evaluate(t).(type) {
+	case query:
+		node := typ.Select(t)
+		if node == nil {
+			return float64(0)
+		}
+		if v, err := strconv.ParseFloat(node.Value(), 64); err == nil {
+			val = v
+		}
+	case float64:
+		val = typ
+	case string:
+		v, err := strconv.ParseFloat(typ, 64)
+		if err != nil {
+			panic(errors.New("ceiling() function argument type must be a node-set or number"))
+		}
+		val = v
+	}
+	return math.Ceil(val)
 }
 
 // nameFunc is a XPath functions name([node-set]).
