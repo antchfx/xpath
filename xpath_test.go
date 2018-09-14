@@ -220,6 +220,7 @@ func TestFunction(t *testing.T) {
 	testEval(t, html, `concat("1","2","3")`, "123")
 	testEval(t, html, `concat(" ",//a[@id='1']/@href," ")`, " / ")
 	testEval(t, html, "ceiling(5.2)", float64(6))
+	testEval(t, html, "floor(5.2)", float64(5))
 	testEval(t, html, `substring-before('aa-bb','-')`, "aa")
 	testEval(t, html, `substring-before('aa-bb','a')`, "")
 	testEval(t, html, `substring-before('aa-bb','b')`, "aa-")

@@ -91,28 +91,38 @@ func sumFunc(q query, t iterator) interface{} {
 	return sum
 }
 
-// ceilingFunc is a XPath Node Set functions ceiling(node-set).
-func ceilingFunc(q query, t iterator) interface{} {
-	var val float64
-	switch typ := q.Evaluate(t).(type) {
+func asNumber(t iterator, o interface{}) float64 {
+	switch typ := o.(type) {
 	case query:
 		node := typ.Select(t)
 		if node == nil {
 			return float64(0)
 		}
 		if v, err := strconv.ParseFloat(node.Value(), 64); err == nil {
-			val = v
+			return v
 		}
 	case float64:
-		val = typ
+		return typ
 	case string:
 		v, err := strconv.ParseFloat(typ, 64)
 		if err != nil {
 			panic(errors.New("ceiling() function argument type must be a node-set or number"))
 		}
-		val = v
+		return v
 	}
+	return 0
+}
+
+// ceilingFunc is a XPath Node Set functions ceiling(node-set).
+func ceilingFunc(q query, t iterator) interface{} {
+	val := asNumber(t, q.Evaluate(t))
 	return math.Ceil(val)
+}
+
+// floorFunc is a XPath Node Set functions floor(node-set).
+func floorFunc(q query, t iterator) interface{} {
+	val := asNumber(t, q.Evaluate(t))
+	return math.Floor(val)
 }
 
 // nameFunc is a XPath functions name([node-set]).

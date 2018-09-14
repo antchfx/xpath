@@ -126,7 +126,7 @@ Supported Features
 `element-available()`| ✗ |
 `ends-with()`| ✓ |
 `false()`| ✗ |
-`floor()`| ✗ |
+`floor()`| ✓ |
 `format-number()`| ✗ |
 `function-available()`| ✗ |
 `generate-id()`| ✗ |
