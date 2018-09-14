@@ -325,6 +325,46 @@ func substringFunc(arg1, arg2, arg3 query) func(query, iterator) interface{} {
 	}
 }
 
+// substringIndFunc is XPath functions substring-before/substring-after function returns a part of a given string.
+func substringIndFunc(arg1, arg2 query, after bool) func(query, iterator) interface{} {
+	return func(q query, t iterator) interface{} {
+		var str string
+		switch v := arg1.Evaluate(t).(type) {
+		case string:
+			str = v
+		case query:
+			node := v.Select(t)
+			if node == nil {
+				return ""
+			}
+			str = node.Value()
+		}
+		var word string
+		switch v := arg2.Evaluate(t).(type) {
+		case string:
+			word = v
+		case query:
+			node := v.Select(t)
+			if node == nil {
+				return ""
+			}
+			word = node.Value()
+		}
+		if word == "" {
+			return ""
+		}
+
+		i := strings.Index(str, word)
+		if i < 0 {
+			return ""
+		}
+		if after {
+			return str[i+len(word):]
+		}
+		return str[:i]
+	}
+}
+
 // stringLengthFunc is XPATH string-length( [string] ) function that returns a number
 // equal to the number of characters in a given string.
 func stringLengthFunc(arg1 query) func(query, iterator) interface{} {
