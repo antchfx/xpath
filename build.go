@@ -233,10 +233,10 @@ func (b *builder) processFunctionNode(root *functionNode) (query, error) {
 			return nil, err
 		}
 		qyOutput = &functionQuery{Input: argQuery, Func: notFunc}
-	case "name":
+	case "name", "local-name":
 		inp := b.firstInput
 		if len(root.Args) > 1 {
-			return nil, errors.New("xpath: name function must have at most one parameter")
+			return nil, fmt.Errorf("xpath: %s function must have at most one parameter", root.FuncName)
 		}
 		if len(root.Args) == 1 {
 			argQuery, err := b.processNode(root.Args[0])
@@ -245,7 +245,14 @@ func (b *builder) processFunctionNode(root *functionNode) (query, error) {
 			}
 			inp = argQuery
 		}
-		qyOutput = &functionQuery{Input: inp, Func: nameFunc}
+		f := &functionQuery{Input: inp}
+		switch root.FuncName {
+		case "name":
+			f.Func = nameFunc
+		case "local-name":
+			f.Func = localNameFunc
+		}
+		qyOutput = f
 	case "last":
 		qyOutput = &functionQuery{Input: b.firstInput, Func: lastFunc}
 	case "position":

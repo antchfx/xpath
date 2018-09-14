@@ -103,6 +103,15 @@ func nameFunc(q query, t iterator) interface{} {
 	return ns + ":" + v.LocalName()
 }
 
+// localNameFunc is a XPath functions local-name([node-set]).
+func localNameFunc(q query, t iterator) interface{} {
+	v := q.Select(t)
+	if v == nil {
+		return ""
+	}
+	return v.LocalName()
+}
+
 func asBool(t iterator, v interface{}) bool {
 	switch v := v.(type) {
 	case nil:
