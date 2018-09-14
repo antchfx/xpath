@@ -156,10 +156,34 @@ func asBool(t iterator, v interface{}) bool {
 	}
 }
 
+func asString(t iterator, v interface{}) string {
+	switch v := v.(type) {
+	case nil:
+		return ""
+	case bool:
+		if v {
+			return "true"
+		}
+		return "false"
+	case float64:
+		return strconv.FormatFloat(v, 'g', -1, 64)
+	case string:
+		return v
+	default:
+		panic(fmt.Errorf("unexpected type: %T", v))
+	}
+}
+
 // booleanFunc is a XPath functions boolean([node-set]).
 func booleanFunc(q query, t iterator) interface{} {
 	v := q.Evaluate(t)
 	return asBool(t, v)
+}
+
+// stringFunc is a XPath functions string([node-set]).
+func stringFunc(q query, t iterator) interface{} {
+	v := q.Evaluate(t)
+	return asString(t, v)
 }
 
 // startwithFunc is a XPath functions starts-with(string, string).

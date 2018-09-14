@@ -214,6 +214,7 @@ func TestFunction(t *testing.T) {
 	testXPath2(t, html, "//title[string-length(child::*) = 5]", 0)
 	testXPath2(t, html, "//ul[count(li)=4]", 1)
 	testEval(t, html, "sum(1+2)", float64(3))
+	testEval(t, html, "string(sum(1+2))", "3")
 	testEval(t, html, "sum(1.1+2)", float64(3.1))
 	testEval(t, html, "sum(//a/@id)", float64(6)) // 1+2+3
 	testEval(t, html, `concat("1","2","3")`, "123")
