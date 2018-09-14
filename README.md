@@ -113,16 +113,21 @@ Supported Features
     * last() float64
     * count( node-set ) float64
     * name() string
+    * local-name() string
     * starts-with( string, string ) boolean
     * ends-with( string, string ) boolean
     * normalize-space( string ) string
     * substring( string , start : int [, length : int] ) string
+    * substring-before( string , string ) string
+    * substring-after( string , string ) string
     * not( expression ) boolean
     * string-length( [string] ) float64
     * contains( string, string ) boolean
     * sum( node-set ) float64
+    * ceiling( float64 ) float64
     * concat( string1 , string2 [, stringn]* ) string
     * boolean(expression) boolean
+    * string(expression) string
 
 - `a or b` : Boolean `or` operation.
 
