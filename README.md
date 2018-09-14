@@ -141,7 +141,7 @@ Supported Features
 `not()`| ✓ |
 `number()`| ✓ |
 `position()`| ✓ |
-`round()`| ✗ |
+`round()`| ✓ |
 `starts-with()`| ✓ |
 `string()`| ✓ |
 `string-length()`| ✓ |

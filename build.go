@@ -348,7 +348,7 @@ func (b *builder) processFunctionNode(root *functionNode) (query, error) {
 			return nil, err
 		}
 		qyOutput = &functionQuery{Input: argQuery, Func: sumFunc}
-	case "ceiling", "floor":
+	case "ceiling", "floor", "round":
 		if len(root.Args) == 0 {
 			return nil, fmt.Errorf("xpath: ceiling(node-sets) function must with have parameters node-sets")
 		}
@@ -362,6 +362,8 @@ func (b *builder) processFunctionNode(root *functionNode) (query, error) {
 			f.Func = ceilingFunc
 		case "floor":
 			f.Func = floorFunc
+		case "round":
+			f.Func = roundFunc
 		}
 		qyOutput = f
 	case "concat":

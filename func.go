@@ -125,6 +125,12 @@ func floorFunc(q query, t iterator) interface{} {
 	return math.Floor(val)
 }
 
+// roundFunc is a XPath Node Set functions round(node-set).
+func roundFunc(q query, t iterator) interface{} {
+	val := asNumber(t, q.Evaluate(t))
+	return math.Round(val)
+}
+
 // nameFunc is a XPath functions name([node-set]).
 func nameFunc(q query, t iterator) interface{} {
 	v := q.Select(t)
