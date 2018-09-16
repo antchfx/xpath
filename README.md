@@ -105,25 +105,51 @@ Supported Features
     * a div b	Divide
     * a mod b	Floating point mod, like Java.
 
-- `(expr)` : Parenthesized expressions.
-
-- `fun(arg1, ..., argn)` : Function calls.
-
-    * position() float64
-    * last() float64
-    * count( node-set ) float64
-    * name() string
-    * starts-with( string, string ) boolean
-    * ends-with( string, string ) boolean
-    * normalize-space( string ) string
-    * substring( string , start : int [, length : int] ) string
-    * not( expression ) boolean
-    * string-length( [string] ) float64
-    * contains( string, string ) boolean
-    * sum( node-set ) float64
-    * concat( string1 , string2 [, stringn]* ) string
-    * boolean(expression) boolean
-
 - `a or b` : Boolean `or` operation.
 
 - `a and b` : Boolean `and` operation.
+
+- `(expr)` : Parenthesized expressions.
+
+- `fun(arg1, ..., argn)` : Function calls:
+
+| Function | Supported |
+| --- | --- |
+`boolean()`| ✓ |
+`ceiling()`| ✓ |
+`choose()`| ✗ |
+`concat()`| ✓ |
+`contains()`| ✓ |
+`count()`| ✓ |
+`current()`| ✗ |
+`document()`| ✗ |
+`element-available()`| ✗ |
+`ends-with()`| ✓ |
+`false()`| ✓ |
+`floor()`| ✓ |
+`format-number()`| ✗ |
+`function-available()`| ✗ |
+`generate-id()`| ✗ |
+`id()`| ✗ |
+`key()`| ✗ |
+`lang()`| ✗ |
+`last()`| ✓ |
+`local-name()`| ✓ |
+`name()`| ✓ |
+`namespace-uri()`| ✓ |
+`normalize-space()`| ✓ |
+`not()`| ✓ |
+`number()`| ✓ |
+`position()`| ✓ |
+`round()`| ✓ |
+`starts-with()`| ✓ |
+`string()`| ✓ |
+`string-length()`| ✓ |
+`substring()`| ✓ |
+`substring-after()`| ✓ |
+`substring-before()`| ✓ |
+`sum()`| ✓ |
+`system-property()`| ✗ |
+`translate()`| ✓ |
+`true()`| ✓ |
+`unparsed-entity-url()` | ✗ |
