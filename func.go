@@ -182,7 +182,7 @@ func asBool(t iterator, v interface{}) bool {
 	case bool:
 		return bool(v)
 	case float64:
-		return v == 0
+		return v != 0
 	case string:
 		return v != ""
 	case query:
