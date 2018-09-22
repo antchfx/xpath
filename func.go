@@ -125,16 +125,6 @@ func floorFunc(q query, t iterator) interface{} {
 	return math.Floor(val)
 }
 
-// math.Round() is supported by Go 1.9x,
-// This method just compatible for version <1.9x.
-// https://github.com/golang/go/issues/4594
-func round(f float64) int {
-	if math.Abs(f) < 0.5 {
-		return 0
-	}
-	return int(f + math.Copysign(0.5, f))
-}
-
 // roundFunc is a XPath Node Set functions round(node-set).
 func roundFunc(q query, t iterator) interface{} {
 	val := asNumber(t, q.Evaluate(t))
