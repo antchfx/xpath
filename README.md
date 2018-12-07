@@ -55,6 +55,9 @@ Supported Features
 
 - `a|b` : All nodes matching a or b, union operation(not boolean or).
 
+- `(a, b, c)` : Evaluates each of its operands and concatenates the resulting sequences, in order, into a single result sequence
+
+
 #### Node Axes 
 
 - `child::*` : The child axis selects children of the current node.
