@@ -6,7 +6,10 @@ import (
 	"testing"
 )
 
-var html *TNode = example()
+var (
+	html  = example()
+	html2 = example2()
+)
 
 func TestCompile(t *testing.T) {
 	var err error
@@ -22,8 +25,11 @@ func TestCompile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("//ul/li/@class should be correct but got error %s", err)
 	}
+	_, err = Compile("/a/b/(c, .[not(c)])")
+	if err != nil {
+		t.Fatalf("/a/b/(c, .[not(c)]) should be correct but got error %s", err)
+	}
 }
-
 func TestSelf(t *testing.T) {
 	testXPath(t, html, ".", "html")
 	testXPath(t, html.FirstChild, ".", "head")
@@ -45,6 +51,11 @@ func TestAttribute(t *testing.T) {
 	testXPath2(t, html, "@lang='zh'", 0)
 	testXPath2(t, html, "//@href", 3)
 	testXPath2(t, html, "//a[@*]", 3)
+}
+
+func TestSequence(t *testing.T) {
+	testXPath2(t, html2, "//table/tbody/tr/td/(para, .[not(para)])", 9)
+	testXPath2(t, html2, "//table/tbody/tr/td/(para, .[not(para)], ..)", 12)
 }
 
 func TestRelativePath(t *testing.T) {
@@ -564,6 +575,71 @@ func (n *TNode) appendNode(data string, typ NodeType) *TNode {
 
 func (n *TNode) addAttribute(k, v string) {
 	n.Attr = append(n.Attr, Attribute{k, v})
+}
+
+func example2() *TNode {
+	/*
+		<html lang="en">
+		   <head>
+			   <title>Hello</title>
+			   <meta name="language" content="en"/>
+		   </head>
+		   <body>
+				<h1> This is a H1 </h1>
+				<table>
+					<tbody>
+						<tr>
+							<td>row1-val1</td>
+							<td>row1-val2</td>
+							<td>row1-val3</td>
+						</tr>
+						<tr>
+							<td><para>row2-val1</para></td>
+							<td><para>row2-val2</para></td>
+							<td><para>row2-val3</para></td>
+						</tr>
+						<tr>
+							<td>row3-val1</td>
+							<td><para>row3-val2</para></td>
+							<td>row3-val3</td>
+						</tr>
+					</tbody>
+				</table>
+		   </body>
+		</html>
+	*/
+	doc := createNode("", RootNode)
+	xhtml := doc.createChildNode("html", ElementNode)
+	xhtml.addAttribute("lang", "en")
+
+	// The HTML head section.
+	head := xhtml.createChildNode("head", ElementNode)
+	n := head.createChildNode("title", ElementNode)
+	n = n.createChildNode("Hello", TextNode)
+	n = head.createChildNode("meta", ElementNode)
+	n.addAttribute("name", "language")
+	n.addAttribute("content", "en")
+	// The HTML body section.
+	body := xhtml.createChildNode("body", ElementNode)
+	n = body.createChildNode("h1", ElementNode)
+	n = n.createChildNode(" This is a H1 ", TextNode)
+
+	n = body.createChildNode("table", ElementNode)
+	tbody := n.createChildNode("tbody", ElementNode)
+	n = tbody.createChildNode("tr", ElementNode)
+	n.createChildNode("td", ElementNode).createChildNode("row1-val1", TextNode)
+	n.createChildNode("td", ElementNode).createChildNode("row1-val2", TextNode)
+	n.createChildNode("td", ElementNode).createChildNode("row1-val3", TextNode)
+	n = tbody.createChildNode("tr", ElementNode)
+	n.createChildNode("td", ElementNode).createChildNode("para", ElementNode).createChildNode("row2-val1", TextNode)
+	n.createChildNode("td", ElementNode).createChildNode("para", ElementNode).createChildNode("row2-val2", TextNode)
+	n.createChildNode("td", ElementNode).createChildNode("para", ElementNode).createChildNode("row2-val3", TextNode)
+	n = tbody.createChildNode("tr", ElementNode)
+	n.createChildNode("td", ElementNode).createChildNode("row3-val1", TextNode)
+	n.createChildNode("td", ElementNode).createChildNode("para", ElementNode).createChildNode("row3-val2", TextNode)
+	n.createChildNode("td", ElementNode).createChildNode("row3-val3", TextNode)
+
+	return xhtml
 }
 
 func example() *TNode {
