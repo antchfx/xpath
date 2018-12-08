@@ -156,3 +156,9 @@ Supported Features
 `translate()`| ✓ |
 `true()`| ✓ |
 `unparsed-entity-url()` | ✗ |
+
+Changelogs
+===
+
+2018-12-07
+-  supports XPath 2.0 Sequence expressions. [#30](https://github.com/antchfx/xpath/pull/30) by [@minherz](https://github.com/minherz).
