@@ -650,7 +650,9 @@ func example() *TNode {
 			   <meta name="language" content="en"/>
 		   </head>
 		   <body>
-				<h1> This is a H1 </h1>
+				<h1>
+				This is a H1
+				</h1>
 				<ul>
 					<li><a id="1" href="/">Home</a></li>
 					<li><a id="2" href="/about">about</a></li>
@@ -678,7 +680,7 @@ func example() *TNode {
 	// The HTML body section.
 	body := xhtml.createChildNode("body", ElementNode)
 	n = body.createChildNode("h1", ElementNode)
-	n = n.createChildNode(" This is a H1 ", TextNode)
+	n = n.createChildNode("\nThis is a H1\n", TextNode)
 	ul := body.createChildNode("ul", ElementNode)
 	n = ul.createChildNode("li", ElementNode)
 	n = n.createChildNode("a", ElementNode)

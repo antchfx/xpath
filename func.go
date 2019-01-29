@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -308,6 +309,11 @@ func containsFunc(arg1, arg2 query) func(query, iterator) interface{} {
 	}
 }
 
+var (
+	regnewline  = regexp.MustCompile(`[\r\n\t]`)
+	regseqspace = regexp.MustCompile(`\s{2,}`)
+)
+
 // normalizespaceFunc is XPath functions normalize-space(string?)
 func normalizespaceFunc(q query, t iterator) interface{} {
 	var m string
@@ -317,11 +323,14 @@ func normalizespaceFunc(q query, t iterator) interface{} {
 	case query:
 		node := typ.Select(t)
 		if node == nil {
-			return false
+			return ""
 		}
 		m = node.Value()
 	}
-	return strings.TrimSpace(m)
+	m = strings.TrimSpace(m)
+	m = regnewline.ReplaceAllString(m, " ")
+	m = regseqspace.ReplaceAllString(m, " ")
+	return m
 }
 
 // substringFunc is XPath functions substring function returns a part of a given string.

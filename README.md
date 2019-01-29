@@ -160,5 +160,8 @@ Supported Features
 Changelogs
 ===
 
+2019-01-29
+-  improvement `normalize-space` function. [#32](https://github.com/antchfx/xpath/issues/32)
+
 2018-12-07
 -  supports XPath 2.0 Sequence expressions. [#30](https://github.com/antchfx/xpath/pull/30) by [@minherz](https://github.com/minherz).
