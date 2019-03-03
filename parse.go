@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strconv"
 	"unicode"
+	"unicode/utf8"
 )
 
 // A XPath expression token type.
@@ -157,6 +158,7 @@ func (p *parser) parseExpression(n node) node {
 		panic("the xpath query is too complex(depth > 200)")
 	}
 	n = p.parseOrExpr(n)
+	// panic("--2--")
 	p.d--
 	return n
 }
@@ -174,6 +176,7 @@ func (p *parser) skipItem(typ itemType) {
 // OrExpr ::= AndExpr | OrExpr 'or' AndExpr
 func (p *parser) parseOrExpr(n node) node {
 	opnd := p.parseAndExpr(n)
+	// panic("--3--")
 	for {
 		if !testOp(p.r, "or") {
 			break
@@ -187,6 +190,7 @@ func (p *parser) parseOrExpr(n node) node {
 // AndExpr ::= EqualityExpr	| AndExpr 'and' EqualityExpr
 func (p *parser) parseAndExpr(n node) node {
 	opnd := p.parseEqualityExpr(n)
+	// panic("--4--")
 	for {
 		if !testOp(p.r, "and") {
 			break
@@ -200,6 +204,7 @@ func (p *parser) parseAndExpr(n node) node {
 // EqualityExpr ::= RelationalExpr | EqualityExpr '=' RelationalExpr | EqualityExpr '!=' RelationalExpr
 func (p *parser) parseEqualityExpr(n node) node {
 	opnd := p.parseRelationalExpr(n)
+	// panic("--5--")
 Loop:
 	for {
 		var op string
@@ -222,6 +227,7 @@ Loop:
 //					| RelationalExpr '>=' AdditiveExpr
 func (p *parser) parseRelationalExpr(n node) node {
 	opnd := p.parseAdditiveExpr(n)
+	// panic("--6--")
 Loop:
 	for {
 		var op string
@@ -246,6 +252,7 @@ Loop:
 // AdditiveExpr	::= MultiplicativeExpr	| AdditiveExpr '+' MultiplicativeExpr | AdditiveExpr '-' MultiplicativeExpr
 func (p *parser) parseAdditiveExpr(n node) node {
 	opnd := p.parseMultiplicativeExpr(n)
+	// panic("--7--")
 Loop:
 	for {
 		var op string
@@ -267,6 +274,7 @@ Loop:
 //						| MultiplicativeExpr 'div' UnaryExpr | MultiplicativeExpr 'mod' UnaryExpr
 func (p *parser) parseMultiplicativeExpr(n node) node {
 	opnd := p.parseUnaryExpr(n)
+	// panic("--8--")
 Loop:
 	for {
 		var op string
@@ -292,6 +300,7 @@ func (p *parser) parseUnaryExpr(n node) node {
 		minus = !minus
 	}
 	opnd := p.parseUnionExpr(n)
+	// panic("--9--")
 	if minus {
 		opnd = newOperatorNode("*", opnd, newOperandNode(float64(-1)))
 	}
@@ -301,6 +310,7 @@ func (p *parser) parseUnaryExpr(n node) node {
 // 	UnionExpr ::= PathExpr | UnionExpr '|' PathExpr
 func (p *parser) parseUnionExpr(n node) node {
 	opnd := p.parsePathExpr(n)
+	// panic("--10--")
 Loop:
 	for {
 		if p.r.typ != itemUnion {
@@ -329,6 +339,7 @@ func (p *parser) parsePathExpr(n node) node {
 		}
 	} else {
 		opnd = p.parseLocationPath(nil)
+		// panic("--11--")
 	}
 	return opnd
 }
@@ -362,7 +373,9 @@ func (p *parser) parseLocationPath(n node) (opnd node) {
 	case itemSlashSlash:
 		p.next()
 		opnd = newRootNode("//")
-		opnd = p.parseRelativeLocationPath(newAxisNode("descendant-or-self", "", "", "", opnd))
+		tmp := newAxisNode("descendant-or-self", "", "", "", opnd)
+		opnd = p.parseRelativeLocationPath(tmp)
+		// panic("--12--")
 	default:
 		opnd = p.parseRelativeLocationPath(n)
 	}
@@ -385,6 +398,7 @@ Loop:
 			break Loop
 		}
 	}
+	// panic("--13--")
 	return opnd
 }
 
@@ -649,8 +663,9 @@ func (s *scanner) nextChar() bool {
 		s.curr = rune(0)
 		return false
 	}
-	s.curr = rune(s.text[s.pos])
-	s.pos++
+	size := 0
+	s.curr, size = utf8.DecodeRuneInString(s.text[s.pos:])
+	s.pos += size
 	return true
 }
 
@@ -835,8 +850,10 @@ func (s *scanner) scanName() string {
 }
 
 func isName(r rune) bool {
+	// panic("--14--")
 	return string(r) != ":" && string(r) != "/" &&
 		(unicode.Is(first, r) || unicode.Is(second, r) || string(r) == "*")
+	// return string(r) != ":" && string(r) != "/"
 }
 
 func isDigit(r rune) bool {

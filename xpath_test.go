@@ -30,6 +30,14 @@ func TestCompile(t *testing.T) {
 		t.Fatalf("/a/b/(c, .[not(c)]) should be correct but got error %s", err)
 	}
 }
+
+func TestCompile2(t *testing.T) {
+	_, err := Compile("//ul/li/@clášs")
+	if err != nil {
+		t.Fatalf("//ul/li/@clášs should be correct but got error %s", err)
+	}
+}
+
 func TestSelf(t *testing.T) {
 	testXPath(t, html, ".", "html")
 	testXPath(t, html.FirstChild, ".", "head")
