@@ -32,9 +32,9 @@ func TestCompile(t *testing.T) {
 }
 
 func TestCompile2(t *testing.T) {
-	_, err := Compile("//ul/li/@clášs")
+	_, err := Compile("//ul/li/@clášs日本語")
 	if err != nil {
-		t.Fatalf("//ul/li/@clášs should be correct but got error %s", err)
+		t.Fatalf("//ul/li/@clášs日本語 should be correct but got error %s", err)
 	}
 }
 
