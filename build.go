@@ -478,7 +478,6 @@ func build(expr string) (q query, err error) {
 		}
 	}()
 	root := parse(expr)
-	// panic("--1--")
 	b := &builder{}
 	return b.processNode(root)
 }
