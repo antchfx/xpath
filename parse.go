@@ -774,7 +774,7 @@ func (s *scanner) scanFraction() float64 {
 	)
 	for isDigit(s.curr) {
 		s.nextChar()
-		c++
+		c += utf8.RuneLen(s.curr)
 	}
 	v, err := strconv.ParseFloat(s.text[i:i+c], 64)
 	if err != nil {
@@ -790,14 +790,14 @@ func (s *scanner) scanNumber() float64 {
 	)
 	for isDigit(s.curr) {
 		s.nextChar()
-		c++
+		c += utf8.RuneLen(s.curr)
 	}
 	if s.curr == '.' {
 		s.nextChar()
-		c++
+		c += utf8.RuneLen(s.curr)
 		for isDigit(s.curr) {
 			s.nextChar()
-			c++
+			c += utf8.RuneLen(s.curr)
 		}
 	}
 	v, err := strconv.ParseFloat(s.text[i:i+c], 64)
@@ -818,7 +818,7 @@ func (s *scanner) scanString() string {
 		if !s.nextChar() {
 			panic(errors.New("xpath: scanString got unclosed string"))
 		}
-		c++
+		c += utf8.RuneLen(s.curr)
 	}
 	s.nextChar()
 	return s.text[i : i+c]
@@ -830,7 +830,7 @@ func (s *scanner) scanName() string {
 		i = s.pos - 1
 	)
 	for isName(s.curr) {
-		c++
+		c += utf8.RuneLen(s.curr)
 		if !s.nextChar() {
 			break
 		}

@@ -528,7 +528,6 @@ func (f *filterQuery) Select(t iterator) NodeNavigator {
 			return node
 		}
 		node = node.Copy()
-		//fmt.Println(node.LocalName())
 
 		t.Current().MoveTo(node)
 		if f.do(t) {
