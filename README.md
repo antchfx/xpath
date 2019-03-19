@@ -160,6 +160,9 @@ Supported Features
 Changelogs
 ===
 
+2019-03-19 
+- optimize XPath `|` operation performance. [#33](https://github.com/antchfx/xpath/issues/33). Tips: suggest split into multiple subquery if you have a lot of `|` operations.
+
 2019-01-29
 -  improvement `normalize-space` function. [#32](https://github.com/antchfx/xpath/issues/32)
 
