@@ -1,4 +1,4 @@
-module github.com/gjvnq/xparh
+module github.com/gjvnq/xpath
 
 go 1.12
 
