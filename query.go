@@ -731,7 +731,8 @@ type unionQuery struct {
 
 func (u *unionQuery) Select(t iterator) NodeNavigator {
 	if u.iterator == nil {
-		var m = make(map[uint64]NodeNavigator)
+		var list []NodeNavigator
+		var m = make(map[uint64]bool)
 		root := t.Current().Copy()
 		for {
 			node := u.Left.Select(t)
@@ -740,7 +741,8 @@ func (u *unionQuery) Select(t iterator) NodeNavigator {
 			}
 			code := getHashCode(node.Copy())
 			if _, ok := m[code]; !ok {
-				m[code] = node.Copy()
+				m[code] = true
+				list = append(list, node.Copy())
 			}
 		}
 		t.Current().MoveTo(root)
@@ -751,16 +753,11 @@ func (u *unionQuery) Select(t iterator) NodeNavigator {
 			}
 			code := getHashCode(node.Copy())
 			if _, ok := m[code]; !ok {
-				m[code] = node.Copy()
+				m[code] = true
+				list = append(list, node.Copy())
 			}
 		}
-		list := make([]NodeNavigator, len(m))
 		var i int
-		for _, v := range m {
-			list[i] = v
-			i++
-		}
-		i = 0
 		u.iterator = func() NodeNavigator {
 			if i >= len(list) {
 				return nil
