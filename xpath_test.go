@@ -157,6 +157,7 @@ func TestPosition(t *testing.T) {
 	testXPath3(t, html, "//li[1]", ul.FirstChild)
 	testXPath3(t, html, "//li[4]", ul.LastChild)
 	testXPath3(t, html, "//li[last()]", ul.LastChild)
+	testXPath2(t, html2, "//td[2]", 3)
 }
 
 func TestPredicate(t *testing.T) {

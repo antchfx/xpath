@@ -232,11 +232,14 @@ func (d *descendantQuery) Select(t iterator) NodeNavigator {
 			}
 			node = node.Copy()
 			level := 0
+			positmap := make(map[int]int)
 			first := true
 			d.iterator = func() NodeNavigator {
 				if first && d.Self {
 					first = false
 					if d.Predicate(node) {
+						d.posit = 1
+						positmap[level] = 1
 						return node
 					}
 				}
@@ -244,6 +247,7 @@ func (d *descendantQuery) Select(t iterator) NodeNavigator {
 				for {
 					if node.MoveToChild() {
 						level++
+						positmap[level] = 0
 					} else {
 						for {
 							if level == 0 {
@@ -257,6 +261,8 @@ func (d *descendantQuery) Select(t iterator) NodeNavigator {
 						}
 					}
 					if d.Predicate(node) {
+						positmap[level]++
+						d.posit = positmap[level]
 						return node
 					}
 				}
@@ -264,7 +270,6 @@ func (d *descendantQuery) Select(t iterator) NodeNavigator {
 		}
 
 		if node := d.iterator(); node != nil {
-			d.posit++
 			return node
 		}
 		d.iterator = nil
