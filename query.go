@@ -519,7 +519,14 @@ func (f *filterQuery) do(t iterator) bool {
 	case reflect.String:
 		return len(val.String()) > 0
 	case reflect.Float64:
-		pt := float64(getNodePosition(f.Input))
+		input := f.Input
+		switch v := f.Input.(type) {
+		case *filterQuery:
+			// filterQuery nested filterQuery?
+			// TODO : mergeFilterQuery
+			input = v.Input
+		}
+		pt := float64(getNodePosition(input))
 		return int(val.Float()) == int(pt)
 	default:
 		if q, ok := f.Predicate.(query); ok {
