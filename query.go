@@ -509,6 +509,7 @@ func (s *selfQuery) Clone() query {
 type filterQuery struct {
 	Input     query
 	Predicate query
+	posit     int
 }
 
 func (f *filterQuery) do(t iterator) bool {
@@ -519,15 +520,8 @@ func (f *filterQuery) do(t iterator) bool {
 	case reflect.String:
 		return len(val.String()) > 0
 	case reflect.Float64:
-		input := f.Input
-		switch v := f.Input.(type) {
-		case *filterQuery:
-			// filterQuery nested filterQuery?
-			// TODO : mergeFilterQuery
-			input = v.Input
-		}
-		pt := float64(getNodePosition(input))
-		return int(val.Float()) == int(pt)
+		pt := getNodePosition(f.Input)
+		return int(val.Float()) == pt
 	default:
 		if q, ok := f.Predicate.(query); ok {
 			return q.Select(t) != nil
@@ -536,19 +530,26 @@ func (f *filterQuery) do(t iterator) bool {
 	return false
 }
 
+func (f *filterQuery) position() int {
+	return f.posit
+}
+
 func (f *filterQuery) Select(t iterator) NodeNavigator {
+
 	for {
+
 		node := f.Input.Select(t)
 		if node == nil {
 			return node
 		}
 		node = node.Copy()
-		//fmt.Println(node.LocalName())
 
 		t.Current().MoveTo(node)
 		if f.do(t) {
+			f.posit++
 			return node
 		}
+		f.posit = 0
 	}
 }
 
