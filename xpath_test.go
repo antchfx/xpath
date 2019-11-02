@@ -30,6 +30,22 @@ func TestCompile(t *testing.T) {
 		t.Fatalf("/a/b/(c, .[not(c)]) should be correct but got error %s", err)
 	}
 }
+
+func TestMustCompile(t *testing.T) {
+	expr := MustCompile("//")
+	if expr == nil {
+		t.Fatal("// should be compiled but got nil object")
+	}
+
+	if wanted := (nopQuery{}); expr.q != wanted {
+		t.Fatalf("wanted nopQuery object but got %s", expr)
+	}
+	iter := expr.Select(createNavigator(html))
+	if iter.MoveNext() {
+		t.Fatal("should be an empty node list but got one")
+	}
+}
+
 func TestSelf(t *testing.T) {
 	testXPath(t, html, ".", "html")
 	testXPath(t, html.FirstChild, ".", "head")

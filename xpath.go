@@ -151,7 +151,7 @@ func Compile(expr string) (*Expr, error) {
 func MustCompile(expr string) *Expr {
 	exp, err := Compile(expr)
 	if err != nil {
-		return nil
+		return &Expr{s: expr, q: nopQuery{}}
 	}
 	return exp
 }

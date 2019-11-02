@@ -22,6 +22,17 @@ type query interface {
 	Clone() query
 }
 
+// nopQuery is an empty query that always return nil for any query.
+type nopQuery struct {
+	query
+}
+
+func (nopQuery) Select(iterator) NodeNavigator { return nil }
+
+func (nopQuery) Evaluate(iterator) interface{} { return nil }
+
+func (nopQuery) Clone() query { return nopQuery{} }
+
 // contextQuery is returns current node on the iterator object query.
 type contextQuery struct {
 	count int
