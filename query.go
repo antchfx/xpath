@@ -391,6 +391,7 @@ func (f *followingQuery) position() int {
 // precedingQuery is an XPath preceding node query.(preceding::*)
 type precedingQuery struct {
 	iterator  func() NodeNavigator
+	posit     int
 	Input     query
 	Sibling   bool // The matching sibling node of current node.
 	Predicate func(NodeNavigator) bool
@@ -399,6 +400,7 @@ type precedingQuery struct {
 func (p *precedingQuery) Select(t iterator) NodeNavigator {
 	for {
 		if p.iterator == nil {
+			p.posit = 0
 			node := p.Input.Select(t)
 			if node == nil {
 				return nil
@@ -411,6 +413,7 @@ func (p *precedingQuery) Select(t iterator) NodeNavigator {
 							return nil
 						}
 						if p.Predicate(node) {
+							p.posit++
 							return node
 						}
 					}
@@ -424,6 +427,7 @@ func (p *precedingQuery) Select(t iterator) NodeNavigator {
 								if !node.MoveToParent() {
 									return nil
 								}
+								p.posit = 0
 							}
 							q = &descendantQuery{
 								Self:      true,
@@ -433,6 +437,7 @@ func (p *precedingQuery) Select(t iterator) NodeNavigator {
 							t.Current().MoveTo(node)
 						}
 						if node := q.Select(t); node != nil {
+							p.posit++
 							return node
 						}
 						q = nil
@@ -458,6 +463,10 @@ func (p *precedingQuery) Test(n NodeNavigator) bool {
 
 func (p *precedingQuery) Clone() query {
 	return &precedingQuery{Input: p.Input.Clone(), Sibling: p.Sibling, Predicate: p.Predicate}
+}
+
+func (p *precedingQuery) position() int {
+	return p.posit
 }
 
 // parentQuery is an XPath parent node query.(parent::*)
