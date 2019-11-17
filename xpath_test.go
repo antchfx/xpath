@@ -269,6 +269,10 @@ func TestFunction(t *testing.T) {
 		`translate('The quick brown fox.', 'brown', 'red')`,
 		"The quick red fdx.",
 	)
+	// preceding-sibling::*
+	testXPath3(t, html, "//li[last()]/preceding-sibling::*[2]", selectNode(html, "//li[position()=2]"))
+	// preceding::
+	testXPath3(t, html, "//li/preceding::*[1]", selectNode(html, "//h1"))
 }
 
 func TestPanic(t *testing.T) {
