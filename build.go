@@ -243,6 +243,25 @@ func (b *builder) processFunctionNode(root *functionNode) (query, error) {
 			return nil, err
 		}
 		qyOutput = &functionQuery{Input: argQuery, Func: normalizespaceFunc}
+	case "replace":
+		//replace( string , string, string )
+		if len(root.Args) != 3 {
+			return nil, errors.New("xpath: replace function must have three parameters")
+		}
+		var (
+			arg1, arg2, arg3 query
+			err              error
+		)
+		if arg1, err = b.processNode(root.Args[0]); err != nil {
+			return nil, err
+		}
+		if arg2, err = b.processNode(root.Args[1]); err != nil {
+			return nil, err
+		}
+		if arg3, err = b.processNode(root.Args[2]); err != nil {
+			return nil, err
+		}
+		qyOutput = &functionQuery{Input: b.firstInput, Func: replaceFunc(arg1, arg2, arg3)}
 	case "translate":
 		//translate( string , string, string )
 		if len(root.Args) != 3 {

@@ -457,6 +457,17 @@ func translateFunc(arg1, arg2, arg3 query) func(query, iterator) interface{} {
 	}
 }
 
+// replaceFunc is XPath functions replace() function returns a replaced string.
+func replaceFunc(arg1, arg2, arg3 query) func(query, iterator) interface{} {
+	return func(q query, t iterator) interface{} {
+		str := asString(t, arg1.Evaluate(t))
+		src := asString(t, arg2.Evaluate(t))
+		dst := asString(t, arg3.Evaluate(t))
+
+		return strings.Replace(str, src, dst, -1)
+	}
+}
+
 // notFunc is XPATH functions not(expression) function operation.
 func notFunc(q query, t iterator) interface{} {
 	switch v := q.Evaluate(t).(type) {

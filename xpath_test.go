@@ -261,6 +261,7 @@ func TestFunction(t *testing.T) {
 	testEval(t, html, `substring-after('aa-bb','a')`, "a-bb")
 	testEval(t, html, `substring-after('aa-bb','b')`, "b")
 	testEval(t, html, `substring-after('aa-bb','q')`, "")
+	testEval(t, html, `replace('aa-bb-cc','bb','ee')`, "aa-ee-cc")
 	testEval(t, html,
 		`translate('The quick brown fox.', 'abcdefghijklmnopqrstuvwxyz', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ')`,
 		"THE QUICK BROWN FOX.",
