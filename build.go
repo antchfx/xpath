@@ -290,7 +290,22 @@ func (b *builder) processFunctionNode(root *functionNode) (query, error) {
 			return nil, err
 		}
 		qyOutput = &functionQuery{Input: argQuery, Func: notFunc}
-	case "name", "local-name", "namespace-uri":
+	case "namespace-uri":
+		if len(root.Args) > 1 {
+			return nil, fmt.Errorf("xpath: %s function must have at most one parameter", root.FuncName)
+		}
+		var (
+			arg query
+			err error
+		)
+		if len(root.Args) == 1 {
+			arg, err = b.processNode(root.Args[0])
+			if err != nil {
+				return nil, err
+			}
+		}
+		qyOutput = &functionQuery{Input: b.firstInput, Func: namespaceFunc(arg)}
+	case "name", "local-name":
 		inp := b.firstInput
 		if len(root.Args) > 1 {
 			return nil, fmt.Errorf("xpath: %s function must have at most one parameter", root.FuncName)
@@ -308,8 +323,6 @@ func (b *builder) processFunctionNode(root *functionNode) (query, error) {
 			f.Func = nameFunc
 		case "local-name":
 			f.Func = localNameFunc
-		case "namespace-uri":
-			f.Func = namespaceFunc
 		}
 		qyOutput = f
 	case "true", "false":

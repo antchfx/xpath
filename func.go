@@ -156,20 +156,28 @@ func localNameFunc(q query, t iterator) interface{} {
 }
 
 // namespaceFunc is a XPath functions namespace-uri([node-set]).
-func namespaceFunc(q query, t iterator) interface{} {
-	v := q.Select(t)
-	if v == nil {
-		return ""
+func namespaceFunc(arg query) func(query, iterator) interface{} {
+	return func(q query, t iterator) interface{} {
+		var v NodeNavigator
+		if arg == nil {
+			v = t.Current()
+		} else {
+			// Get the first node in the node-set if specified.
+			v = arg.Select(t)
+			if v == nil {
+				return ""
+			}
+		}
+		// fix about namespace-uri() bug: https://github.com/antchfx/xmlquery/issues/22
+		// TODO: In the next version, add NamespaceURL() to the NodeNavigator interface.
+		type namespaceURL interface {
+			NamespaceURL() string
+		}
+		if f, ok := v.(namespaceURL); ok {
+			return f.NamespaceURL()
+		}
+		return v.Prefix()
 	}
-	// fix about namespace-uri() bug: https://github.com/antchfx/xmlquery/issues/22
-	// TODO: In the next version, add NamespaceURL() to the NodeNavigator interface.
-	type namespaceURL interface {
-		NamespaceURL() string
-	}
-	if f, ok := v.(namespaceURL); ok {
-		return f.NamespaceURL()
-	}
-	return v.Prefix()
 }
 
 func asBool(t iterator, v interface{}) bool {
