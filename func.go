@@ -134,25 +134,39 @@ func roundFunc(q query, t iterator) interface{} {
 }
 
 // nameFunc is a XPath functions name([node-set]).
-func nameFunc(q query, t iterator) interface{} {
-	v := q.Select(t)
-	if v == nil {
-		return ""
+func nameFunc(arg query) func(query, iterator) interface{} {
+	return func(q query, t iterator) interface{} {
+		var v NodeNavigator
+		if arg == nil {
+			v = t.Current()
+		} else {
+			v = arg.Select(t)
+			if v == nil {
+				return ""
+			}
+		}
+		ns := v.Prefix()
+		if ns == "" {
+			return v.LocalName()
+		}
+		return ns + ":" + v.LocalName()
 	}
-	ns := v.Prefix()
-	if ns == "" {
-		return v.LocalName()
-	}
-	return ns + ":" + v.LocalName()
 }
 
 // localNameFunc is a XPath functions local-name([node-set]).
-func localNameFunc(q query, t iterator) interface{} {
-	v := q.Select(t)
-	if v == nil {
-		return ""
+func localNameFunc(arg query) func(query, iterator) interface{} {
+	return func(q query, t iterator) interface{} {
+		var v NodeNavigator
+		if arg == nil {
+			v = t.Current()
+		} else {
+			v = arg.Select(t)
+			if v == nil {
+				return ""
+			}
+		}
+		return v.LocalName()
 	}
-	return v.LocalName()
 }
 
 // namespaceFunc is a XPath functions namespace-uri([node-set]).
