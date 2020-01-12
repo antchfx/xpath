@@ -77,7 +77,18 @@ func (b *builder) processAxisNode(root *axisNode) (query, error) {
 				} else {
 					qyGrandInput = &contextQuery{}
 				}
-				qyOutput = &descendantQuery{Input: qyGrandInput, Predicate: predicate, Self: true}
+				// fix #20: https://github.com/antchfx/htmlquery/issues/20
+				filter := func(n NodeNavigator) bool {
+					v := predicate(n)
+					switch root.Prop {
+					case "text":
+						v = v && n.NodeType() == TextNode
+					case "comment":
+						v = v && n.NodeType() == CommentNode
+					}
+					return v
+				}
+				qyOutput = &descendantQuery{Input: qyGrandInput, Predicate: filter, Self: true}
 				return qyOutput, nil
 			}
 		}
