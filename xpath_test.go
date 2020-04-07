@@ -276,6 +276,29 @@ func TestFunction(t *testing.T) {
 	testXPath3(t, html, "//li/preceding::*[1]", selectNode(html, "//h1"))
 }
 
+func TestTransformFunctionReverse(t *testing.T) {
+	nodes := selectNodes(html, "reverse(//li)")
+	expectedReversedNodeValues := []string { "", "login", "about", "Home" }
+	if len(nodes) != len(expectedReversedNodeValues) {
+		t.Fatalf("reverse(//li) should return %d <li> nodes", len(expectedReversedNodeValues))
+	}
+	for i := 0; i < len(expectedReversedNodeValues); i++ {
+		if nodes[i].Value() != expectedReversedNodeValues[i] {
+			t.Fatalf("reverse(//li)[%d].Value() should be '%s', instead, got '%s'",
+				i, expectedReversedNodeValues[i], nodes[i].Value())
+		}
+	}
+
+	// Although this xpath itself doesn't make much sense, it does exercise the call path to provide coverage
+	// for transformFunctionQuery.Evaluate()
+	testXPath2(t, html, "//h1[reverse(.) = reverse(.)]", 1)
+
+	// Test reverse() parsing error: missing node-sets argument.
+	assertPanic(t, func() { testXPath2(t, html, "reverse()", 0) })
+	// Test reverse() parsing error: invalid node-sets argument.
+	assertPanic(t, func() { testXPath2(t, html, "reverse(concat())", 0) })
+}
+
 func TestPanic(t *testing.T) {
 	// starts-with
 	assertPanic(t, func() { testXPath(t, html, "//*[starts-with(0, 0)]", "") })

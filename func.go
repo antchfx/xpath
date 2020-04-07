@@ -531,3 +531,23 @@ func functionArgs(q query) query {
 	}
 	return q.Clone()
 }
+
+func reverseFunc(q query, t iterator) func() NodeNavigator {
+	var list []NodeNavigator
+	for {
+		node := q.Select(t)
+		if node == nil {
+			break
+		}
+		list = append(list, node.Copy())
+	}
+	i := len(list)
+	return func() NodeNavigator {
+		if i <= 0 {
+			return nil
+		}
+		i--
+		node := list[i]
+		return node
+	}
+}
