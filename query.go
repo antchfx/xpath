@@ -590,8 +590,9 @@ func (f *filterQuery) Clone() query {
 	return &filterQuery{Input: f.Input.Clone(), Predicate: f.Predicate.Clone()}
 }
 
-// functionQuery is an XPath function that call a function to returns
-// value of current NodeNavigator node.
+// functionQuery is an XPath function that returns a computed value for
+// the Evaluate call of the current NodeNavigator node. Select call isn't
+// applicable for functionQuery.
 type functionQuery struct {
 	Input query                             // Node Set
 	Func  func(query, iterator) interface{} // The xpath function.
@@ -609,6 +610,34 @@ func (f *functionQuery) Evaluate(t iterator) interface{} {
 
 func (f *functionQuery) Clone() query {
 	return &functionQuery{Input: f.Input.Clone(), Func: f.Func}
+}
+
+// transformFunctionQuery diffs from functionQuery where the latter computes a scalar
+// value (number,string,boolean) for the current NodeNavigator node while the former
+// (transformFunctionQuery) performs a mapping or transform of the current NodeNavigator
+// and returns a new NodeNavigator. It is used for non-scalar XPath functions such as
+// reverse(), remove(), subsequence(), unordered(), etc.
+type transformFunctionQuery struct {
+	Input    query
+	Func     func(query, iterator) func() NodeNavigator
+	iterator func() NodeNavigator
+}
+
+func (f *transformFunctionQuery) Select(t iterator) NodeNavigator {
+	if f.iterator == nil {
+		f.iterator = f.Func(f.Input, t)
+	}
+	return f.iterator()
+}
+
+func (f *transformFunctionQuery) Evaluate(t iterator) interface{} {
+	f.Input.Evaluate(t)
+	f.iterator = nil
+	return f
+}
+
+func (f *transformFunctionQuery) Clone() query {
+	return &transformFunctionQuery{Input: f.Input.Clone(), Func: f.Func}
 }
 
 // constantQuery is an XPath constant operand.

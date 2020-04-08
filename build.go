@@ -409,6 +409,15 @@ func (b *builder) processFunctionNode(root *functionNode) (query, error) {
 			args = append(args, q)
 		}
 		qyOutput = &functionQuery{Input: b.firstInput, Func: concatFunc(args...)}
+	case "reverse":
+		if len(root.Args) == 0 {
+			return nil, fmt.Errorf("xpath: reverse(node-sets) function must with have parameters node-sets")
+		}
+		argQuery, err := b.processNode(root.Args[0])
+		if err != nil {
+			return nil, err
+		}
+		qyOutput = &transformFunctionQuery{Input: argQuery, Func: reverseFunc}
 	default:
 		return nil, fmt.Errorf("not yet support this function %s()", root.FuncName)
 	}
