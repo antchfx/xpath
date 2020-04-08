@@ -145,6 +145,7 @@ Supported Features
 `number()`| ✓ |
 `position()`| ✓ |
 `replace()`| ✓ |
+`reverse()`| ✓ |
 `round()`| ✓ |
 `starts-with()`| ✓ |
 `string()`| ✓ |
