@@ -856,8 +856,18 @@ func getHashCode(n NodeNavigator) uint64 {
 	switch n.NodeType() {
 	case AttributeNode, TextNode, CommentNode:
 		sb.WriteString(fmt.Sprintf("%s=%s", n.LocalName(), n.Value()))
-		if n.MoveToParent() {
-			sb.WriteString(n.LocalName())
+		// https://github.com/antchfx/htmlquery/issues/25
+		d := 1
+		for n.MoveToPrevious() {
+			d++
+		}
+		sb.WriteString(fmt.Sprintf("-%d", d))
+		for n.MoveToParent() {
+			d = 1
+			for n.MoveToPrevious() {
+				d++
+			}
+			sb.WriteString(fmt.Sprintf("-%d", d))
 		}
 	case ElementNode:
 		sb.WriteString(n.Prefix() + n.LocalName())
