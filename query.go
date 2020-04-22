@@ -227,6 +227,7 @@ func (c *childQuery) position() int {
 type descendantQuery struct {
 	iterator func() NodeNavigator
 	posit    int
+	level    int
 
 	Self      bool
 	Input     query
@@ -242,7 +243,7 @@ func (d *descendantQuery) Select(t iterator) NodeNavigator {
 				return nil
 			}
 			node = node.Copy()
-			level := 0
+			d.level = 0
 			positmap := make(map[int]int)
 			first := true
 			d.iterator = func() NodeNavigator {
@@ -250,30 +251,30 @@ func (d *descendantQuery) Select(t iterator) NodeNavigator {
 					first = false
 					if d.Predicate(node) {
 						d.posit = 1
-						positmap[level] = 1
+						positmap[d.level] = 1
 						return node
 					}
 				}
 
 				for {
 					if node.MoveToChild() {
-						level++
-						positmap[level] = 0
+						d.level = d.level + 1
+						positmap[d.level] = 0
 					} else {
 						for {
-							if level == 0 {
+							if d.level == 0 {
 								return nil
 							}
 							if node.MoveToNext() {
 								break
 							}
 							node.MoveToParent()
-							level--
+							d.level = d.level - 1
 						}
 					}
 					if d.Predicate(node) {
-						positmap[level]++
-						d.posit = positmap[level]
+						positmap[d.level]++
+						d.posit = positmap[d.level]
 						return node
 					}
 				}
@@ -300,6 +301,10 @@ func (d *descendantQuery) Test(n NodeNavigator) bool {
 // position returns a position of current NodeNavigator.
 func (d *descendantQuery) position() int {
 	return d.posit
+}
+
+func (d *descendantQuery) depth() int {
+	return d.level
 }
 
 func (d *descendantQuery) Clone() query {
@@ -538,6 +543,7 @@ type filterQuery struct {
 	Input     query
 	Predicate query
 	posit     int
+	positmap  map[int]int
 }
 
 func (f *filterQuery) do(t iterator) bool {
@@ -563,7 +569,9 @@ func (f *filterQuery) position() int {
 }
 
 func (f *filterQuery) Select(t iterator) NodeNavigator {
-
+	if f.positmap == nil {
+		f.positmap = make(map[int]int)
+	}
 	for {
 
 		node := f.Input.Select(t)
@@ -574,10 +582,13 @@ func (f *filterQuery) Select(t iterator) NodeNavigator {
 
 		t.Current().MoveTo(node)
 		if f.do(t) {
-			f.posit++
+			// fix https://github.com/antchfx/htmlquery/issues/26
+			// Calculate and keep the each of matching node's position in the same depth.
+			level := getNodeDepth(f.Input)
+			f.positmap[level]++
+			f.posit = f.positmap[level]
 			return node
 		}
-		f.posit = 0
 	}
 }
 
@@ -898,4 +909,14 @@ func getNodePosition(q query) int {
 		return count.position()
 	}
 	return 1
+}
+
+func getNodeDepth(q query) int {
+	type Depth interface {
+		depth() int
+	}
+	if count, ok := q.(Depth); ok {
+		return count.depth()
+	}
+	return 0
 }
