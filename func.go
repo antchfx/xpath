@@ -4,10 +4,15 @@ import (
 	"errors"
 	"fmt"
 	"math"
-	"regexp"
 	"strconv"
 	"strings"
+	"sync"
+	"unicode"
 )
+
+var builderPool = sync.Pool{New: func() interface{} {
+	return &strings.Builder{}
+}}
 
 // The XPath function list.
 
@@ -201,7 +206,7 @@ func asBool(t iterator, v interface{}) bool {
 	case *NodeIterator:
 		return v.MoveNext()
 	case bool:
-		return bool(v)
+		return v
 	case float64:
 		return v != 0
 	case string:
@@ -338,11 +343,6 @@ func containsFunc(arg1, arg2 query) func(query, iterator) interface{} {
 	}
 }
 
-var (
-	regnewline  = regexp.MustCompile(`[\r\n\t]`)
-	regseqspace = regexp.MustCompile(`\s{2,}`)
-)
-
 // normalizespaceFunc is XPath functions normalize-space(string?)
 func normalizespaceFunc(q query, t iterator) interface{} {
 	var m string
@@ -356,10 +356,26 @@ func normalizespaceFunc(q query, t iterator) interface{} {
 		}
 		m = node.Value()
 	}
-	m = strings.TrimSpace(m)
-	m = regnewline.ReplaceAllString(m, " ")
-	m = regseqspace.ReplaceAllString(m, " ")
-	return m
+	var b = builderPool.Get().(*strings.Builder)
+	b.Grow(len(m))
+
+	runeStr := []rune(strings.TrimSpace(m))
+	l := len(runeStr)
+	for i := range runeStr {
+		r := runeStr[i]
+		isSpace := unicode.IsSpace(r)
+		if !(isSpace && (i+1 < l && unicode.IsSpace(runeStr[i+1]))) {
+			if isSpace {
+				r = ' '
+			}
+			b.WriteRune(r)
+		}
+	}
+	result := b.String()
+	b.Reset()
+	builderPool.Put(b)
+
+	return result
 }
 
 // substringFunc is XPath functions substring function returns a part of a given string.
@@ -466,7 +482,7 @@ func translateFunc(arg1, arg2, arg3 query) func(query, iterator) interface{} {
 		src := asString(t, functionArgs(arg2).Evaluate(t))
 		dst := asString(t, functionArgs(arg3).Evaluate(t))
 
-		var replace []string
+		replace := make([]string, 0, len(src))
 		for i, s := range src {
 			d := ""
 			if i < len(dst) {
@@ -507,20 +523,25 @@ func notFunc(q query, t iterator) interface{} {
 // concat( string1 , string2 [, stringn]* )
 func concatFunc(args ...query) func(query, iterator) interface{} {
 	return func(q query, t iterator) interface{} {
-		var a []string
+		b := builderPool.Get().(*strings.Builder)
 		for _, v := range args {
 			v = functionArgs(v)
+
 			switch v := v.Evaluate(t).(type) {
 			case string:
-				a = append(a, v)
+				b.WriteString(v)
 			case query:
 				node := v.Select(t)
 				if node != nil {
-					a = append(a, node.Value())
+					b.WriteString(node.Value())
 				}
 			}
 		}
-		return strings.Join(a, "")
+		result := b.String()
+		b.Reset()
+		builderPool.Put(b)
+
+		return result
 	}
 }
 
