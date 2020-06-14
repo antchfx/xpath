@@ -278,7 +278,7 @@ func TestFunction(t *testing.T) {
 
 func TestTransformFunctionReverse(t *testing.T) {
 	nodes := selectNodes(html, "reverse(//li)")
-	expectedReversedNodeValues := []string { "", "login", "about", "Home" }
+	expectedReversedNodeValues := []string{"", "login", "about", "Home"}
 	if len(nodes) != len(expectedReversedNodeValues) {
 		t.Fatalf("reverse(//li) should return %d <li> nodes", len(expectedReversedNodeValues))
 	}
