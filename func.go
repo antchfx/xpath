@@ -10,8 +10,18 @@ import (
 	"unicode"
 )
 
+// Defined an interface of stringBuilder that compatible with 
+// strings.Builder(go 1.10) and bytes.Buffer(< go 1.10)
+type stringBuilder interface {
+	WriteRune(r rune) (n int, err error)
+	WriteString(s string) (int, error)
+	Reset()
+	Grow(n int)
+	String() string
+}
+
 var builderPool = sync.Pool{New: func() interface{} {
-	return &strings.Builder{}
+	return newStringBuilder()
 }}
 
 // The XPath function list.
@@ -357,7 +367,7 @@ func normalizespaceFunc(q query, t iterator) interface{} {
 		}
 		m = node.Value()
 	}
-	var b = builderPool.Get().(*strings.Builder)
+	var b = builderPool.Get().(stringBuilder)
 	b.Grow(len(m))
 
 	runeStr := []rune(strings.TrimSpace(m))
@@ -524,7 +534,7 @@ func notFunc(q query, t iterator) interface{} {
 // concat( string1 , string2 [, stringn]* )
 func concatFunc(args ...query) func(query, iterator) interface{} {
 	return func(q query, t iterator) interface{} {
-		b := builderPool.Get().(*strings.Builder)
+		b := builderPool.Get().(stringBuilder)
 		for _, v := range args {
 			v = functionArgs(v)
 
