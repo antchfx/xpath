@@ -435,13 +435,15 @@ func (b *builder) processOperatorNode(root *operatorNode) (query, error) {
 	}
 	var qyOutput query
 	switch root.Op {
-	case "+", "-", "div", "mod": // Numeric operator
+	case "+", "-", "*", "div", "mod": // Numeric operator
 		var exprFunc func(interface{}, interface{}) interface{}
 		switch root.Op {
 		case "+":
 			exprFunc = plusFunc
 		case "-":
 			exprFunc = minusFunc
+		case "*":
+			exprFunc = mulFunc
 		case "div":
 			exprFunc = divFunc
 		case "mod":
