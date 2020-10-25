@@ -156,7 +156,7 @@ func nameFunc(arg query) func(query, iterator) interface{} {
 		if arg == nil {
 			v = t.Current()
 		} else {
-			v = arg.Select(t)
+			v = arg.Clone().Select(t)
 			if v == nil {
 				return ""
 			}
@@ -176,7 +176,7 @@ func localNameFunc(arg query) func(query, iterator) interface{} {
 		if arg == nil {
 			v = t.Current()
 		} else {
-			v = arg.Select(t)
+			v = arg.Clone().Select(t)
 			if v == nil {
 				return ""
 			}
@@ -193,7 +193,7 @@ func namespaceFunc(arg query) func(query, iterator) interface{} {
 			v = t.Current()
 		} else {
 			// Get the first node in the node-set if specified.
-			v = arg.Select(t)
+			v = arg.Clone().Select(t)
 			if v == nil {
 				return ""
 			}
