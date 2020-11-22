@@ -11,6 +11,14 @@ const (
 	defaultCap = 65536
 )
 
+// The reason we're building a simple capacity-resetting loading cache (when capacity reached) instead of using
+// something like github.com/hashicorp/golang-lru is primarily due to (not wanting to create) external dependency.
+// Currently this library has 0 external dep (other than go sdk), and supports go 1.6, 1.9, and 1.10 (and later).
+// Creating external lib dependencies (plus their transitive dependencies) would make things hard if not impossible.
+// We expect under most circumstances, the defaultCap is big enough for any long running services that use this
+// library if their xpath regexp cardinality is low. However, in extreme cases when the capacity is reached, we
+// simply reset the cache, taking a small subsequent perf hit (next to nothing considering amortization) in trade
+// of more complex and less performant LRU type of construct.
 type loadingCache struct {
 	sync.RWMutex
 	cap   int
