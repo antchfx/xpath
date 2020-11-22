@@ -10,7 +10,7 @@ import (
 	"unicode"
 )
 
-// Defined an interface of stringBuilder that compatible with 
+// Defined an interface of stringBuilder that compatible with
 // strings.Builder(go 1.10) and bytes.Buffer(< go 1.10)
 type stringBuilder interface {
 	WriteRune(r rune) (n int, err error)
@@ -351,6 +351,35 @@ func containsFunc(arg1, arg2 query) func(query, iterator) interface{} {
 		}
 
 		return strings.Contains(m, n)
+	}
+}
+
+// matchesFunc is an XPath function that tests a given string against a regexp pattern.
+// Note: does not support https://www.w3.org/TR/xpath-functions-31/#func-matches 3rd optional `flags` argument; if
+// needed, directly put flags in the regexp pattern, such as `(?i)^pattern$` for `i` flag.
+func matchesFunc(arg1, arg2 query) func(query, iterator) interface{} {
+	return func(q query, t iterator) interface{} {
+		var s string
+		switch typ := functionArgs(arg1).Evaluate(t).(type) {
+		case string:
+			s = typ
+		case query:
+			node := typ.Select(t)
+			if node == nil {
+				return ""
+			}
+			s = node.Value()
+		}
+		var pattern string
+		var ok bool
+		if pattern, ok = functionArgs(arg2).Evaluate(t).(string); !ok {
+			panic(errors.New("matches() function second argument type must be string"))
+		}
+		re, err := getRegexp(pattern)
+		if err != nil {
+			panic(fmt.Errorf("matches() function second argument is not a valid regexp pattern, err: %s", err.Error()))
+		}
+		return re.MatchString(s)
 	}
 }
 
