@@ -354,9 +354,9 @@ func containsFunc(arg1, arg2 query) func(query, iterator) interface{} {
 	}
 }
 
-// matchesFunc is an XPath function matches that tests a given string against a regexp pattern.
-// Note: not support https://www.w3.org/TR/xpath-functions-31/#func-matches 3rd optional flags argument; if needed
-// directly put the flags in pattern, such as 'i' (case-insensitive) by `(?i)^your pattern$`
+// matchesFunc is an XPath function that tests a given string against a regexp pattern.
+// Note: does not support https://www.w3.org/TR/xpath-functions-31/#func-matches 3rd optional `flags` argument; if
+// needed, directly put flags in the regexp pattern, such as `(?i)^pattern$` for `i` flag.
 func matchesFunc(arg1, arg2 query) func(query, iterator) interface{} {
 	return func(q query, t iterator) interface{} {
 		var s string
