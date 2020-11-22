@@ -225,8 +225,9 @@ func TestFunction(t *testing.T) {
 	testXPath(t, html, "//*[starts-with(name(),'h1')]", "h1")
 	testXPath(t, html, "//*[ends-with(name(),'itle')]", "title") // Head title
 	testXPath2(t, html, "//*[contains(@href,'a')]", 2)
-	testXPath2(t, html, "//*[starts-with(@href,'/a')]", 2) // a links: `/account`,`/about`
-	testXPath2(t, html, "//*[ends-with(@href,'t')]", 2)    // a links: `/account`,`/about`
+	testXPath2(t, html, "//*[starts-with(@href,'/a')]", 2)            // a links: `/account`,`/about`
+	testXPath2(t, html, "//*[ends-with(@href,'t')]", 2)               // a links: `/account`,`/about`
+	testXPath2(t, html, "//*[matches(@href,'(?i)^.*OU[A-Z]?T$')]", 2) // a links: `/account`,`/about`. Note use of `(?i)`
 	testXPath3(t, html, "//h1[normalize-space(text())='This is a H1']", selectNode(html, "//h1"))
 	testXPath3(t, html, "//title[substring(.,1)='Hello']", selectNode(html, "//title"))
 	testXPath3(t, html, "//title[substring(text(),1,4)='Hell']", selectNode(html, "//title"))
@@ -309,6 +310,12 @@ func TestPanic(t *testing.T) {
 	// contains
 	assertPanic(t, func() { testXPath2(t, html, "//*[contains(0, 0)]", 0) })
 	assertPanic(t, func() { testXPath2(t, html, "//*[contains(@href, 0)]", 0) })
+	// matches
+	assertPanic(t, func() { testXPath2(t, html, "//*[matches()]", 0) })                   // arg len check failure
+	assertPanic(t, func() { testXPath2(t, html, "//*[matches(substring(), 0)]", 0) })     // first arg processing failure
+	assertPanic(t, func() { testXPath2(t, html, "//*[matches(@href, substring())]", 0) }) // second arg processing failure
+	assertPanic(t, func() { testXPath2(t, html, "//*[matches(@href, 0)]", 0) })           // second arg not string
+	assertPanic(t, func() { testXPath2(t, html, "//*[matches(@href, '[invalid')]", 0) })  // second arg invalid regexp
 	// sum
 	assertPanic(t, func() { testXPath3(t, html, "//title[sum('Hello') = 0]", nil) })
 	// substring
@@ -317,15 +324,6 @@ func TestPanic(t *testing.T) {
 	assertPanic(t, func() { testXPath3(t, html, "//title[substring(.,4,4)=0]", nil) })
 	//assertPanic(t, func() { testXPath2(t, html, "//title[substring(child::*,0) = '']", 0) }) // Here substring return boolen (false), should it?
 
-}
-
-func assertPanic(t *testing.T, f func()) {
-	defer func() {
-		if r := recover(); r == nil {
-			t.Errorf("The code did not panic")
-		}
-	}()
-	f()
 }
 
 func TestEvaluate(t *testing.T) {

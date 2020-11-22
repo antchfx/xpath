@@ -1,26 +1,24 @@
-package xpath_test
+package xpath
 
 import (
 	"fmt"
-
-	"github.com/antchfx/xpath"
 )
 
 // XPath package example.
 func Example() {
-	expr, err := xpath.Compile("count(//book)")
+	expr, err := Compile("count(//book)")
 	if err != nil {
 		panic(err)
 	}
-	var root xpath.NodeNavigator
+	var root NodeNavigator
 	// using Evaluate() method
 	val := expr.Evaluate(root) // it returns float64 type
 	fmt.Println(val.(float64))
 
 	// using Evaluate() method
-	expr = xpath.MustCompile("//book")
+	expr = MustCompile("//book")
 	val = expr.Evaluate(root) // it returns NodeIterator type.
-	iter := val.(*xpath.NodeIterator)
+	iter := val.(*NodeIterator)
 	for iter.MoveNext() {
 		fmt.Println(iter.Current().Value())
 	}
