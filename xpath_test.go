@@ -29,6 +29,14 @@ func TestCompile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("/a/b/(c, .[not(c)]) should be correct but got error %s", err)
 	}
+	_, err = Compile("if (a[id]=1) then /a else /b")
+	if err != nil {
+		t.Fatalf("if (a[id]=1) then /a else /b should be correct but got error %s", err)
+	}
+	_, err = Compile("if (a[id]=1) then concat('1','2') else false()")
+	if err != nil {
+		t.Fatalf("if (a[id]=1) then concat('1','2') else false()should be correct but got error %s", err)
+	}
 }
 
 func TestMustCompile(t *testing.T) {

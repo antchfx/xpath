@@ -439,6 +439,23 @@ func (b *builder) processFunctionNode(root *functionNode) (query, error) {
 	return qyOutput, nil
 }
 
+func (b *builder) processIfNode(root *ifNode) (query, error) {
+	testExpr, err := b.processNode(root.TestExpr)
+	if err != nil {
+		return nil, err
+	}
+	thenExpr, err := b.processNode(root.ThenExpr)
+	if err != nil {
+		return nil, err
+	}
+	elseExpr, err := b.processNode(root.ElseExpr)
+	if err != nil {
+		return nil, err
+	}
+	qyOutput := &ifQuery{TestExpr: testExpr, ThenExpr: thenExpr, ElseExpr: elseExpr}
+	return qyOutput, nil
+}
+
 func (b *builder) processOperatorNode(root *operatorNode) (query, error) {
 	left, err := b.processNode(root.Left)
 	if err != nil {
@@ -515,6 +532,8 @@ func (b *builder) processNode(root node) (q query, err error) {
 		q, err = b.processFunctionNode(root.(*functionNode))
 	case nodeOperator:
 		q, err = b.processOperatorNode(root.(*operatorNode))
+	case nodeIf:
+		q, err = b.processIfNode(root.(*ifNode))
 	}
 	return
 }

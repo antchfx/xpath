@@ -863,6 +863,35 @@ func (u *unionQuery) Clone() query {
 	return &unionQuery{Left: u.Left.Clone(), Right: u.Right.Clone()}
 }
 
+type ifQuery struct {
+	TestExpr, ThenExpr, ElseExpr query
+}
+
+func (b *ifQuery) Select(t iterator) NodeNavigator {
+
+	m := b.TestExpr.Evaluate(t)
+	pass := asBool(t, m)
+	if pass {
+		return b.ThenExpr.Select(t)
+	} else {
+		return b.ElseExpr.Select(t)
+	}
+}
+
+func (b *ifQuery) Evaluate(t iterator) interface{} {
+	m := b.TestExpr.Evaluate(t)
+	pass := asBool(t, m)
+	if pass {
+		return b.ThenExpr.Evaluate(t)
+	} else {
+		return b.ElseExpr.Evaluate(t)
+	}
+}
+
+func (b *ifQuery) Clone() query {
+	return nil
+}
+
 func getHashCode(n NodeNavigator) uint64 {
 	var sb bytes.Buffer
 	switch n.NodeType() {

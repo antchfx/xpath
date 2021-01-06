@@ -43,7 +43,17 @@ const (
 	itemNumber                     // Number constant
 	itemAxe                        // Axe (like child::)
 	itemEOF                        // END
+	itemIf                         // if
+	itemThen                       // then
+	itemElse                       // else
 )
+
+// Reserved words
+var reserved = map[string]itemType{
+	"if":   itemIf,
+	"else": itemElse,
+	"then": itemThen,
+}
 
 // A node is an XPath node in the parse tree.
 type node interface {
@@ -65,6 +75,7 @@ const (
 	nodeOperator
 	nodeVariable
 	nodeConstantOperand
+	nodeIf
 )
 
 type parser struct {
@@ -114,6 +125,11 @@ func newFunctionNode(name, prefix string, args []node) node {
 	return &functionNode{nodeType: nodeFunction, Prefix: prefix, FuncName: name, Args: args}
 }
 
+// neIfNode returns condional if node
+func newIfNode(testExpr, thenExpr, elseExpr node) node {
+	return &ifNode{nodeType: nodeIf, TestExpr: testExpr, ThenExpr: thenExpr, ElseExpr: elseExpr}
+}
+
 // testOp reports whether current item name is an operand op.
 func testOp(r *scanner, op string) bool {
 	return r.typ == itemName && r.prefix == "" && r.name == op
@@ -121,7 +137,7 @@ func testOp(r *scanner, op string) bool {
 
 func isPrimaryExpr(r *scanner) bool {
 	switch r.typ {
-	case itemString, itemNumber, itemDollar, itemLParens:
+	case itemString, itemNumber, itemDollar, itemLParens, itemIf:
 		return true
 	case itemName:
 		return r.canBeFunc && !isNodeType(r)
@@ -156,7 +172,13 @@ func (p *parser) parseExpression(n node) node {
 	if p.d = p.d + 1; p.d > 200 {
 		panic("the xpath query is too complex(depth > 200)")
 	}
-	n = p.parseOrExpr(n)
+	switch p.r.typ {
+	case itemIf:
+		n = p.parseIfExpr(n)
+	default:
+		n = p.parseOrExpr(n)
+	}
+
 	p.d--
 	return n
 }
@@ -501,6 +523,21 @@ func (p *parser) parsePrimaryExpr(n node) (opnd node) {
 	return opnd
 }
 
+// 'if' '(' Expr ')' 'then' ExprSingle 'else' ExprSingle
+func (p *parser) parseIfExpr(n node) node {
+
+	p.skipItem(itemIf)
+	p.skipItem(itemLParens)
+
+	testExpr := p.parseExpression(n)
+	p.skipItem(itemRParens)
+	p.skipItem(itemThen)
+	thenExpr := p.parseExpression(n)
+	p.skipItem(itemElse)
+	elseExpr := p.parseExpression(n)
+	return newIfNode(testExpr, thenExpr, elseExpr)
+}
+
 // FunctionCall	 ::=  FunctionName '(' ( Argument ( ',' Argument )* )? ')'
 func (p *parser) parseMethod(n node) node {
 	var args []node
@@ -528,6 +565,7 @@ func parse(expr string) node {
 	r.nextChar()
 	r.nextItem()
 	p := &parser{r: r}
+
 	return p.parseExpression(nil)
 }
 
@@ -616,6 +654,12 @@ type functionNode struct {
 	Args     []node
 	Prefix   string
 	FuncName string // function name
+}
+type ifNode struct {
+	nodeType
+	TestExpr node
+	ThenExpr node
+	ElseExpr node
 }
 
 func (f *functionNode) String() string {
@@ -712,8 +756,10 @@ func (s *scanner) nextItem() bool {
 			s.typ = itemName
 			s.name = s.scanName()
 			s.prefix = ""
+
 			// "foo:bar" is one itemem not three because it doesn't allow spaces in between
 			// We should distinct it from "foo::" and need process "foo ::" as well
+
 			if s.curr == ':' {
 				s.nextChar()
 				// can be "foo:bar" or "foo::"
@@ -746,7 +792,18 @@ func (s *scanner) nextItem() bool {
 				}
 			}
 			s.skipSpace()
-			s.canBeFunc = s.curr == '('
+
+			if s.name == "if" && s.curr == '(' {
+				s.typ = itemIf
+			} else {
+				s.canBeFunc = s.curr == '('
+			}
+
+			// If is a reserved word
+			if item, exists := reserved[s.name]; exists {
+				s.typ = item
+			}
+
 		} else {
 			panic(fmt.Sprintf("%s has an invalid token.", s.text))
 		}
