@@ -137,7 +137,7 @@ func testOp(r *scanner, op string) bool {
 
 func isPrimaryExpr(r *scanner) bool {
 	switch r.typ {
-	case itemString, itemNumber, itemDollar, itemLParens, itemIf:
+	case itemString, itemNumber, itemDollar, itemLParens:
 		return true
 	case itemName:
 		return r.canBeFunc && !isNodeType(r)
@@ -565,7 +565,6 @@ func parse(expr string) node {
 	r.nextChar()
 	r.nextItem()
 	p := &parser{r: r}
-
 	return p.parseExpression(nil)
 }
 
@@ -756,10 +755,8 @@ func (s *scanner) nextItem() bool {
 			s.typ = itemName
 			s.name = s.scanName()
 			s.prefix = ""
-
 			// "foo:bar" is one itemem not three because it doesn't allow spaces in between
 			// We should distinct it from "foo::" and need process "foo ::" as well
-
 			if s.curr == ':' {
 				s.nextChar()
 				// can be "foo:bar" or "foo::"
