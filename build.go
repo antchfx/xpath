@@ -515,6 +515,12 @@ func (b *builder) processNode(root node) (q query, err error) {
 		q, err = b.processFunctionNode(root.(*functionNode))
 	case nodeOperator:
 		q, err = b.processOperatorNode(root.(*operatorNode))
+	case nodeGroup:
+		q, err = b.processNode(root.(*groupNode).Input)
+		if err != nil {
+			return
+		}
+		q = &groupQuery{Input: q}
 	}
 	return
 }
