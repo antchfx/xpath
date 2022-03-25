@@ -110,6 +110,12 @@ func TestAncestor(t *testing.T) {
 
 func TestFollowingSibling(t *testing.T) {
 	var list []*TNode
+	list = selectNodes(html2, "//h1/span/following-sibling::text()")
+	for _, n := range list {
+		if n.Type != TextNode {
+			t.Errorf("expected node is text but got:%s nodes %d", n.Data, len(list))
+		}
+	}
 	list = selectNodes(html, "//li/following-sibling::*")
 	for _, n := range list {
 		if n.Data != "li" {
@@ -628,7 +634,7 @@ func example2() *TNode {
 			   <meta name="language" content="en"/>
 		   </head>
 		   <body>
-				<h1> This is a H1 </h1>
+				<h1><span>SPAN</span><a>Anchor</a> This is a H1 </h1>
 				<table>
 					<tbody>
 						<tr>
@@ -664,8 +670,12 @@ func example2() *TNode {
 	n.addAttribute("content", "en")
 	// The HTML body section.
 	body := xhtml.createChildNode("body", ElementNode)
-	n = body.createChildNode("h1", ElementNode)
-	n = n.createChildNode(" This is a H1 ", TextNode)
+	h1 := body.createChildNode("h1", ElementNode)
+	n = h1.createChildNode("span", ElementNode)
+	n = n.createChildNode("SPAN", TextNode)
+	n = h1.createChildNode("a", ElementNode)
+	n = n.createChildNode("Anchor", TextNode)
+	h1.createChildNode(" This is a H1 ", TextNode)
 
 	n = body.createChildNode("table", ElementNode)
 	tbody := n.createChildNode("tbody", ElementNode)
