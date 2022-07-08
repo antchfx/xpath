@@ -46,6 +46,27 @@ func TestMustCompile(t *testing.T) {
 	}
 }
 
+func TestSubQuery(t *testing.T) {
+	testXPath2(t, html, "(//li)", 4)
+	testXPath4(t, html, "(//li)[2]", `about`)
+	testXPath4(t, html, "(//li)[last()]", ``)
+	testXPath4(t, html, "(//li/a[@id])[last()]", `login`)
+	testXPath4(t, html, "(//li/a[@id])[last()]/@id", `login`) // This test case shoud fix. Skip.
+	// test cached
+	expr := MustCompile("(//li/a)[last()]")
+	for i := 0; i < 10; i++ {
+		iter := expr.Select(createNavigator(html))
+		if iter.MoveNext() {
+			node := iter.Current().(*TNodeNavigator)
+			if e, g := "login", node.Value(); e != g {
+				t.Fatalf("expected %s, but got %s", e, g)
+			}
+		} else {
+			t.Fatal("expected one but got nil.")
+		}
+	}
+}
+
 func TestSelf(t *testing.T) {
 	testXPath(t, html, ".", "html")
 	testXPath(t, html.FirstChild, ".", "head")
@@ -400,6 +421,16 @@ func testXPath3(t *testing.T, root *TNode, expr string, expected *TNode) {
 	}
 	if node != expected {
 		t.Fatalf("`%s` %s != %s", expr, node.Value(), expected.Value())
+	}
+}
+
+func testXPath4(t *testing.T, root *TNode, expr string, expected string) {
+	node := selectNode(root, expr)
+	if node == nil {
+		t.Fatalf("`%s` returns node is nil", expr)
+	}
+	if got := node.Value(); got != expected {
+		t.Fatalf("`%s` expected \n%s,but got\n%s", expr, expected, got)
 	}
 }
 
