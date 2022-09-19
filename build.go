@@ -88,7 +88,10 @@ func (b *builder) processAxisNode(root *axisNode) (query, error) {
 					}
 					return v
 				}
-				qyOutput = &descendantQuery{Input: qyGrandInput, Predicate: filter, Self: true}
+				// fix `//*[contains(@id,"food")]//*[contains(@id,"food")]`, see https://github.com/antchfx/htmlquery/issues/52
+				// Skip the current node(Self:false) for the next descendants nodes.
+				_, ok := qyGrandInput.(*contextQuery)
+				qyOutput = &descendantQuery{Input: qyGrandInput, Predicate: filter, Self: ok}
 				return qyOutput, nil
 			}
 		}
