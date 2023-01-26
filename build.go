@@ -524,8 +524,6 @@ func (b *builder) processNode(root node) (q query, err error) {
 			return
 		}
 		q = &groupQuery{Input: q}
-		// fix https://github.com/antchfx/xpath/issues/76
-		q = &cacheQuery{Input: q}
 		b.firstInput = q
 	}
 	return

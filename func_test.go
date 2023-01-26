@@ -8,7 +8,8 @@ func (t testQuery) Select(_ iterator) NodeNavigator {
 	panic("implement me")
 }
 
-func (t testQuery) Reset() {
+func (t testQuery) Clone() query {
+	return t
 }
 
 func (t testQuery) Evaluate(_ iterator) interface{} {

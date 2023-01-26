@@ -121,16 +121,14 @@ func (expr *Expr) Evaluate(root NodeNavigator) interface{} {
 	val := expr.q.Evaluate(iteratorFunc(func() NodeNavigator { return root }))
 	switch val.(type) {
 	case query:
-		expr.q.Reset()
-		return &NodeIterator{query: expr.q, node: root}
+		return &NodeIterator{query: expr.q.Clone(), node: root}
 	}
 	return val
 }
 
 // Select selects a node set using the specified XPath expression.
 func (expr *Expr) Select(root NodeNavigator) *NodeIterator {
-	expr.q.Reset()
-	return &NodeIterator{query: expr.q, node: root}
+	return &NodeIterator{query: expr.q.Clone(), node: root}
 }
 
 // String returns XPath expression string.
