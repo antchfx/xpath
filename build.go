@@ -350,7 +350,15 @@ func (b *builder) processFunctionNode(root *functionNode) (query, error) {
 			},
 		}
 	case "last":
-		qyOutput = &functionQuery{Input: b.firstInput, Func: lastFunc}
+		switch typ := b.firstInput.(type) {
+		case *groupQuery, *filterQuery:
+			// https://github.com/antchfx/xpath/issues/76
+			// https://github.com/antchfx/xpath/issues/78
+			qyOutput = &lastQuery{Input: typ}
+		default:
+			qyOutput = &functionQuery{Input: b.firstInput, Func: lastFunc}
+		}
+
 	case "position":
 		qyOutput = &functionQuery{Input: b.firstInput, Func: positionFunc}
 	case "boolean", "number", "string":
@@ -514,6 +522,7 @@ func (b *builder) processNode(root node) (q query, err error) {
 		b.firstInput = q
 	case nodeFilter:
 		q, err = b.processFilterNode(root.(*filterNode))
+		b.firstInput = q
 	case nodeFunction:
 		q, err = b.processFunctionNode(root.(*functionNode))
 	case nodeOperator:

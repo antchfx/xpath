@@ -54,6 +54,26 @@ func TestSelf(t *testing.T) {
 	testXPath2(t, html, "//body/./ul/li/a", 3)
 }
 
+func TestLastFunc(t *testing.T) {
+	testXPath3(t, html, "/head[last()]", html.FirstChild)
+	ul := selectNode(html, "//ul")
+	testXPath3(t, html, "//li[last()]", ul.LastChild)
+	list := selectNodes(html, "//li/a[last()]")
+	if got := len(list); got != 3 {
+		t.Fatalf("expected %d, but got %d", 3, got)
+	}
+	testXPath3(t, html, "(//ul/li)[last()]", ul.LastChild)
+
+	n := selectNode(html, "//meta[@name][last()]")
+	if n == nil {
+		t.Fatal("should found one, but got nil")
+	}
+	if expected, value := "description", n.getAttribute("name"); expected != value {
+		t.Fatalf("expected, %s but got %s", expected, value)
+	}
+
+}
+
 func TestParent(t *testing.T) {
 	testXPath(t, html.LastChild, "..", "html")
 	testXPath(t, html.LastChild, "parent::*", "html")
@@ -96,8 +116,8 @@ func TestChild(t *testing.T) {
 }
 
 func TestDescendant(t *testing.T) {
-	testXPath2(t, html, "descendant::*", 15)
-	testXPath2(t, html, "/head/descendant::*", 2)
+	testXPath2(t, html, "descendant::*", 16)
+	testXPath2(t, html, "/head/descendant::*", 3)
 	testXPath2(t, html, "//ul/descendant::*", 7)  // <li> + <a>
 	testXPath2(t, html, "//ul/descendant::li", 4) // <li>
 }
@@ -168,14 +188,14 @@ func TestStarWide(t *testing.T) {
 func TestNodeTestType(t *testing.T) {
 	testXPath(t, html, "//title/text()", "Hello")
 	testXPath(t, html, "//a[@href='/']/text()", "Home")
-	testXPath2(t, html, "//head/node()", 2)
+	testXPath2(t, html, "//head/node()", 3)
 	testXPath2(t, html, "//ul/node()", 4)
 }
 
 func TestPosition(t *testing.T) {
 	testXPath3(t, html, "/head[1]", html.FirstChild) // compare to 'head' element
 	ul := selectNode(html, "//ul")
-	testXPath3(t, html, "/head[last()]", html.FirstChild)
+
 	testXPath3(t, html, "//li[1]", ul.FirstChild)
 	testXPath3(t, html, "//li[4]", ul.LastChild)
 	testXPath3(t, html, "//li[last()]", ul.LastChild)
@@ -636,6 +656,14 @@ func (n *TNode) addAttribute(k, v string) {
 	n.Attr = append(n.Attr, Attribute{k, v})
 }
 
+func (n *TNode) getAttribute(key string) string {
+	for i := 0; i < len(n.Attr); i++ {
+		if n.Attr[i].Key == key {
+			return n.Attr[i].Value
+		}
+	}
+	return ""
+}
 func example2() *TNode {
 	/*
 		<html lang="en">
@@ -711,6 +739,7 @@ func example() *TNode {
 		   <head>
 			   <title>Hello</title>
 			   <meta name="language" content="en"/>
+			   <meta name="description" content="some description"/>
 		   </head>
 		   <body>
 				<h1>
@@ -740,6 +769,9 @@ func example() *TNode {
 	n = head.createChildNode("meta", ElementNode)
 	n.addAttribute("name", "language")
 	n.addAttribute("content", "en")
+	n = head.createChildNode("meta", ElementNode)
+	n.addAttribute("name", "description")
+	n.addAttribute("content", "some description")
 	// The HTML body section.
 	body := xhtml.createChildNode("body", ElementNode)
 	n = body.createChildNode("h1", ElementNode)

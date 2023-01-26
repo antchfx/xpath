@@ -894,46 +894,33 @@ func (u *unionQuery) Clone() query {
 	return &unionQuery{Left: u.Left.Clone(), Right: u.Right.Clone()}
 }
 
-type cacheQuery struct {
-	posit    int
-	buffer   []NodeNavigator
-	iterator func() NodeNavigator
+type lastQuery struct {
+	buffer  []NodeNavigator
+	counted bool
 
 	Input query
 }
 
-func (c *cacheQuery) Select(t iterator) NodeNavigator {
-	if c.iterator == nil {
+func (q *lastQuery) Select(t iterator) NodeNavigator {
+	return nil
+}
+
+func (q *lastQuery) Evaluate(t iterator) interface{} {
+	if !q.counted {
 		for {
-			node := c.Input.Select(t)
+			node := q.Input.Select(t)
 			if node == nil {
 				break
 			}
-			c.buffer = append(c.buffer, node.Copy())
+			q.buffer = append(q.buffer, node.Copy())
 		}
-		c.iterator = func() NodeNavigator {
-			if c.posit >= len(c.buffer) {
-				return nil
-			}
-			node := c.buffer[c.posit]
-			c.posit++
-			return node
-		}
+		q.counted = true
 	}
-	return c.iterator()
+	return float64(len(q.buffer))
 }
 
-func (c *cacheQuery) Evaluate(t iterator) interface{} {
-	c.posit = 0
-	return c.Input.Evaluate(t)
-}
-
-func (c *cacheQuery) Clone() query {
-	return &cacheQuery{Input: c.Input.Clone()}
-}
-
-func (c *cacheQuery) position() int {
-	return c.posit
+func (q *lastQuery) Clone() query {
+	return &lastQuery{Input: q.Input.Clone()}
 }
 
 func getHashCode(n NodeNavigator) uint64 {
