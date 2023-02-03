@@ -2,6 +2,7 @@ package xpath
 
 import (
 	"bytes"
+	"fmt"
 	"strings"
 	"testing"
 )
@@ -28,6 +29,60 @@ func TestCompile(t *testing.T) {
 	_, err = Compile("/a/b/(c, .[not(c)])")
 	if err != nil {
 		t.Fatalf("/a/b/(c, .[not(c)]) should be correct but got error %s", err)
+	}
+	_, err = Compile("/pre:foo")
+	if err != nil {
+		t.Fatalf("/pre:foo should be correct but got error %s", err)
+	}
+}
+
+func TestCompileWithNS(t *testing.T) {
+	_, err := CompileWithNS("/foo", nil)
+	if err != nil {
+		t.Fatalf("/foo {nil} should be correct but got error %s", err)
+	}
+	_, err = CompileWithNS("/foo", map[string]string{})
+	if err != nil {
+		t.Fatalf("/foo {} should be correct but got error %s", err)
+	}
+	_, err = CompileWithNS("/foo", map[string]string{"a": "b"})
+	if err != nil {
+		t.Fatalf("/foo {a:b} should be correct but got error %s", err)
+	}
+	_, err = CompileWithNS("/a:foo", map[string]string{"a": "b"})
+	if err != nil {
+		t.Fatalf("/a:foo should be correct but got error %s", err)
+	}
+	_, err = CompileWithNS("/u:foo", map[string]string{"a": "b"})
+	msg := fmt.Sprintf("%v", err)
+	if msg != "prefix u not defined." {
+		t.Fatalf("expected 'prefix u not defined' but got: %s", msg)
+	}
+}
+
+func TestNamespace(t *testing.T) {
+	doc := createNode("", RootNode)
+	books := doc.createChildNode("books", ElementNode)
+	book1 := books.createChildNode("book", ElementNode)
+	book1.createChildNode("book1", TextNode)
+	book2 := books.createChildNode("b:book", ElementNode)
+	book2.addAttribute("xmlns:b", "ns")
+	book2.createChildNode("book2", TextNode)
+	book3 := books.createChildNode("c:book", ElementNode)
+	book3.addAttribute("xmlns:c", "ns")
+	book3.createChildNode("book3", TextNode)
+
+	// Existing behaviour:
+	v := joinValues(selectNodes(doc, "//b:book"))
+	if v != "book2" {
+		t.Fatalf("expected book2 but got %s", v)
+	}
+
+	// With namespace bindings:
+	exp, _ := CompileWithNS("//x:book", map[string]string{"x": "ns"})
+	v = joinValues(iterateNodes(exp.Select(createNavigator(doc))))
+	if v != "book2,book3" {
+		t.Fatalf("expected 'book2,book3' but got %s", v)
 	}
 }
 
@@ -464,6 +519,14 @@ func selectNodes(root *TNode, expr string) []*TNode {
 	return iterateNodes(t)
 }
 
+func joinValues(nodes []*TNode) string {
+	s := make([]string, 0)
+	for _, n := range nodes {
+		s = append(s, n.Value())
+	}
+	return strings.Join(s, ",")
+}
+
 func createNavigator(n *TNode) *TNodeNavigator {
 	return &TNodeNavigator{curr: n, root: n, attr: -1}
 }
@@ -516,10 +579,28 @@ func (n *TNodeNavigator) LocalName() string {
 	if n.attr != -1 {
 		return n.curr.Attr[n.attr].Key
 	}
-	return n.curr.Data
+	name := n.curr.Data
+	if strings.Contains(name, ":") {
+		return strings.Split(name, ":")[1]
+	}
+	return name
 }
 
 func (n *TNodeNavigator) Prefix() string {
+	if n.attr == -1 && strings.Contains(n.curr.Data, ":") {
+		return strings.Split(n.curr.Data, ":")[0]
+	}
+	return ""
+}
+
+func (n *TNodeNavigator) NamespaceURL() string {
+	if n.Prefix() != "" {
+		for _, a := range n.curr.Attr {
+			if a.Key == "xmlns:"+n.Prefix() {
+				return a.Value
+			}
+		}
+	}
 	return ""
 }
 

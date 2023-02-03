@@ -44,6 +44,12 @@ func axisPredicate(root *axisNode) func(NodeNavigator) bool {
 	predicate := func(n NodeNavigator) bool {
 		if typ == n.NodeType() || typ == allNode {
 			if nametest {
+				type namespaceURL interface {
+					NamespaceURL() string
+				}
+				if ns, ok := n.(namespaceURL); ok && root.hasNamespaceURI {
+					return root.LocalName == n.LocalName() && root.namespaceURI == ns.NamespaceURL()
+				}
 				if root.LocalName == n.LocalName() && root.Prefix == n.Prefix() {
 					return true
 				}
@@ -539,7 +545,7 @@ func (b *builder) processNode(root node) (q query, err error) {
 }
 
 // build builds a specified XPath expressions expr.
-func build(expr string) (q query, err error) {
+func build(expr string, namespaces map[string]string) (q query, err error) {
 	defer func() {
 		if e := recover(); e != nil {
 			switch x := e.(type) {
@@ -552,7 +558,7 @@ func build(expr string) (q query, err error) {
 			}
 		}
 	}()
-	root := parse(expr)
+	root := parse(expr, namespaces)
 	b := &builder{}
 	return b.processNode(root)
 }
