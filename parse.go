@@ -547,6 +547,7 @@ func (p *parser) parseMethod(n node) node {
 // Parse parsing the XPath express string expr and returns a tree node.
 func parse(expr string, namespaces map[string]string) node {
 	r := &scanner{text: expr}
+	r.init()
 	r.nextChar()
 	r.nextItem()
 	p := &parser{r: r, namespaces: namespaces}
@@ -669,6 +670,7 @@ func (f *functionNode) String() string {
 
 type scanner struct {
 	text, name, prefix string
+	runes              []rune
 
 	pos       int
 	curr      rune
@@ -678,12 +680,16 @@ type scanner struct {
 	canBeFunc bool
 }
 
+func (s *scanner) init() {
+	s.runes = []rune(s.text)
+}
+
 func (s *scanner) nextChar() bool {
-	if s.pos >= len(s.text) {
+	if s.pos >= len(s.runes) {
 		s.curr = rune(0)
 		return false
 	}
-	s.curr = rune(s.text[s.pos])
+	s.curr = s.runes[s.pos]
 	s.pos++
 	return true
 }

@@ -14,6 +14,10 @@ var (
 
 func TestCompile(t *testing.T) {
 	var err error
+	_, err = Compile("//title[@元素名称='初步诊断']")
+	if err != nil {
+		t.Fatalf("//title[@元素名称='初步诊断'] shoud be correct but got error %s", err)
+	}
 	_, err = Compile("//a")
 	if err != nil {
 		t.Fatalf("//a should be correct but got error %s", err)
