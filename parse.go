@@ -812,7 +812,7 @@ func (s *scanner) scanFraction() float64 {
 		s.nextChar()
 		c++
 	}
-	v, err := strconv.ParseFloat(s.text[i:i+c], 64)
+	v, err := strconv.ParseFloat(string(s.runes[i:i+c]), 64)
 	if err != nil {
 		panic(fmt.Errorf("xpath: scanFraction parse float got error: %v", err))
 	}
@@ -836,7 +836,7 @@ func (s *scanner) scanNumber() float64 {
 			c++
 		}
 	}
-	v, err := strconv.ParseFloat(s.text[i:i+c], 64)
+	v, err := strconv.ParseFloat(string(s.runes[i:i+c]), 64)
 	if err != nil {
 		panic(fmt.Errorf("xpath: scanNumber parse float got error: %v", err))
 	}
@@ -857,7 +857,7 @@ func (s *scanner) scanString() string {
 		c++
 	}
 	s.nextChar()
-	return s.text[i : i+c]
+	return string(s.runes[i : i+c])
 }
 
 func (s *scanner) scanName() string {
@@ -871,7 +871,7 @@ func (s *scanner) scanName() string {
 			break
 		}
 	}
-	return s.text[i : i+c]
+	return string(s.runes[i : i+c])
 }
 
 func isName(r rune) bool {
