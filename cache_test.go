@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math/rand"
 	"strconv"
-	"sync"
 	"testing"
 )
 
@@ -93,21 +92,28 @@ func BenchmarkLoadingCacheCapped_MultiThread(b *testing.B) {
 		func(key interface{}) (interface{}, error) {
 			return key, nil
 		}, benchLoadingCacheCap)
-	wg := sync.WaitGroup{}
-	wg.Add(benchLoadingCacheConcurrency)
+	errCh := make(chan error, benchLoadingCacheConcurrency)
+	defer close(errCh)
 	for i := 0; i < benchLoadingCacheConcurrency; i++ {
 		go func() {
 			for j := 0; j < b.N; j++ {
 				k := rand.Intn(benchLoadingCacheKeyRange)
 				v, _ := c.get(k)
 				if k != v {
-					b.FailNow()
+					errCh <- fmt.Errorf("key:%q != value:%q", k, v)
+					return
 				}
 			}
-			defer wg.Done()
+			errCh <- nil
+			return
 		}()
 	}
-	wg.Wait()
+	for i := 0; i < benchLoadingCacheConcurrency; i++ {
+		if err := <-errCh; err != nil {
+			b.Fatal(err)
+		}
+	}
+
 	b.Logf("N=%d, concurrency=%d, reset=%d", b.N, benchLoadingCacheConcurrency, c.reset)
 }
 
@@ -133,21 +139,27 @@ func BenchmarkLoadingCacheNoCap_MultiThread(b *testing.B) {
 		func(key interface{}) (interface{}, error) {
 			return key, nil
 		}, 0) // 0 => no cap
-	wg := sync.WaitGroup{}
-	wg.Add(benchLoadingCacheConcurrency)
+	errCh := make(chan error, benchLoadingCacheConcurrency)
+	defer close(errCh)
 	for i := 0; i < benchLoadingCacheConcurrency; i++ {
 		go func() {
 			for j := 0; j < b.N; j++ {
 				k := rand.Intn(benchLoadingCacheKeyRange)
 				v, _ := c.get(k)
 				if k != v {
-					b.FailNow()
+					errCh <- fmt.Errorf("key:%q != value:%q", k, v)
+					return
 				}
 			}
-			defer wg.Done()
+			errCh <- nil
+			return
 		}()
 	}
-	wg.Wait()
+	for i := 0; i < benchLoadingCacheConcurrency; i++ {
+		if err := <-errCh; err != nil {
+			b.Fatal(err)
+		}
+	}
 	b.Logf("N=%d, concurrency=%d, reset=%d", b.N, benchLoadingCacheConcurrency, c.reset)
 }
 
