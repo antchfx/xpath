@@ -352,6 +352,8 @@ func TestFunction(t *testing.T) {
 		`translate('The quick brown fox.', 'brown', 'red')`,
 		"The quick red fdx.",
 	)
+	testEval(t, html, `string-join(//li/a,';')`, "Home;about;login")
+	testEval(t, html, `string-join('some text',';')`, "some text")
 	// preceding-sibling::*
 	testXPath3(t, html, "//li[last()]/preceding-sibling::*[2]", selectNode(html, "//li[position()=2]"))
 	// preceding::
@@ -404,7 +406,9 @@ func TestPanic(t *testing.T) {
 	assertPanic(t, func() { testXPath3(t, html, "//title[substring(.,4,'')=0]", nil) })
 	assertPanic(t, func() { testXPath3(t, html, "//title[substring(.,4,4)=0]", nil) })
 	//assertPanic(t, func() { testXPath2(t, html, "//title[substring(child::*,0) = '']", 0) }) // Here substring return boolen (false), should it?
-
+	//string-join
+	assertPanic(t, func() { testXPath3(t, html, "string-join()", nil) })
+	assertPanic(t, func() { testXPath3(t, html, "string-join(//li/a)", nil) })
 }
 
 func TestEvaluate(t *testing.T) {
