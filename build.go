@@ -218,6 +218,12 @@ func (b *builder) processFunctionNode(root *functionNode) (query, error) {
 		if arg2, err = b.processNode(root.Args[1]); err != nil {
 			return nil, err
 		}
+		// Issue #92, testing the regular expression before.
+		if q, ok := arg2.(*constantQuery); ok {
+			if _, err = getRegexp(q.Val.(string)); err != nil {
+				return nil, fmt.Errorf("matches() got error. %v", err)
+			}
+		}
 		qyOutput = &functionQuery{Input: b.firstInput, Func: matchesFunc(arg1, arg2)}
 	case "substring":
 		//substring( string , start [, length] )

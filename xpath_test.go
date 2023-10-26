@@ -360,6 +360,16 @@ func TestFunction(t *testing.T) {
 	testXPath3(t, html, "//li/preceding::*[1]", selectNode(html, "//h1"))
 }
 
+func TestFunction_matches(t *testing.T) {
+	// testing unexpected the regular expression.
+	if _, err := build(`//*[matches(., '^[\u0621-\u064AA-Za-z\-]+')]`, nil); err == nil {
+		t.Fatal("matches() should got error, but nil")
+	}
+	if _, err := build(`//*[matches(., '//*[matches(., '\w+`, nil); err == nil {
+		t.Fatal("matches() should got error, but nil")
+	}
+}
+
 func TestTransformFunctionReverse(t *testing.T) {
 	nodes := selectNodes(html, "reverse(//li)")
 	expectedReversedNodeValues := []string{"", "login", "about", "Home"}
