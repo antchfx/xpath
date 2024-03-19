@@ -14,5 +14,7 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version: ${{ matrix.go-version }}
+      - name: Install dependencies
+        run: go mod download
       - name: Test with the Go CLI
         run: go test
