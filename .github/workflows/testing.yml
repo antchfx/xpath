@@ -15,6 +15,6 @@ jobs:
         with:
           go-version: ${{ matrix.go-version }}
       - name: Install dependencies
-        run: go mod download
+        run: go test .
       - name: Test with the Go CLI
         run: go test
