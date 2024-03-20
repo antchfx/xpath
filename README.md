@@ -1,14 +1,13 @@
-XPath
-====
+# XPath
+
 [![GoDoc](https://godoc.org/github.com/antchfx/xpath?status.svg)](https://godoc.org/github.com/antchfx/xpath)
 [![Coverage Status](https://coveralls.io/repos/github/antchfx/xpath/badge.svg?branch=master)](https://coveralls.io/github/antchfx/xpath?branch=master)
-[![Build Status](https://travis-ci.org/antchfx/xpath.svg?branch=master)](https://travis-ci.org/antchfx/xpath)
+[![Build Status](https://github.com/antchfx/xpath/actions/workflows/testing.yml/badge.svg)](https://github.com/antchfx/xpath/actions/workflows/testing.yml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/antchfx/xpath)](https://goreportcard.com/report/github.com/antchfx/xpath)
 
 XPath is Go package provides selecting nodes from XML, HTML or other documents using XPath expression.
 
-Implementation
-===
+# Implementation
 
 - [htmlquery](https://github.com/antchfx/htmlquery) - an XPath query package for HTML document
 
@@ -16,8 +15,7 @@ Implementation
 
 - [jsonquery](https://github.com/antchfx/jsonquery) - an XPath query package for JSON document
 
-Supported Features
-===
+# Supported Features
 
 #### The basic XPath patterns.
 
@@ -67,7 +65,7 @@ Supported Features
 
 - `descendant-or-self::*` : Selects descendants including the current node.
 
-- `attribute::*` : Selects attributes of the current element. It is equivalent to @*
+- `attribute::*` : Selects attributes of the current element. It is equivalent to @\*
 
 - `following-sibling::*` : Selects nodes after the current node.
 
@@ -87,27 +85,27 @@ Supported Features
 
 #### Expressions
 
- The gxpath supported three types: number, boolean, string.
+The gxpath supported three types: number, boolean, string.
 
 - `path` : Selects nodes based on the path.
 
 - `a = b` : Standard comparisons.
 
-    * a = b	    True if a equals b.
-    * a != b	True if a is not equal to b.
-    * a < b	    True if a is less than b.
-    * a <= b	True if a is less than or equal to b.
-    * a > b	    True if a is greater than b.
-    * a >= b	True if a is greater than or equal to b.
+  - a = b True if a equals b.
+  - a != b True if a is not equal to b.
+  - a < b True if a is less than b.
+  - a <= b True if a is less than or equal to b.
+  - a > b True if a is greater than b.
+  - a >= b True if a is greater than or equal to b.
 
 - `a + b` : Arithmetic expressions.
 
-    * `- a`	Unary minus
-    * a + b	Add
-    * a - b	Substract
-    * a * b	Multiply
-    * a div b	Divide
-    * a mod b	Floating point mod, like Java.
+  - `- a` Unary minus
+  - a + b Add
+  - a - b Substract
+  - a \* b Multiply
+  - a div b Divide
+  - a mod b Floating point mod, like Java.
 
 - `a or b` : Boolean `or` operation.
 
@@ -117,49 +115,49 @@ Supported Features
 
 - `fun(arg1, ..., argn)` : Function calls:
 
-| Function | Supported |
-| --- | --- |
-`boolean()`| ✓ |
-`ceiling()`| ✓ |
-`choose()`| ✗ |
-`concat()`| ✓ |
-`contains()`| ✓ |
-`count()`| ✓ |
-`current()`| ✗ |
-`document()`| ✗ |
-`element-available()`| ✗ |
-`ends-with()`| ✓ |
-`false()`| ✓ |
-`floor()`| ✓ |
-`format-number()`| ✗ |
-`function-available()`| ✗ |
-`generate-id()`| ✗ |
-`id()`| ✗ |
-`key()`| ✗ |
-`lang()`| ✗ |
-`last()`| ✓ |
-`local-name()`| ✓ |
-`matches()`| ✓ |
-`name()`| ✓ |
-`namespace-uri()`| ✓ |
-`normalize-space()`| ✓ |
-`not()`| ✓ |
-`number()`| ✓ |
-`position()`| ✓ |
-`replace()`| ✓ |
-`reverse()`| ✓ |
-`round()`| ✓ |
-`starts-with()`| ✓ |
-`string()`| ✓ |
-`string-join()`[^1]| ✓ |
-`string-length()`| ✓ |
-`substring()`| ✓ |
-`substring-after()`| ✓ |
-`substring-before()`| ✓ |
-`sum()`| ✓ |
-`system-property()`| ✗ |
-`translate()`| ✓ |
-`true()`| ✓ |
-`unparsed-entity-url()` | ✗ |
+| Function                | Supported |
+| ----------------------- | --------- |
+| `boolean()`             | ✓         |
+| `ceiling()`             | ✓         |
+| `choose()`              | ✗         |
+| `concat()`              | ✓         |
+| `contains()`            | ✓         |
+| `count()`               | ✓         |
+| `current()`             | ✗         |
+| `document()`            | ✗         |
+| `element-available()`   | ✗         |
+| `ends-with()`           | ✓         |
+| `false()`               | ✓         |
+| `floor()`               | ✓         |
+| `format-number()`       | ✗         |
+| `function-available()`  | ✗         |
+| `generate-id()`         | ✗         |
+| `id()`                  | ✗         |
+| `key()`                 | ✗         |
+| `lang()`                | ✗         |
+| `last()`                | ✓         |
+| `local-name()`          | ✓         |
+| `matches()`             | ✓         |
+| `name()`                | ✓         |
+| `namespace-uri()`       | ✓         |
+| `normalize-space()`     | ✓         |
+| `not()`                 | ✓         |
+| `number()`              | ✓         |
+| `position()`            | ✓         |
+| `replace()`             | ✓         |
+| `reverse()`             | ✓         |
+| `round()`               | ✓         |
+| `starts-with()`         | ✓         |
+| `string()`              | ✓         |
+| `string-join()`[^1]     | ✓         |
+| `string-length()`       | ✓         |
+| `substring()`           | ✓         |
+| `substring-after()`     | ✓         |
+| `substring-before()`    | ✓         |
+| `sum()`                 | ✓         |
+| `system-property()`     | ✗         |
+| `translate()`           | ✓         |
+| `true()`                | ✓         |
+| `unparsed-entity-url()` | ✗         |
 
 [^1]: XPath-2.0 expression
