@@ -2,20 +2,23 @@ name: goveralls
 on: [push, pull_request]
 jobs:
   test:
-    name: Test with Coverage
     runs-on: ubuntu-latest
     steps:
       - name: Set up Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v5
         with:
           go-version: "1.16"
+
       - name: Check out code
-        uses: actions/checkout@v2
-      - name: Run Unit tests
+        uses: actions/checkout@v4
+
+      - name: Run coverage
         run: |
           go test -covermode atomic -coverprofile=coverage.out ./...
+
       - name: Install goveralls
         run: go install github.com/mattn/goveralls@latest
+
       - name: Send coverage
         env:
           COVERALLS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
