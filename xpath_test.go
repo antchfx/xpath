@@ -7,9 +7,26 @@ import (
 	"testing"
 )
 
+func (n NodeType) String() string {
+	switch n {
+	case RootNode:
+		return "RootNode"
+	case ElementNode:
+		return "ElementNode"
+	case AttributeNode:
+		return "AttributeNode"
+	case TextNode:
+		return "TextNode"
+	case CommentNode:
+		return "CommentNode"
+	}
+	return "allNode"
+}
+
 var (
-	html  = example()
-	html2 = example2()
+	html             = example()
+	html2            = example2()
+	employee_example = createEmployeeExample()
 )
 
 func TestCompile(t *testing.T) {
@@ -552,9 +569,10 @@ type Attribute struct {
 type TNode struct {
 	Parent, FirstChild, LastChild, PrevSibling, NextSibling *TNode
 
-	Type NodeType
-	Data string
-	Attr []Attribute
+	Type  NodeType
+	Data  string
+	Attr  []Attribute
+	lines int
 }
 
 func (n *TNode) Value() string {
@@ -826,6 +844,105 @@ func example2() *TNode {
 	n.createChildNode("td", ElementNode).createChildNode("row3-val3", TextNode)
 
 	return xhtml
+}
+
+// The example document from https://way2tutorial.com/xml/xpath-node-test.php
+func createEmployeeExample() *TNode {
+	/*
+	   <?xml version="1.0" standalone="yes"?>
+	   <empinfo>
+	     <employee id="1">
+	       <name>Opal Kole</name>
+	       <designation discipline="web" experience="3 year">Senior Engineer</designation>
+	       <email>OpalKole@myemail.com</email>
+	     </employee>
+	     <employee id="2">
+	       <name from="CA">Max Miller</name>
+	       <designation discipline="DBA" experience="2 year">DBA Engineer</designation>
+	       <email>maxmiller@email.com</email>
+	     </employee>
+	     <employee id="3">
+	       <name>Beccaa Moss</name>
+	       <designation discipline="appdev">Application Developer</designation>
+	       <email>beccaamoss@email.com</email>
+	     </employee>
+	   </empinfo>
+	*/
+
+	type Element struct {
+		Data       string
+		Attributes map[string]string
+	}
+	var lines = 0
+	doc := createNode("", RootNode)
+	lines++ // 1
+	empinfo := doc.createChildNode("empinfo", ElementNode)
+	lines++
+	empinfo.lines = lines
+	var employees = []struct {
+		name        Element
+		designation Element
+		email       Element
+	}{
+		{
+			name: Element{Data: "Opal Kole"},
+			designation: Element{Data: "Senior Engineer", Attributes: map[string]string{
+				"discipline": "web",
+				"experience": "3 year",
+			}},
+			email: Element{Data: "OpalKole@myemail.com"},
+		},
+		{
+			name: Element{Data: "Max Miller", Attributes: map[string]string{"from": "CA"}},
+			designation: Element{Data: "DBA Engineer", Attributes: map[string]string{
+				"discipline": "DBA",
+				"experience": "2 year",
+			}},
+			email: Element{Data: "maxmiller@email.com"},
+		},
+		{
+			name: Element{Data: "Beccaa Moss"},
+			designation: Element{Data: "Application Developer", Attributes: map[string]string{
+				"discipline": "appdev",
+			}},
+			email: Element{Data: "beccaamoss@email.com"},
+		},
+	}
+	for i := 0; i < len(employees); i++ {
+		v := employees[i]
+		lines++
+		// employee
+		employee := empinfo.createChildNode("employee", ElementNode)
+		employee.addAttribute("id", fmt.Sprintf("%d", i+1))
+		employee.lines = lines
+		lines++
+		// name
+		name := employee.createChildNode("name", ElementNode)
+		name.createChildNode(v.name.Data, TextNode)
+		for k, n := range v.name.Attributes {
+			name.addAttribute(k, n)
+		}
+		name.lines = lines
+		lines++
+		// designation
+		designation := employee.createChildNode("designation", ElementNode)
+		designation.createChildNode(v.designation.Data, TextNode)
+		for k, n := range v.designation.Attributes {
+			designation.addAttribute(k, n)
+		}
+		designation.lines = lines
+		lines++
+		// email
+		email := employee.createChildNode("email", ElementNode)
+		email.createChildNode(v.email.Data, TextNode)
+		for k, n := range v.email.Attributes {
+			email.addAttribute(k, n)
+		}
+		email.lines = lines
+		// skiping closed tag
+		lines++
+	}
+	return doc
 }
 
 func example() *TNode {
