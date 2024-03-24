@@ -531,8 +531,23 @@ func iterateNavs(t *NodeIterator) []*TNodeNavigator {
 func iterateNodes(t *NodeIterator) []*TNode {
 	var nodes []*TNode
 	for t.MoveNext() {
-		node := (t.Current().(*TNodeNavigator)).curr
-		nodes = append(nodes, node)
+		n := t.Current().(*TNodeNavigator)
+		if n.NodeType() == AttributeNode {
+			childNode := &TNode{
+				Type: TextNode,
+				Data: n.Value(),
+			}
+			nodes = append(nodes, &TNode{
+				Parent:     n.curr,
+				Type:       AttributeNode,
+				Data:       n.LocalName(),
+				FirstChild: childNode,
+				LastChild:  childNode,
+			})
+		} else {
+			nodes = append(nodes, n.curr)
+		}
+
 	}
 	return nodes
 }
@@ -601,8 +616,16 @@ type TNodeNavigator struct {
 }
 
 func (n *TNodeNavigator) NodeType() NodeType {
-	if n.curr.Type == ElementNode && n.attr != -1 {
-		return AttributeNode
+	switch n.curr.Type {
+	case CommentNode:
+		return CommentNode
+	case TextNode:
+		return TextNode
+	case ElementNode:
+		if n.attr != -1 {
+			return AttributeNode
+		}
+		return ElementNode
 	}
 	return n.curr.Type
 }
@@ -669,7 +692,10 @@ func (n *TNodeNavigator) MoveToRoot() {
 }
 
 func (n *TNodeNavigator) MoveToParent() bool {
-	if node := n.curr.Parent; node != nil {
+	if n.attr != -1 {
+		n.attr = -1
+		return true
+	} else if node := n.curr.Parent; node != nil {
 		n.curr = node
 		return true
 	}
@@ -685,6 +711,9 @@ func (n *TNodeNavigator) MoveToNextAttribute() bool {
 }
 
 func (n *TNodeNavigator) MoveToChild() bool {
+	if n.attr != -1 {
+		return false
+	}
 	if node := n.curr.FirstChild; node != nil {
 		n.curr = node
 		return true
@@ -693,7 +722,7 @@ func (n *TNodeNavigator) MoveToChild() bool {
 }
 
 func (n *TNodeNavigator) MoveToFirst() bool {
-	if n.curr.PrevSibling == nil {
+	if n.attr != -1 || n.curr.PrevSibling == nil {
 		return false
 	}
 	for {
@@ -711,6 +740,9 @@ func (n *TNodeNavigator) String() string {
 }
 
 func (n *TNodeNavigator) MoveToNext() bool {
+	if n.attr != -1 {
+		return false
+	}
 	if node := n.curr.NextSibling; node != nil {
 		n.curr = node
 		return true
@@ -719,6 +751,9 @@ func (n *TNodeNavigator) MoveToNext() bool {
 }
 
 func (n *TNodeNavigator) MoveToPrevious() bool {
+	if n.attr != -1 {
+		return false
+	}
 	if node := n.curr.PrevSibling; node != nil {
 		n.curr = node
 		return true
