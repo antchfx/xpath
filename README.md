@@ -61,6 +61,9 @@ XPath is Go package provides selecting nodes from XML, HTML or other documents u
 
 - `child::*` : The child axis selects children of the current node.
 
+  - `child::node()`: Selects all the children of the context node.
+  - `child::text()`: Selects all text node children of the context node.
+
 - `descendant::*` : The descendant axis selects descendants of the current node. It is equivalent to '//'.
 
 - `descendant-or-self::*` : Selects descendants including the current node.
@@ -91,21 +94,21 @@ The gxpath supported three types: number, boolean, string.
 
 - `a = b` : Standard comparisons.
 
-  - a = b True if a equals b.
-  - a != b True if a is not equal to b.
-  - a < b True if a is less than b.
-  - a <= b True if a is less than or equal to b.
-  - a > b True if a is greater than b.
-  - a >= b True if a is greater than or equal to b.
+  - `a = b` : True if a equals b.
+  - `a != b` : True if a is not equal to b.
+  - `a < b` : True if a is less than b.
+  - `a <= b` : True if a is less than or equal to b.
+  - `a > b` : True if a is greater than b.
+  - `a >= b` : True if a is greater than or equal to b.
 
 - `a + b` : Arithmetic expressions.
 
   - `- a` Unary minus
-  - a + b Add
-  - a - b Substract
-  - a \* b Multiply
-  - a div b Divide
-  - a mod b Floating point mod, like Java.
+  - `a + b` : Addition
+  - `a - b` : Subtraction
+  - `a * b` : Multiplication
+  - `a div b` : Division
+  - `a mod b` : Modulus (division remainder)
 
 - `a or b` : Boolean `or` operation.
 
