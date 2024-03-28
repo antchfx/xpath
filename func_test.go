@@ -16,6 +16,14 @@ func (t testQuery) Evaluate(_ iterator) interface{} {
 	return string(t)
 }
 
+func (t testQuery) ValueType() resultType {
+	return xpathResultType.Any
+}
+
+func (t testQuery) Properties() queryProp {
+	return queryProps.None
+}
+
 const strForNormalization = "\t    \rloooooooonnnnnnngggggggg  \r \n tes  \u00a0 t strin \n\n \r g "
 const expectedStrAfterNormalization = `loooooooonnnnnnngggggggg tes t strin g`
 

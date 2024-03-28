@@ -71,6 +71,10 @@ func Test_func_ends_with(t *testing.T) {
 func Test_func_last(t *testing.T) {
 	test_xpath_elements(t, book_example, `//bookstore[last()]`, 2)
 	test_xpath_elements(t, book_example, `//bookstore/book[last()]`, 25)
+	test_xpath_elements(t, book_example, `(//bookstore/book)[last()]`, 25)
+	//https: //github.com/antchfx/xpath/issues/76
+	test_xpath_elements(t, book_example, `(//bookstore/book[year = 2005])[last()]`, 9)
+	test_xpath_elements(t, book_example, `//bookstore/book[year = 2005][last()]`, 9)
 	test_xpath_elements(t, html_example, `//ul/li[last()]`, 15)
 	test_xpath_elements(t, html_example, `(//ul/li)[last()]`, 15)
 }
@@ -130,6 +134,7 @@ func Test_func_sum(t *testing.T) {
 	test_xpath_eval(t, empty_example, `sum(1 + 2)`, float64(3))
 	test_xpath_eval(t, empty_example, `sum(1.1 + 2)`, float64(3.1))
 	test_xpath_eval(t, book_example, `sum(//book/price)`, float64(149.93))
+	test_xpath_elements(t, book_example, `//book[sum(./price) > 40]`, 15)
 	assertPanic(t, func() { selectNode(html_example, `//title[sum('Hello') = 0]`) })
 }
 
@@ -168,10 +173,11 @@ func Test_func_number(t *testing.T) {
 
 func Test_func_position(t *testing.T) {
 	test_xpath_elements(t, book_example, `//book[position() = 1]`, 3)
-	//test_xpath_elements(t, book_example, `//book[(position() mod 2) = 0]`, 9, 25)
-	//test_xpath_elements(t, book_example, `//book[position() = last()]`, 25)
-	//test_xpath_elements(t, book_example, `//book/*[position() = 1]`, 4, 10, 16, 26)
-	test_xpath_elements(t, book_example, `(//book/title)[position() = 1]`, 3)
+	test_xpath_elements(t, book_example, `//book[(position() mod 2) = 0]`, 9, 25)
+	test_xpath_elements(t, book_example, `//book[position() = last()]`, 25)
+	test_xpath_elements(t, book_example, `//book/*[position() = 1]`, 4, 10, 16, 26)
+	// Test Failed
+	//test_xpath_elements(t, book_example, `(//book/title)[position() = 1]`, 3)
 }
 
 func Test_func_replace(t *testing.T) {

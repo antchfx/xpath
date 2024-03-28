@@ -150,10 +150,11 @@ func TestNodeType(t *testing.T) {
 	for _, test := range tests {
 		v := selectNode(employee_example, test.expr)
 		assertTrue(t, v != nil)
-		assertEqual(t, test.expected, test.expected)
+		assertEqual(t, test.expected, v.Type)
 	}
 
-	doc := createNode("<!-- This is a comment -->", CommentNode)
+	doc := createNode("", RootNode)
+	doc.createChildNode("<!-- This is a comment -->", CommentNode)
 	n := selectNode(doc, "//comment()")
 	assertTrue(t, n != nil)
 	assertEqual(t, CommentNode, n.Type)
@@ -192,12 +193,12 @@ func iterateNodes(t *NodeIterator) []*TNode {
 	return nodes
 }
 
-func selectNode(root *TNode, expr string) (n *TNode) {
-	t := Select(createNavigator(root), expr)
-	if t.MoveNext() {
-		n = (t.Current().(*TNodeNavigator)).curr
+func selectNode(root *TNode, expr string) *TNode {
+	list := selectNodes(root, expr)
+	if len(list) == 0 {
+		return nil
 	}
-	return n
+	return list[0]
 }
 
 func selectNodes(root *TNode, expr string) []*TNode {
@@ -753,8 +754,8 @@ func createHtmlExample() *TNode {
 	// skip the last ul
 	lines++
 	p := body.createChildNode("p", ElementNode)
-	lines++
 	p.lines = lines
+	lines++
 	p.createChildNode("This is the first paragraph.", TextNode)
 	lines++
 	comment := body.createChildNode("<!-- this is the end -->", CommentNode)
