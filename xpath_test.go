@@ -63,6 +63,57 @@ func test_xpath_eval(t *testing.T, root *TNode, expr string, expected ...interfa
 	assertEqual(t, expected[0], v)
 }
 
+func Test_Predicates_MultiParent(t *testing.T) {
+	// https://github.com/antchfx/xpath/issues/75
+	/*
+	   <measCollecFile xmlns="http://www.3gpp.org/ftp/specs/archive/32_series/32.435#measCollec">
+	   		<measData>
+	   			<measInfo>
+	   				<measType p="1">field1</measType>
+	   				<measType p="2">field2</measType>
+	   				<measValue>
+	   					<r p="1">31854</r>
+	   					<r p="2">159773</r>
+	   				</measValue>
+	   			</measInfo>
+	   			<measInfo measInfoId="metric_name2">
+	   				<measType p="1">field3</measType>
+	   				<measType p="2">field4</measType>
+	   				<measValue>
+	   					<r p="1">1234</r>
+	   					<r p="2">567</r>
+	   				</measValue>
+	   			</measInfo>
+	   		</measData>
+	   	</measCollecFile>
+	*/
+	doc := createNode("", RootNode)
+	measCollecFile := doc.createChildNode("measCollecFile", ElementNode)
+	measData := measCollecFile.createChildNode("measData", ElementNode)
+	data := []struct {
+		measType  map[string]string
+		measValue map[string]string
+	}{
+		{measType: map[string]string{"1": "field1", "2": "field2"}, measValue: map[string]string{"1": "31854", "2": "159773"}},
+		{measType: map[string]string{"1": "field3", "2": "field4"}, measValue: map[string]string{"1": "1234", "2": "567"}},
+	}
+	for _, d := range data {
+		measInfo := measData.createChildNode("measInfo", ElementNode)
+		measType := measInfo.createChildNode("measType", ElementNode)
+
+		for key, value := range d.measType {
+			measType.addAttribute("p", key)
+			measType.createChildNode(value, TextNode)
+		}
+		measValue := measInfo.createChildNode("measValue", ElementNode)
+		for key, value := range d.measValue {
+			r := measValue.createChildNode("r", ElementNode)
+			r.addAttribute("p", key)
+			r.createChildNode(value, TextNode)
+		}
+	}
+	test_xpath_values(t, doc, `//r[@p=../../measType/@p]`, "31854", "159773", "1234", "567")
+}
 func TestCompile(t *testing.T) {
 	var err error
 	_, err = Compile("//a")

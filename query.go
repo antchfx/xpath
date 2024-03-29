@@ -680,16 +680,11 @@ func (p *precedingQuery) position() int {
 
 // parentQuery is an XPath parent node query.(parent::*)
 type parentQuery struct {
-	table     map[uint64]bool
 	Input     query
 	Predicate func(NodeNavigator) bool
 }
 
 func (p *parentQuery) Select(t iterator) NodeNavigator {
-	if p.table == nil {
-		p.table = make(map[uint64]bool)
-	}
-
 	for {
 		node := p.Input.Select(t)
 		if node == nil {
@@ -697,11 +692,7 @@ func (p *parentQuery) Select(t iterator) NodeNavigator {
 		}
 		node = node.Copy()
 		if node.MoveToParent() && p.Predicate(node) {
-			id := getHashCode(node.Copy())
-			if _, ok := p.table[id]; !ok {
-				p.table[id] = true
-				return node
-			}
+			return node
 		}
 	}
 }
