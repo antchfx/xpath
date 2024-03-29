@@ -4,14 +4,6 @@ import (
 	"testing"
 )
 
-/*
- The below list are not supported yet
-*/
-// ================================
-// */employee
-// (4,2)
-// ===============================
-
 func Test_descendant_issue(t *testing.T) {
 	// Issue #93 https://github.com/antchfx/xpath/issues/93
 	/*
@@ -48,8 +40,7 @@ func TestRelativePaths(t *testing.T) {
 	test_xpath_tags(t, book_example, `//book/..`, "bookstore")
 	test_xpath_elements(t, book_example, `//book[@category="cooking"]/..`, 2)
 	test_xpath_elements(t, book_example, `//book/year[text() = 2005]/../..`, 2) // bookstore
-	// Warning. duplicate elements.
-	//test_xpath_elements(t, book_example, `//book/year/../following-sibling::*`, 9, 15, 25)
+	test_xpath_elements(t, book_example, `//book/year/../following-sibling::*`, 9, 15, 25)
 	test_xpath_count(t, book_example, `//bookstore/book/*`, 20)
 	test_xpath_tags(t, html_example, "//title/../..", "html")
 	test_xpath_elements(t, html_example, "//ul/../p", 19)

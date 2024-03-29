@@ -11,6 +11,7 @@ func Test_func_boolean(t *testing.T) {
 	test_xpath_eval(t, empty_example, `true()`, true)
 	test_xpath_eval(t, empty_example, `false()`, false)
 	test_xpath_eval(t, empty_example, `boolean(0)`, false)
+	test_xpath_eval(t, empty_example, `boolean(null)`, false)
 	test_xpath_eval(t, empty_example, `boolean(1)`, true)
 	test_xpath_eval(t, empty_example, `boolean(2)`, true)
 	test_xpath_eval(t, empty_example, `boolean(true)`, false)
@@ -80,7 +81,8 @@ func Test_func_last(t *testing.T) {
 }
 
 func Test_func_local_name(t *testing.T) {
-	// TODO
+	test_xpath_eval(t, book_example, `local-name(bookstore)`, "bookstore")
+	test_xpath_eval(t, mybook_example, `local-name(//mybook:book)`, "book")
 }
 
 func Test_func_starts_with(t *testing.T) {
@@ -210,7 +212,8 @@ func Test_func_round(t *testing.T) {
 }
 
 func Test_func_namespace_uri(t *testing.T) {
-	// TODO
+	//test_xpath_eval(t, mybook_example, `namespace-uri(//mybook:book)`, "http://www.contoso.com/books")
+	//test_xpath_elements(t, mybook_example, `//*[namespace-uri()='http://www.contoso.com/books']`, 3, 9)
 }
 
 func Test_func_normalize_space(t *testing.T) {

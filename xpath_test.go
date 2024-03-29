@@ -12,6 +12,7 @@ var (
 	book_example     = createBookExample()
 	html_example     = createHtmlExample()
 	empty_example    = createNode("", RootNode)
+	mybook_example   = createMyBookExample()
 )
 
 func test_xpath_elements(t *testing.T, root *TNode, expr string, expected ...int) {
@@ -126,6 +127,14 @@ func TestCompile(t *testing.T) {
 	assertNil(t, err)
 	_, err = Compile("/pre:foo")
 	assertNil(t, err)
+}
+
+func TestInvalidXPath(t *testing.T) {
+	var err error
+	_, err = Compile("()")
+	assertErr(t, err)
+	_, err = Compile("(1,2,3)")
+	assertErr(t, err)
 }
 
 func TestCompileWithNS(t *testing.T) {
@@ -812,5 +821,68 @@ func createHtmlExample() *TNode {
 	comment := body.createChildNode("<!-- this is the end -->", CommentNode)
 	comment.lines = lines
 	lines++
+	return doc
+}
+
+func createMyBookExample() *TNode {
+	/*
+		<?xml version="1.0" encoding="utf-8"?>
+		<books xmlns:mybook="http://www.contoso.com/books">
+			<mybook:book id="bk101">
+				<title>XML Developer's Guide</title>
+				<author>Gambardella, Matthew</author>
+				<price>44.95</price>
+				<publish_date>2000-10-01</publish_date>
+			</mybook:book>
+			<mybook:book id="bk102">
+				<title>Midnight Rain</title>
+				<author>Ralls, Kim</author>
+				<price>5.95</price>
+				<publish_date>2000-12-16</publish_date>
+			</mybook:book>
+		</books>
+	*/
+	lines := 0
+	doc := createNode("", RootNode)
+	lines++
+	books := doc.createChildNode("books", ElementNode)
+	books.addAttribute("xmlns:mybook", "http://www.contoso.com/books")
+	books.lines = lines
+	lines++
+	data := []struct {
+		id      string
+		title   string
+		author  string
+		price   float64
+		publish string
+	}{
+		{id: "bk101", title: "XML Developer's Guide", author: "Gambardella, Matthew", price: 44.95, publish: "2000-10-01"},
+		{id: "bk102", title: "Midnight Rain", author: "Ralls, Kim", price: 5.95, publish: "2000-12-16"},
+	}
+	for i := 0; i < len(data); i++ {
+		v := data[i]
+		book := books.createChildNode("mybook:book", ElementNode)
+		book.addAttribute("id", v.id)
+		book.lines = lines
+		lines++
+		title := book.createChildNode("title", ElementNode)
+		title.createChildNode(v.title, TextNode)
+		title.lines = lines
+		lines++
+		author := book.createChildNode("author", ElementNode)
+		author.createChildNode(v.author, TextNode)
+		author.lines = lines
+		lines++
+		price := book.createChildNode("price", ElementNode)
+		price.createChildNode(fmt.Sprintf("%.2f", v.price), TextNode)
+		price.lines = lines
+		lines++
+		publish_date := book.createChildNode("publish_date", ElementNode)
+		publish_date.createChildNode(v.publish, TextNode)
+		publish_date.lines = lines
+		lines++
+		// skip the last of book element
+		lines++
+	}
 	return doc
 }
