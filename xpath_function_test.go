@@ -96,10 +96,11 @@ func Test_func_starts_with(t *testing.T) {
 func Test_func_string(t *testing.T) {
 	test_xpath_eval(t, empty_example, `string(1.23)`, "1.23")
 	test_xpath_eval(t, empty_example, `string(3)`, "3")
+	test_xpath_eval(t, book_example, `string(//book/@category)`, "cooking")
 }
 
 func Test_func_string_join(t *testing.T) {
-	//test_xpath_eval(t, empty_example, `string-join(('Now', 'is', 'the', 'time', '...'), '')`, "Now is the time ...")
+	//(t, empty_example, `string-join(('Now', 'is', 'the', 'time', '...'), '')`, "Now is the time ...")
 	test_xpath_eval(t, empty_example, `string-join("some text", ";")`, "some text")
 	test_xpath_eval(t, book_example, `string-join(//book/@category, ";")`, "cooking;children;web;web")
 }
@@ -120,6 +121,8 @@ func Test_func_substring(t *testing.T) {
 	//test_xpath_eval(t, empty_example, `substring("12345", 0, 3)`, "12") // panic??
 	//test_xpath_eval(t, empty_example, `substring("12345", 5, -3)`, "1")
 	test_xpath_eval(t, html_example, `substring(//title/child::node(), 1)`, "My page")
+	assertPanic(t, func() { selectNode(empty_example, `substring("12345", 5, -3)`) }) // Should be supports a negative value
+	assertPanic(t, func() { selectNode(empty_example, `substring("12345", 5, "")`) })
 }
 
 func Test_func_substring_after(t *testing.T) {
@@ -217,5 +220,7 @@ func Test_func_namespace_uri(t *testing.T) {
 }
 
 func Test_func_normalize_space(t *testing.T) {
-	// TODO
+	test_xpath_eval(t, empty_example, `normalize-space(' abc ')`, "abc")
+	test_xpath_eval(t, book_example, `normalize-space(//book/title)`, "Everyday Italian")
+	test_xpath_eval(t, book_example, `normalize-space(//book[1]/title)`, "Everyday Italian")
 }
