@@ -15,6 +15,28 @@ var (
 	mybook_example   = createMyBookExample()
 )
 
+type testQuery string
+
+func (t testQuery) Select(_ iterator) NodeNavigator {
+	panic("implement me")
+}
+
+func (t testQuery) Clone() query {
+	return t
+}
+
+func (t testQuery) Evaluate(_ iterator) interface{} {
+	return string(t)
+}
+
+func (t testQuery) ValueType() resultType {
+	return xpathResultType.Any
+}
+
+func (t testQuery) Properties() queryProp {
+	return queryProps.None
+}
+
 func test_xpath_elements(t *testing.T, root *TNode, expr string, expected ...int) {
 	result := selectNodes(root, expr)
 	assertEqual(t, len(expected), len(result))

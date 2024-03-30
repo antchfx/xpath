@@ -43,6 +43,8 @@ func Test_func_concat(t *testing.T) {
 	test_xpath_eval(t, empty_example, `concat("1", "2", "3")`, "123")
 	//test_xpath_eval(t, empty_example, `concat("Ciao!", ())`, "Ciao!")
 	test_xpath_eval(t, book_example, `concat(//book[1]/title, ", ", //book[1]/year)`, "Everyday Italian, 2005")
+	result := concatFunc(testQuery("a"), testQuery("b"))(nil, nil).(string)
+	assertEqual(t, result, "ab")
 }
 
 func Test_func_contains(t *testing.T) {
@@ -220,7 +222,26 @@ func Test_func_namespace_uri(t *testing.T) {
 }
 
 func Test_func_normalize_space(t *testing.T) {
+	const testStr = "\t    \rloooooooonnnnnnngggggggg  \r \n tes  \u00a0 t strin \n\n \r g "
+	const expectedStr = `loooooooonnnnnnngggggggg tes t strin g`
+	test_xpath_eval(t, employee_example, `normalize-space("`+testStr+`")`, expectedStr)
+
 	test_xpath_eval(t, empty_example, `normalize-space(' abc ')`, "abc")
 	test_xpath_eval(t, book_example, `normalize-space(//book/title)`, "Everyday Italian")
 	test_xpath_eval(t, book_example, `normalize-space(//book[1]/title)`, "Everyday Italian")
+}
+
+func Benchmark_NormalizeSpaceFunc(b *testing.B) {
+	b.ReportAllocs()
+	const strForNormalization = "\t    \rloooooooonnnnnnngggggggg  \r \n tes  \u00a0 t strin \n\n \r g "
+	for i := 0; i < b.N; i++ {
+		_ = normalizespaceFunc(testQuery(strForNormalization), nil)
+	}
+}
+
+func Benchmark_ConcatFunc(b *testing.B) {
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		_ = concatFunc(testQuery("a"), testQuery("b"))(nil, nil)
+	}
 }
