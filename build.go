@@ -125,6 +125,7 @@ func (b *builder) processAxis(root *axisNode, flags flag, props *builderProp) (q
 				// Skip the current node(Self:false) for the next descendants nodes.
 				_, ok := qyGrandInput.(*contextQuery)
 				qyOutput = &descendantQuery{name: root.LocalName, Input: qyGrandInput, Predicate: filter, Self: ok}
+				*props |= builderProps.NonFlat
 				return qyOutput, nil
 			}
 		} else if ((flags & flagsEnum.Filter) == 0) && (root.AxeType == "descendant" || root.AxeType == "descendant-or-self") {
@@ -158,7 +159,7 @@ func (b *builder) processAxis(root *axisNode, flags flag, props *builderProp) (q
 			}
 			return v
 		}
-		if (*props & builderProps.NonFlat) != builderProps.None {
+		if (*props & builderProps.NonFlat) == 0 {
 			qyOutput = &childQuery{name: root.LocalName, Input: qyInput, Predicate: filter}
 		} else {
 			qyOutput = &cachedChildQuery{name: root.LocalName, Input: qyInput, Predicate: filter}
