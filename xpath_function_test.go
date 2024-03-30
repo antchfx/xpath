@@ -115,7 +115,7 @@ func Test_func_string_length(t *testing.T) {
 func Test_func_substring(t *testing.T) {
 	test_xpath_eval(t, empty_example, `substring("motor car", 6)`, " car")
 	test_xpath_eval(t, empty_example, `substring("metadata", 4, 3)`, "ada")
-	//test_xpath_eval(t, empty_example, `substring("12345", 5, -3)`, "") ?? it should be 1 ??
+	//test_xpath_eval(t, empty_example, `substring("12345", 5, -3)`, "") // ?? it should be 1 ??
 	//test_xpath_eval(t, empty_example, `substring("12345", 1.5, 2.6)`, "234")
 	//test_xpath_eval(t, empty_example, `substring("12345", 0, 3)`, "12") // panic??
 	//test_xpath_eval(t, empty_example, `substring("12345", 5, -3)`, "1")
@@ -212,8 +212,8 @@ func Test_func_round(t *testing.T) {
 }
 
 func Test_func_namespace_uri(t *testing.T) {
-	//test_xpath_eval(t, mybook_example, `namespace-uri(//mybook:book)`, "http://www.contoso.com/books")
-	//test_xpath_elements(t, mybook_example, `//*[namespace-uri()='http://www.contoso.com/books']`, 3, 9)
+	test_xpath_eval(t, mybook_example, `namespace-uri(//mybook:book)`, "http://www.contoso.com/books")
+	test_xpath_elements(t, mybook_example, `//*[namespace-uri()='http://www.contoso.com/books']`, 3, 9)
 }
 
 func Test_func_normalize_space(t *testing.T) {

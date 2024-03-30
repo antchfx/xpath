@@ -285,10 +285,12 @@ type Attribute struct {
 type TNode struct {
 	Parent, FirstChild, LastChild, PrevSibling, NextSibling *TNode
 
-	Type  NodeType
-	Data  string
-	Attr  []Attribute
-	lines int
+	Type         NodeType
+	Data         string
+	Attr         []Attribute
+	NamespaceURL string
+	Prefix       string
+	lines        int
 }
 
 func (n *TNode) Value() string {
@@ -346,7 +348,7 @@ func (n *TNodeNavigator) Prefix() string {
 	if n.attr == -1 && strings.Contains(n.curr.Data, ":") {
 		return strings.Split(n.curr.Data, ":")[0]
 	}
-	return ""
+	return n.curr.Prefix
 }
 
 func (n *TNodeNavigator) NamespaceURL() string {
@@ -357,7 +359,7 @@ func (n *TNodeNavigator) NamespaceURL() string {
 			}
 		}
 	}
-	return ""
+	return n.curr.NamespaceURL
 }
 
 func (n *TNodeNavigator) Value() string {
@@ -842,11 +844,16 @@ func createMyBookExample() *TNode {
 			</mybook:book>
 		</books>
 	*/
-	lines := 0
+	var (
+		prefix       string = "mybook"
+		namespaceURL string = "http://www.contoso.com/books"
+	)
+	lines := 1
 	doc := createNode("", RootNode)
+	doc.lines = lines
 	lines++
 	books := doc.createChildNode("books", ElementNode)
-	books.addAttribute("xmlns:mybook", "http://www.contoso.com/books")
+	books.addAttribute("xmlns:mybook", namespaceURL)
 	books.lines = lines
 	lines++
 	data := []struct {
@@ -861,8 +868,10 @@ func createMyBookExample() *TNode {
 	}
 	for i := 0; i < len(data); i++ {
 		v := data[i]
-		book := books.createChildNode("mybook:book", ElementNode)
+		book := books.createChildNode("book", ElementNode)
 		book.addAttribute("id", v.id)
+		book.Prefix = prefix
+		book.NamespaceURL = namespaceURL
 		book.lines = lines
 		lines++
 		title := book.createChildNode("title", ElementNode)
