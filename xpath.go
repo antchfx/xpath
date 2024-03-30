@@ -74,6 +74,7 @@ type NodeNavigator interface {
 type NodeIterator struct {
 	node  NodeNavigator
 	query query
+	table map[uint64]bool
 }
 
 // Current returns current node which matched.
@@ -83,14 +84,22 @@ func (t *NodeIterator) Current() NodeNavigator {
 
 // MoveNext moves Navigator to the next match node.
 func (t *NodeIterator) MoveNext() bool {
-	n := t.query.Select(t)
-	if n != nil {
+	for {
+		n := t.query.Select(t)
+		if n == nil {
+			return false
+		}
 		if !t.node.MoveTo(n) {
 			t.node = n.Copy()
 		}
+		// https://github.com/antchfx/xpath/issues/94
+		id := getHashCode(n.Copy())
+		if _, ok := t.table[id]; ok {
+			continue
+		}
+		t.table[id] = true
 		return true
 	}
-	return false
 }
 
 // Select selects a node set using the specified XPath expression.
@@ -121,14 +130,14 @@ func (expr *Expr) Evaluate(root NodeNavigator) interface{} {
 	val := expr.q.Evaluate(iteratorFunc(func() NodeNavigator { return root }))
 	switch val.(type) {
 	case query:
-		return &NodeIterator{query: expr.q.Clone(), node: root}
+		return &NodeIterator{query: expr.q.Clone(), node: root, table: make(map[uint64]bool)}
 	}
 	return val
 }
 
 // Select selects a node set using the specified XPath expression.
 func (expr *Expr) Select(root NodeNavigator) *NodeIterator {
-	return &NodeIterator{query: expr.q.Clone(), node: root}
+	return &NodeIterator{query: expr.q.Clone(), node: root, table: make(map[uint64]bool)}
 }
 
 // String returns XPath expression string.

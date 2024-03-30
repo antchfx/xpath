@@ -1392,7 +1392,7 @@ func getHashCode(n NodeNavigator) uint64 {
 		}
 	}
 	h := fnv.New64a()
-	h.Write([]byte(sb.String()))
+	h.Write(sb.Bytes())
 	return h.Sum64()
 }
 
