@@ -645,3 +645,9 @@ func stringJoinFunc(arg1 query) func(query, iterator) interface{} {
 		return strings.Join(parts, separator)
 	}
 }
+
+// lower-case is XPATH function that converts a string to lower case.
+func lowerCaseFunc(q query, t iterator) interface{} {
+	v := functionArgs(q).Evaluate(t)
+	return strings.ToLower(asString(t, v))
+}

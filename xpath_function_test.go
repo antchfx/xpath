@@ -231,6 +231,13 @@ func Test_func_normalize_space(t *testing.T) {
 	test_xpath_eval(t, book_example, `normalize-space(//book[1]/title)`, "Everyday Italian")
 }
 
+func Test_func_lower_case(t *testing.T) {
+	test_xpath_eval(t, empty_example, `lower-case("ABc!D")`, "abc!d")
+	test_xpath_count(t, employee_example, `//name[@from="ca"]`, 0)
+	test_xpath_elements(t, employee_example, `//name[lower-case(@from) = "ca"]`, 9)
+	//test_xpath_eval(t, employee_example, `//employee/name/lower-case(text())`, "opal kole", "max miller", "beccaa moss")
+}
+
 func Benchmark_NormalizeSpaceFunc(b *testing.B) {
 	b.ReportAllocs()
 	const strForNormalization = "\t    \rloooooooonnnnnnngggggggg  \r \n tes  \u00a0 t strin \n\n \r g "

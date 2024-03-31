@@ -341,6 +341,12 @@ func (b *builder) processFunction(root *functionNode, props *builderProp) (query
 
 	var qyOutput query
 	switch root.FuncName {
+	case "lower-case":
+		arg, err := b.processNode(root.Args[0], flagsEnum.None, props)
+		if err != nil {
+			return nil, err
+		}
+		qyOutput = &functionQuery{Input: arg, Func: lowerCaseFunc}
 	case "starts-with":
 		arg1, err := b.processNode(root.Args[0], flagsEnum.None, props)
 		if err != nil {
