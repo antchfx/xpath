@@ -121,10 +121,7 @@ func (b *builder) processAxis(root *axisNode, flags flag, props *builderProp) (q
 					}
 					return v
 				}
-				// fix `//*[contains(@id,"food")]//*[contains(@id,"food")]`, see https://github.com/antchfx/htmlquery/issues/52
-				// Skip the current node(Self:false) for the next descendants nodes.
-				_, ok := qyGrandInput.(*contextQuery)
-				qyOutput = &descendantQuery{name: root.LocalName, Input: qyGrandInput, Predicate: filter, Self: ok}
+				qyOutput = &descendantQuery{name: root.LocalName, Input: qyGrandInput, Predicate: filter, Self: false}
 				*props |= builderProps.NonFlat
 				return qyOutput, nil
 			}
