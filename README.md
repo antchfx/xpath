@@ -140,6 +140,7 @@ The gxpath supported three types: number, boolean, string.
 | `lang()`                | ✗         |
 | `last()`                | ✓         |
 | `local-name()`          | ✓         |
+| `lower-case()`[^1]      | ✓         |
 | `matches()`             | ✓         |
 | `name()`                | ✓         |
 | `namespace-uri()`       | ✓         |
