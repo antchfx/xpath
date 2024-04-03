@@ -3,6 +3,7 @@ package xpath
 import (
 	"bytes"
 	"fmt"
+	"sort"
 	"strings"
 	"testing"
 )
@@ -46,7 +47,7 @@ func test_xpath_elements(t *testing.T, root *TNode, expr string, expected ...int
 	}
 }
 
-func test_xpath_values(t *testing.T, root *TNode, expr string, expected ...string) {
+func test_xpath_values(t testing.TB, root *TNode, expr string, expected ...string) {
 	result := selectNodes(root, expr)
 	assertEqual(t, len(expected), len(result))
 
@@ -120,23 +121,38 @@ func Test_Predicates_MultiParent(t *testing.T) {
 		{measType: map[string]string{"1": "field1", "2": "field2"}, measValue: map[string]string{"1": "31854", "2": "159773"}},
 		{measType: map[string]string{"1": "field3", "2": "field4"}, measValue: map[string]string{"1": "1234", "2": "567"}},
 	}
-	for _, d := range data {
+	for j := 0; j < len(data); j++ {
+		d := data[j]
 		measInfo := measData.createChildNode("measInfo", ElementNode)
 		measType := measInfo.createChildNode("measType", ElementNode)
 
-		for key, value := range d.measType {
-			measType.addAttribute("p", key)
-			measType.createChildNode(value, TextNode)
+		var keys []string
+		for k := range d.measType {
+			keys = append(keys, k)
 		}
+		sort.Strings(keys)
+
+		for _, k := range keys {
+			measType.addAttribute("p", k)
+			measType.createChildNode(d.measType[k], TextNode)
+		}
+
 		measValue := measInfo.createChildNode("measValue", ElementNode)
-		for key, value := range d.measValue {
+		keys = make([]string, 0)
+		for k := range d.measValue {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		for _, k := range keys {
 			r := measValue.createChildNode("r", ElementNode)
-			r.addAttribute("p", key)
-			r.createChildNode(value, TextNode)
+			r.addAttribute("p", k)
+			r.createChildNode(d.measValue[k], TextNode)
 		}
 	}
 	test_xpath_values(t, doc, `//r[@p=../../measType/@p]`, "31854", "159773", "1234", "567")
+
 }
+
 func TestCompile(t *testing.T) {
 	var err error
 	_, err = Compile("//a")
