@@ -175,6 +175,8 @@ func Test_func_number(t *testing.T) {
 	test_xpath_eval(t, empty_example, `number("10") > 10`, false)
 	test_xpath_eval(t, empty_example, `number("10") = 10`, true)
 	test_xpath_eval(t, empty_example, `number("123") < 1000`, true)
+	test_xpath_eval(t, empty_example, `number(//non-existent-node) = 0`, false)
+	assertTrue(t, math.IsNaN(MustCompile(`number(//non-existent-node)`).Evaluate(createNavigator(empty_example)).(float64)))
 	assertTrue(t, math.IsNaN(MustCompile(`number("123a")`).Evaluate(createNavigator(empty_example)).(float64)))
 }
 

@@ -113,7 +113,7 @@ func asNumber(t iterator, o interface{}) float64 {
 	case query:
 		node := typ.Select(t)
 		if node == nil {
-			return float64(0)
+			return math.NaN()
 		}
 		if v, err := strconv.ParseFloat(node.Value(), 64); err == nil {
 			return v
