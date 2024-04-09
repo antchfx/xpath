@@ -999,7 +999,7 @@ func (l *logicalQuery) Properties() queryProp {
 type numericQuery struct {
 	Left, Right query
 
-	Do func(interface{}, interface{}) interface{}
+	Do func(iterator, interface{}, interface{}) interface{}
 }
 
 func (n *numericQuery) Select(t iterator) NodeNavigator {
@@ -1009,7 +1009,7 @@ func (n *numericQuery) Select(t iterator) NodeNavigator {
 func (n *numericQuery) Evaluate(t iterator) interface{} {
 	m := n.Left.Evaluate(t)
 	k := n.Right.Evaluate(t)
-	return n.Do(m, k)
+	return n.Do(t, m, k)
 }
 
 func (n *numericQuery) Clone() query {

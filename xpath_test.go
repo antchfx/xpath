@@ -3,6 +3,7 @@ package xpath
 import (
 	"bytes"
 	"fmt"
+	"math"
 	"sort"
 	"strings"
 	"testing"
@@ -233,6 +234,28 @@ func TestMustCompile(t *testing.T) {
 	if iter.MoveNext() {
 		t.Fatal("should be an empty node list but got one")
 	}
+}
+
+func Test_plusFunc(t *testing.T) {
+	// 1+1
+	assertEqual(t, float64(2), plusFunc(nil, float64(1), float64(1)))
+	// string +
+	assertEqual(t, float64(2), plusFunc(nil, "1", "1"))
+	// invalid string
+	v := plusFunc(nil, "a", 1)
+	assertTrue(t, math.IsNaN(v.(float64)))
+	// Nodeset
+	// TODO
+}
+
+func Test_minusFunc(t *testing.T) {
+	// 1 - 1
+	assertEqual(t, float64(0), minusFunc(nil, float64(1), float64(1)))
+	// string
+	assertEqual(t, float64(0), minusFunc(nil, "1", "1"))
+	// invalid string
+	v := minusFunc(nil, "a", 1)
+	assertTrue(t, math.IsNaN(v.(float64)))
 }
 
 func TestNodeType(t *testing.T) {

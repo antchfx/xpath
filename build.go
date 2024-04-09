@@ -665,7 +665,7 @@ func (b *builder) processOperator(root *operatorNode, props *builderProp) (query
 	var qyOutput query
 	switch root.Op {
 	case "+", "-", "*", "div", "mod": // Numeric operator
-		var exprFunc func(interface{}, interface{}) interface{}
+		var exprFunc func(iterator, interface{}, interface{}) interface{}
 		switch root.Op {
 		case "+":
 			exprFunc = plusFunc

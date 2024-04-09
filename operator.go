@@ -1,7 +1,6 @@
 package xpath
 
 import (
-	"reflect"
 	"strconv"
 )
 
@@ -247,44 +246,43 @@ var orFunc = func(t iterator, m, n interface{}) interface{} {
 	return logicalFuncs[t1][t2](t, "or", m, n)
 }
 
-func numericExpr(m, n interface{}, cb func(float64, float64) float64) float64 {
-	typ := reflect.TypeOf(float64(0))
-	a := reflect.ValueOf(m).Convert(typ)
-	b := reflect.ValueOf(n).Convert(typ)
-	return cb(a.Float(), b.Float())
+func numericExpr(t iterator, m, n interface{}, cb func(float64, float64) float64) float64 {
+	a := asNumber(t, m)
+	b := asNumber(t, n)
+	return cb(a, b)
 }
 
 // plusFunc is an `+` operator.
-var plusFunc = func(m, n interface{}) interface{} {
-	return numericExpr(m, n, func(a, b float64) float64 {
+var plusFunc = func(t iterator, m, n interface{}) interface{} {
+	return numericExpr(t, m, n, func(a, b float64) float64 {
 		return a + b
 	})
 }
 
 // minusFunc is an `-` operator.
-var minusFunc = func(m, n interface{}) interface{} {
-	return numericExpr(m, n, func(a, b float64) float64 {
+var minusFunc = func(t iterator, m, n interface{}) interface{} {
+	return numericExpr(t, m, n, func(a, b float64) float64 {
 		return a - b
 	})
 }
 
 // mulFunc is an `*` operator.
-var mulFunc = func(m, n interface{}) interface{} {
-	return numericExpr(m, n, func(a, b float64) float64 {
+var mulFunc = func(t iterator, m, n interface{}) interface{} {
+	return numericExpr(t, m, n, func(a, b float64) float64 {
 		return a * b
 	})
 }
 
 // divFunc is an `DIV` operator.
-var divFunc = func(m, n interface{}) interface{} {
-	return numericExpr(m, n, func(a, b float64) float64 {
+var divFunc = func(t iterator, m, n interface{}) interface{} {
+	return numericExpr(t, m, n, func(a, b float64) float64 {
 		return a / b
 	})
 }
 
 // modFunc is an 'MOD' operator.
-var modFunc = func(m, n interface{}) interface{} {
-	return numericExpr(m, n, func(a, b float64) float64 {
+var modFunc = func(t iterator, m, n interface{}) interface{} {
+	return numericExpr(t, m, n, func(a, b float64) float64 {
 		return float64(int(a) % int(b))
 	})
 }
