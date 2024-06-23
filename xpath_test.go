@@ -324,7 +324,17 @@ func selectNode(root *TNode, expr string) *TNode {
 
 func selectNodes(root *TNode, expr string) []*TNode {
 	t := Select(createNavigator(root), expr)
-	return iterateNodes(t)
+	c := make(map[uint64]bool)
+	var list []*TNode
+	for _, n := range iterateNodes(t) {
+		m := getHashCode(createNavigator(n))
+		if _, ok := c[m]; ok {
+			continue
+		}
+		c[m] = true
+		list = append(list, n)
+	}
+	return list
 }
 
 func joinValues(nodes []*TNode) string {
