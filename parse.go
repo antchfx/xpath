@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strconv"
 	"unicode"
+	"unicode/utf8"
 )
 
 // A XPath expression token type.
@@ -228,8 +229,9 @@ Loop:
 }
 
 // RelationalExpr ::= AdditiveExpr	| RelationalExpr '<' AdditiveExpr | RelationalExpr '>' AdditiveExpr
-//					| RelationalExpr '<=' AdditiveExpr
-//					| RelationalExpr '>=' AdditiveExpr
+//
+//	| RelationalExpr '<=' AdditiveExpr
+//	| RelationalExpr '>=' AdditiveExpr
 func (p *parser) parseRelationalExpr(n node) node {
 	opnd := p.parseAdditiveExpr(n)
 Loop:
@@ -274,7 +276,8 @@ Loop:
 }
 
 // MultiplicativeExpr ::= UnaryExpr	| MultiplicativeExpr MultiplyOperator(*) UnaryExpr
-//						| MultiplicativeExpr 'div' UnaryExpr | MultiplicativeExpr 'mod' UnaryExpr
+//
+//	| MultiplicativeExpr 'div' UnaryExpr | MultiplicativeExpr 'mod' UnaryExpr
 func (p *parser) parseMultiplicativeExpr(n node) node {
 	opnd := p.parseUnaryExpr(n)
 Loop:
@@ -308,7 +311,7 @@ func (p *parser) parseUnaryExpr(n node) node {
 	return opnd
 }
 
-// 	UnionExpr ::= PathExpr | UnionExpr '|' PathExpr
+// UnionExpr ::= PathExpr | UnionExpr '|' PathExpr
 func (p *parser) parseUnionExpr(n node) node {
 	opnd := p.parsePathExpr(n)
 Loop:
@@ -352,7 +355,7 @@ func (p *parser) parseFilterExpr(n node) node {
 	return opnd
 }
 
-// 	Predicate ::=  '[' PredicateExpr ']'
+// Predicate ::=  '[' PredicateExpr ']'
 func (p *parser) parsePredicate(n node) node {
 	p.skipItem(itemLBracket)
 	opnd := p.parseExpression(n)
@@ -447,7 +450,7 @@ func (p *parser) parseSequence(n node) (opnd node) {
 	return opnd
 }
 
-// 	NodeTest ::= NameTest | nodeType '(' ')' | 'processing-instruction' '(' Literal ')'
+// NodeTest ::= NameTest | nodeType '(' ')' | 'processing-instruction' '(' Literal ')'
 func (p *parser) parseNodeTest(n node, axeTyp string) (opnd node) {
 	switch p.r.typ {
 	case itemName:
@@ -672,6 +675,7 @@ type scanner struct {
 
 	pos       int
 	curr      rune
+	currSize  int
 	typ       itemType
 	strval    string  // text value at current pos
 	numval    float64 // number value at current pos
@@ -681,10 +685,18 @@ type scanner struct {
 func (s *scanner) nextChar() bool {
 	if s.pos >= len(s.text) {
 		s.curr = rune(0)
+		s.currSize = 1
 		return false
 	}
-	s.curr = rune(s.text[s.pos])
-	s.pos++
+
+	r, size := rune(s.text[s.pos]), 1
+	if r >= 0x80 { // handle multi-byte runes
+		r, size = utf8.DecodeRuneInString(s.text[s.pos:])
+	}
+
+	s.curr = r
+	s.currSize = size
+	s.pos += size
 	return true
 }
 
@@ -843,12 +855,15 @@ func (s *scanner) scanString() string {
 		end = s.curr
 	)
 	s.nextChar()
-	i := s.pos - 1
+	i := s.pos - s.currSize
+	if s.currSize > 1 {
+		c++
+	}
 	for s.curr != end {
 		if !s.nextChar() {
 			panic(errors.New("xpath: scanString got unclosed string"))
 		}
-		c++
+		c += s.currSize
 	}
 	s.nextChar()
 	return s.text[i : i+c]
@@ -856,21 +871,29 @@ func (s *scanner) scanString() string {
 
 func (s *scanner) scanName() string {
 	var (
-		c int
-		i = s.pos - 1
+		c = s.currSize - 1
+		i = s.pos - s.currSize
 	)
+
+	// Detect current rune size
+
 	for isName(s.curr) {
-		c++
 		if !s.nextChar() {
+			c += s.currSize
 			break
 		}
+		c += s.currSize
 	}
 	return s.text[i : i+c]
 }
 
 func isName(r rune) bool {
 	return string(r) != ":" && string(r) != "/" &&
-		(unicode.Is(first, r) || unicode.Is(second, r) || string(r) == "*")
+		(unicode.Is(first, r) ||
+			unicode.Is(second, r) ||
+			unicode.Is(cyrillic, r) ||
+			unicode.Is(greek, r) ||
+			string(r) == "*")
 }
 
 func isDigit(r rune) bool {
@@ -1216,5 +1239,21 @@ var second = &unicode.RangeTable{
 		{0x3099, 0x309A, 1},
 		{0x309D, 0x309E, 1},
 		{0x30FC, 0x30FE, 1},
+	},
+}
+
+var cyrillic = &unicode.RangeTable{
+	R16: []unicode.Range16{
+		{Lo: 0x0400, Hi: 0x04FF, Stride: 1}, // Cyrillic
+		{Lo: 0x0500, Hi: 0x052F, Stride: 1}, // Cyrillic Supplement
+		{Lo: 0x2DE0, Hi: 0x2DFF, Stride: 1}, // Cyrillic Extended-A
+		{Lo: 0xA640, Hi: 0xA69F, Stride: 1}, // Cyrillic Extended-B
+	},
+}
+
+var greek = &unicode.RangeTable{
+	R16: []unicode.Range16{
+		{Lo: 0x0370, Hi: 0x03FF, Stride: 1}, // Greek and Coptic
+		{Lo: 0x1F00, Hi: 0x1FFF, Stride: 1}, // Greek Extended
 	},
 }
