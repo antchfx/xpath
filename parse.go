@@ -891,8 +891,6 @@ func isName(r rune) bool {
 	return string(r) != ":" && string(r) != "/" &&
 		(unicode.Is(first, r) ||
 			unicode.Is(second, r) ||
-			unicode.Is(cyrillic, r) ||
-			unicode.Is(greek, r) ||
 			string(r) == "*")
 }
 
@@ -1239,21 +1237,5 @@ var second = &unicode.RangeTable{
 		{0x3099, 0x309A, 1},
 		{0x309D, 0x309E, 1},
 		{0x30FC, 0x30FE, 1},
-	},
-}
-
-var cyrillic = &unicode.RangeTable{
-	R16: []unicode.Range16{
-		{Lo: 0x0400, Hi: 0x04FF, Stride: 1}, // Cyrillic
-		{Lo: 0x0500, Hi: 0x052F, Stride: 1}, // Cyrillic Supplement
-		{Lo: 0x2DE0, Hi: 0x2DFF, Stride: 1}, // Cyrillic Extended-A
-		{Lo: 0xA640, Hi: 0xA69F, Stride: 1}, // Cyrillic Extended-B
-	},
-}
-
-var greek = &unicode.RangeTable{
-	R16: []unicode.Range16{
-		{Lo: 0x0370, Hi: 0x03FF, Stride: 1}, // Greek and Coptic
-		{Lo: 0x1F00, Hi: 0x1FFF, Stride: 1}, // Greek Extended
 	},
 }
