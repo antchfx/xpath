@@ -130,3 +130,21 @@ func TestGreekAttributesInXPath_NoMatch(t *testing.T) {
 	div.lines = 1
 	test_xpath_elements(t, doc, `//div[@γλώσσα='αγγλικά']`)
 }
+
+func TestNonEnglishExpression(t *testing.T) {
+	doc := createNode("", RootNode)
+	n_1 := doc.createChildNode("Σειρά", ElementNode)
+	n_1.lines = 1
+	n_2 := n_1.createChildNode("ελληνικά", ElementNode)
+	n_2.lines = 2
+	n_2.createChildNode("hello", TextNode)
+	test_xpath_elements(t, doc, "//Σειρά", 1)
+	test_xpath_values(t, doc, "//Σειρά/ελληνικά", "hello")
+}
+
+func TestChineseCharactersExpression(t *testing.T) {
+	doc := createNode("", RootNode)
+	n := doc.createChildNode("中文", ElementNode)
+	n.createChildNode("你好世界", TextNode)
+	test_xpath_values(t, doc, "//中文", "你好世界")
+}
