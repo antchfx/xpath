@@ -81,3 +81,52 @@ func TestSequence(t *testing.T) {
 	test_xpath_count(t, html_example, `//body/(h1, h2, p)`, 2)
 	test_xpath_count(t, html_example, `//body/(h1, h2, p, ..)`, 3)
 }
+
+func TestLatinAttributesInXPath(t *testing.T) {
+	doc := createNode("", RootNode)
+	div := doc.createChildNode("div", ElementNode)
+	div.addAttribute("language", "english")
+	div.lines = 1
+	test_xpath_elements(t, doc, `//div[@language='english']`, 1)
+}
+
+func TestCyrillicAttributesInXPath(t *testing.T) {
+	doc := createNode("", RootNode)
+	div := doc.createChildNode("div", ElementNode)
+	div.addAttribute("язык", "русский")
+	div.lines = 1
+	test_xpath_elements(t, doc, `//div[@язык='русский']`, 1)
+}
+
+func TestGreekAttributesInXPath(t *testing.T) {
+	doc := createNode("", RootNode)
+	div := doc.createChildNode("div", ElementNode)
+	div.addAttribute("γλώσσα", "ελληνικά")
+	div.lines = 1
+	test_xpath_elements(t, doc, `//div[@γλώσσα='ελληνικά']`, 1)
+}
+
+func TestCyrillicAndGreekAttributesMixedInXPath(t *testing.T) {
+	doc := createNode("", RootNode)
+	div := doc.createChildNode("div", ElementNode)
+	div.addAttribute("язык", "русский")
+	div.addAttribute("γλώσσα", "ελληνικά")
+	div.lines = 1
+	test_xpath_elements(t, doc, `//div[@язык='русский' and @γλώσσα='ελληνικά']`, 1)
+}
+
+func TestCyrillicAttributesInXPath_NoMatch(t *testing.T) {
+	doc := createNode("", RootNode)
+	div := doc.createChildNode("div", ElementNode)
+	div.addAttribute("язык", "русский")
+	div.lines = 1
+	test_xpath_elements(t, doc, `//div[@язык='английский']`)
+}
+
+func TestGreekAttributesInXPath_NoMatch(t *testing.T) {
+	doc := createNode("", RootNode)
+	div := doc.createChildNode("div", ElementNode)
+	div.addAttribute("γλώσσα", "ελληνικά")
+	div.lines = 1
+	test_xpath_elements(t, doc, `//div[@γλώσσα='αγγλικά']`)
+}

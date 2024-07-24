@@ -7,10 +7,10 @@ func Test_self(t *testing.T) {
 }
 
 func Test_child(t *testing.T) {
+	test_xpath_elements(t, employee_example, `//child::employee/child::email`, 6, 11, 16)
 	test_xpath_elements(t, employee_example, `/empinfo/child::*`, 3, 8, 13)
 	test_xpath_elements(t, employee_example, `/empinfo/child::node()`, 3, 8, 13)
 	test_xpath_values(t, employee_example, `//name/child::text()`, "Opal Kole", "Max Miller", "Beccaa Moss")
-	test_xpath_elements(t, employee_example, `//child::employee/child::email`, 6, 11, 16)
 }
 
 func Test_descendant(t *testing.T) {
