@@ -106,7 +106,10 @@ func (b *builder) processAxis(root *axisNode, flags flag, props *builderProp) (q
 			if input := root.Input.(*axisNode); input.AxeType == "descendant-or-self" {
 				var qyGrandInput query
 				if input.Input != nil {
-					qyGrandInput, _ = b.processNode(input.Input, flagsEnum.SmartDesc, props)
+					qyGrandInput, err = b.processNode(input.Input, flagsEnum.SmartDesc, props)
+					if err != nil {
+						return nil, err
+					}
 				} else {
 					qyGrandInput = &contextQuery{}
 				}
