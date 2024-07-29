@@ -226,11 +226,14 @@ func Test_func_namespace_uri(t *testing.T) {
 func Test_func_normalize_space(t *testing.T) {
 	const testStr = "\t    \rloooooooonnnnnnngggggggg  \r \n tes  \u00a0 t strin \n\n \r g "
 	const expectedStr = `loooooooonnnnnnngggggggg tes t strin g`
-	test_xpath_eval(t, employee_example, `normalize-space("`+testStr+`")`, expectedStr)
-
+	test_xpath_eval(t, empty_example, `normalize-space("`+testStr+`")`, expectedStr)
 	test_xpath_eval(t, empty_example, `normalize-space(' abc ')`, "abc")
+	n := selectNode(employee_example, `//employee[@id="1"]/name`)
+	test_xpath_eval(t, n, `normalize-space()`, "Opal Kole")
+	test_xpath_eval(t, n, `normalize-space(.)`, "Opal Kole")
 	test_xpath_eval(t, book_example, `normalize-space(//book/title)`, "Everyday Italian")
 	test_xpath_eval(t, book_example, `normalize-space(//book[1]/title)`, "Everyday Italian")
+
 }
 
 func Test_func_lower_case(t *testing.T) {

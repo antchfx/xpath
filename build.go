@@ -449,10 +449,16 @@ func (b *builder) processFunction(root *functionNode, props *builderProp) (query
 		}
 		qyOutput = &functionQuery{Func: stringLengthFunc(arg1)}
 	case "normalize-space":
-		if len(root.Args) == 0 {
-			return nil, errors.New("xpath: normalize-space function must have at least one parameter")
+		var arg node
+		if len(root.Args) > 0 {
+			arg = root.Args[0]
+		} else {
+			arg = &axisNode{
+				AxeType:  "self",
+				nodeType: nodeAxis,
+			}
 		}
-		argQuery, err := b.processNode(root.Args[0], flagsEnum.None, props)
+		argQuery, err := b.processNode(arg, flagsEnum.None, props)
 		if err != nil {
 			return nil, err
 		}
