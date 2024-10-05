@@ -45,28 +45,9 @@ type builder struct {
 
 // axisPredicate creates a predicate to predicating for this axis node.
 func axisPredicate(root *axisNode) func(NodeNavigator) bool {
-	// get current axix node type.
-	typ := ElementNode
-	switch root.AxeType {
-	case "attribute":
-		typ = AttributeNode
-	case "self", "parent":
-		typ = allNode
-	default:
-		switch root.Prop {
-		case "comment":
-			typ = CommentNode
-		case "text":
-			typ = TextNode
-			//	case "processing-instruction":
-		//	typ = ProcessingInstructionNode
-		case "node":
-			typ = allNode
-		}
-	}
 	nametest := root.LocalName != "" || root.Prefix != ""
 	predicate := func(n NodeNavigator) bool {
-		if typ == n.NodeType() || typ == allNode {
+		if root.typeTest == n.NodeType() || root.typeTest == allNode {
 			if nametest {
 				type namespaceURL interface {
 					NamespaceURL() string
@@ -102,42 +83,35 @@ func (b *builder) processAxis(root *axisNode, flags flag, props *builderProp) (q
 		*props = builderProps.None
 	} else {
 		inputFlags := flagsEnum.None
-		if root.AxeType == "child" && (root.Input.Type() == nodeAxis) {
-			if input := root.Input.(*axisNode); input.AxeType == "descendant-or-self" {
-				var qyGrandInput query
-				if input.Input != nil {
-					qyGrandInput, err = b.processNode(input.Input, flagsEnum.SmartDesc, props)
-					if err != nil {
-						return nil, err
+		if (flags & flagsEnum.Filter) == 0 {
+			if root.AxisType == "child" && (root.Input.Type() == nodeAxis) {
+				if input := root.Input.(*axisNode); input.AxisType == "descendant-or-self" {
+					var qyGrandInput query
+					if input.Input != nil {
+						qyGrandInput, err = b.processNode(input.Input, flagsEnum.SmartDesc, props)
+						if err != nil {
+							return nil, err
+						}
+					} else {
+						qyGrandInput = &contextQuery{}
 					}
-				} else {
-					qyGrandInput = &contextQuery{}
+					qyOutput = &descendantQuery{name: root.LocalName, Input: qyGrandInput, Predicate: predicate, Self: false}
+					*props |= builderProps.NonFlat
+					return qyOutput, nil
 				}
-				// fix #20: https://github.com/antchfx/htmlquery/issues/20
-				filter := func(n NodeNavigator) bool {
-					v := predicate(n)
-					switch root.Prop {
-					case "text":
-						v = v && n.NodeType() == TextNode
-					case "comment":
-						v = v && n.NodeType() == CommentNode
-					}
-					return v
-				}
-				qyOutput = &descendantQuery{name: root.LocalName, Input: qyGrandInput, Predicate: filter, Self: false}
-				*props |= builderProps.NonFlat
-				return qyOutput, nil
 			}
-		} else if ((flags & flagsEnum.Filter) == 0) && (root.AxeType == "descendant" || root.AxeType == "descendant-or-self") {
-			inputFlags |= flagsEnum.SmartDesc
+			if root.AxisType == "descendant" || root.AxisType == "descendant-or-self" {
+				inputFlags |= flagsEnum.SmartDesc
+			}
 		}
+
 		qyInput, err = b.processNode(root.Input, inputFlags, props)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	switch root.AxeType {
+	switch root.AxisType {
 	case "ancestor":
 		qyOutput = &ancestorQuery{name: root.LocalName, Input: qyInput, Predicate: predicate}
 		*props |= builderProps.NonFlat
@@ -147,22 +121,10 @@ func (b *builder) processAxis(root *axisNode, flags flag, props *builderProp) (q
 	case "attribute":
 		qyOutput = &attributeQuery{name: root.LocalName, Input: qyInput, Predicate: predicate}
 	case "child":
-		filter := func(n NodeNavigator) bool {
-			v := predicate(n)
-			switch root.Prop {
-			case "text":
-				v = v && n.NodeType() == TextNode
-			case "node":
-				v = v && (n.NodeType() == ElementNode || n.NodeType() == TextNode)
-			case "comment":
-				v = v && n.NodeType() == CommentNode
-			}
-			return v
-		}
 		if (*props & builderProps.NonFlat) == 0 {
-			qyOutput = &childQuery{name: root.LocalName, Input: qyInput, Predicate: filter}
+			qyOutput = &childQuery{name: root.LocalName, Input: qyInput, Predicate: predicate}
 		} else {
-			qyOutput = &cachedChildQuery{name: root.LocalName, Input: qyInput, Predicate: filter}
+			qyOutput = &cachedChildQuery{name: root.LocalName, Input: qyInput, Predicate: predicate}
 		}
 	case "descendant":
 		if (flags & flagsEnum.SmartDesc) != flagsEnum.None {
@@ -195,7 +157,7 @@ func (b *builder) processAxis(root *axisNode, flags flag, props *builderProp) (q
 	case "namespace":
 		// haha,what will you do someting??
 	default:
-		err = fmt.Errorf("unknown axe type: %s", root.AxeType)
+		err = fmt.Errorf("unknown axe type: %s", root.AxisType)
 		return nil, err
 	}
 	return qyOutput, nil
@@ -238,7 +200,6 @@ func (b *builder) processFilter(root *filterNode, flags flag, props *builderProp
 		*props |= builderProps.PosFilter
 	}
 
-	merge := (qyInput.Properties() & queryProps.Merge) != 0
 	if (propsCond & builderProps.HasPosition) != builderProps.None {
 		if (propsCond & builderProps.HasLast) != 0 {
 			// https://github.com/antchfx/xpath/issues/76
@@ -246,16 +207,15 @@ func (b *builder) processFilter(root *filterNode, flags flag, props *builderProp
 			if qyFunc, ok := cond.(*functionQuery); ok {
 				switch qyFunc.Input.(type) {
 				case *filterQuery:
-					cond = &lastQuery{Input: qyFunc.Input}
+					cond = &lastFuncQuery{Input: qyFunc.Input}
 				}
 			}
 		}
 	}
 
+	merge := (qyInput.Properties() & queryProps.Merge) != 0
 	if first && firstInput != nil {
 		if merge && ((*props & builderProps.PosFilter) != 0) {
-			qyInput = &filterQuery{Input: qyInput, Predicate: cond, NoPosition: false}
-
 			var (
 				rootQuery = &contextQuery{}
 				parent    query
@@ -318,10 +278,11 @@ func (b *builder) processFilter(root *filterNode, flags flag, props *builderProp
 				}
 			}
 			b.firstInput = nil
+			child := &filterQuery{Input: qyInput, Predicate: cond, NoPosition: false}
 			if parent != nil {
-				return &mergeQuery{Input: parent, Child: qyInput}, nil
+				return &mergeQuery{Input: parent, Child: child}, nil
 			}
-			return qyInput, nil
+			return child, nil
 		}
 		b.firstInput = nil
 	}
@@ -346,7 +307,7 @@ func (b *builder) processFunction(root *functionNode, props *builderProp) (query
 		if err != nil {
 			return nil, err
 		}
-		qyOutput = &functionQuery{Input: arg, Func: lowerCaseFunc}
+		qyOutput = &functionQuery{Func: lowerCaseFunc(arg)}
 	case "starts-with":
 		arg1, err := b.processNode(root.Args[0], flagsEnum.None, props)
 		if err != nil {
@@ -453,16 +414,13 @@ func (b *builder) processFunction(root *functionNode, props *builderProp) (query
 		if len(root.Args) > 0 {
 			arg = root.Args[0]
 		} else {
-			arg = &axisNode{
-				AxeType:  "self",
-				nodeType: nodeAxis,
-			}
+			arg = newAxisNode("self", allNode, "", "", "", nil)
 		}
-		argQuery, err := b.processNode(arg, flagsEnum.None, props)
+		arg1, err := b.processNode(arg, flagsEnum.None, props)
 		if err != nil {
 			return nil, err
 		}
-		qyOutput = &functionQuery{Input: argQuery, Func: normalizespaceFunc}
+		qyOutput = &functionQuery{Func: normalizespaceFunc(arg1)}
 	case "replace":
 		//replace( string , string, string )
 		if len(root.Args) != 3 {
@@ -509,7 +467,7 @@ func (b *builder) processFunction(root *functionNode, props *builderProp) (query
 		if err != nil {
 			return nil, err
 		}
-		qyOutput = &functionQuery{Input: argQuery, Func: notFunc}
+		qyOutput = &functionQuery{Func: notFunc(argQuery)}
 	case "name", "local-name", "namespace-uri":
 		if len(root.Args) > 1 {
 			return nil, fmt.Errorf("xpath: %s function must have at most one parameter", root.FuncName)
@@ -540,17 +498,10 @@ func (b *builder) processFunction(root *functionNode, props *builderProp) (query
 			},
 		}
 	case "last":
-		//switch typ := b.firstInput.(type) {
-		//case *groupQuery, *filterQuery:
-		// https://github.com/antchfx/xpath/issues/76
-		// https://github.com/antchfx/xpath/issues/78
-		//qyOutput = &lastQuery{Input: typ}
-		//default:
-		qyOutput = &functionQuery{Func: lastFunc}
-		//}
+		qyOutput = &functionQuery{Input: b.firstInput, Func: lastFunc()}
 		*props |= builderProps.HasLast
 	case "position":
-		qyOutput = &functionQuery{Func: positionFunc}
+		qyOutput = &functionQuery{Input: b.firstInput, Func: positionFunc()}
 		*props |= builderProps.HasPosition
 	case "boolean", "number", "string":
 		var inp query
@@ -564,16 +515,14 @@ func (b *builder) processFunction(root *functionNode, props *builderProp) (query
 			}
 			inp = argQuery
 		}
-		f := &functionQuery{Input: inp}
 		switch root.FuncName {
 		case "boolean":
-			f.Func = booleanFunc
+			qyOutput = &functionQuery{Func: booleanFunc(inp)}
 		case "string":
-			f.Func = stringFunc
+			qyOutput = &functionQuery{Func: stringFunc(inp)}
 		case "number":
-			f.Func = numberFunc
+			qyOutput = &functionQuery{Func: numberFunc(inp)}
 		}
-		qyOutput = f
 	case "count":
 		if len(root.Args) == 0 {
 			return nil, fmt.Errorf("xpath: count(node-sets) function must with have parameters node-sets")
@@ -582,7 +531,7 @@ func (b *builder) processFunction(root *functionNode, props *builderProp) (query
 		if err != nil {
 			return nil, err
 		}
-		qyOutput = &functionQuery{Input: argQuery, Func: countFunc}
+		qyOutput = &functionQuery{Func: countFunc(argQuery)}
 	case "sum":
 		if len(root.Args) == 0 {
 			return nil, fmt.Errorf("xpath: sum(node-sets) function must with have parameters node-sets")
@@ -591,7 +540,7 @@ func (b *builder) processFunction(root *functionNode, props *builderProp) (query
 		if err != nil {
 			return nil, err
 		}
-		qyOutput = &functionQuery{Input: argQuery, Func: sumFunc}
+		qyOutput = &functionQuery{Func: sumFunc(argQuery)}
 	case "ceiling", "floor", "round":
 		if len(root.Args) == 0 {
 			return nil, fmt.Errorf("xpath: ceiling(node-sets) function must with have parameters node-sets")
@@ -600,16 +549,14 @@ func (b *builder) processFunction(root *functionNode, props *builderProp) (query
 		if err != nil {
 			return nil, err
 		}
-		f := &functionQuery{Input: argQuery}
 		switch root.FuncName {
 		case "ceiling":
-			f.Func = ceilingFunc
+			qyOutput = &functionQuery{Func: ceilingFunc(argQuery)}
 		case "floor":
-			f.Func = floorFunc
+			qyOutput = &functionQuery{Func: floorFunc(argQuery)}
 		case "round":
-			f.Func = roundFunc
+			qyOutput = &functionQuery{Func: roundFunc(argQuery)}
 		}
-		qyOutput = f
 	case "concat":
 		if len(root.Args) < 2 {
 			return nil, fmt.Errorf("xpath: concat() must have at least two arguments")
@@ -636,7 +583,7 @@ func (b *builder) processFunction(root *functionNode, props *builderProp) (query
 		if len(root.Args) != 2 {
 			return nil, fmt.Errorf("xpath: string-join(node-sets, separator) function requires node-set and argument")
 		}
-		argQuery, err := b.processNode(root.Args[0], flagsEnum.None, props)
+		input, err := b.processNode(root.Args[0], flagsEnum.None, props)
 		if err != nil {
 			return nil, err
 		}
@@ -644,13 +591,9 @@ func (b *builder) processFunction(root *functionNode, props *builderProp) (query
 		if err != nil {
 			return nil, err
 		}
-		qyOutput = &functionQuery{Input: argQuery, Func: stringJoinFunc(arg1)}
+		qyOutput = &functionQuery{Func: stringJoinFunc(input, arg1)}
 	default:
 		return nil, fmt.Errorf("not yet support this function %s()", root.FuncName)
-	}
-
-	if funcQuery, ok := qyOutput.(*functionQuery); ok && funcQuery.Input == nil {
-		funcQuery.Input = b.firstInput
 	}
 	return qyOutput, nil
 }

@@ -86,12 +86,13 @@ func newOperandNode(v interface{}) node {
 }
 
 // newAxisNode returns new axis node AxisNode.
-func newAxisNode(axeTyp, localName, prefix, prop string, n node, opts ...func(p *axisNode)) node {
+func newAxisNode(axisType string, typeTest NodeType, localName, prefix, prop string, n node, opts ...func(p *axisNode)) node {
 	a := axisNode{
 		nodeType:  nodeAxis,
+		typeTest:  typeTest,
 		LocalName: localName,
 		Prefix:    prefix,
-		AxeType:   axeTyp,
+		AxisType:  axisType,
 		Prop:      prop,
 		Input:     n,
 	}
@@ -338,7 +339,7 @@ func (p *parser) parsePathExpr(n node) node {
 			opnd = p.parseRelativeLocationPath(opnd)
 		case itemSlashSlash:
 			p.next()
-			opnd = p.parseRelativeLocationPath(newAxisNode("descendant-or-self", "", "", "", opnd))
+			opnd = p.parseRelativeLocationPath(newAxisNode("descendant-or-self", allNode, "", "", "", opnd))
 		}
 	} else {
 		opnd = p.parseLocationPath(nil)
@@ -375,7 +376,7 @@ func (p *parser) parseLocationPath(n node) (opnd node) {
 	case itemSlashSlash:
 		p.next()
 		opnd = newRootNode("//")
-		opnd = p.parseRelativeLocationPath(newAxisNode("descendant-or-self", "", "", "", opnd))
+		opnd = p.parseRelativeLocationPath(newAxisNode("descendant-or-self", allNode, "", "", "", opnd))
 	default:
 		opnd = p.parseRelativeLocationPath(n)
 	}
@@ -391,7 +392,7 @@ Loop:
 		switch p.r.typ {
 		case itemSlashSlash:
 			p.next()
-			opnd = newAxisNode("descendant-or-self", "", "", "", opnd)
+			opnd = newAxisNode("descendant-or-self", allNode, "", "", "", opnd)
 		case itemSlash:
 			p.next()
 		default:
@@ -403,30 +404,33 @@ Loop:
 
 // Step	::= AxisSpecifier NodeTest Predicate* | AbbreviatedStep
 func (p *parser) parseStep(n node) (opnd node) {
-	axeTyp := "child" // default axes value.
 	if p.r.typ == itemDot || p.r.typ == itemDotDot {
 		if p.r.typ == itemDot {
-			axeTyp = "self"
+			opnd = newAxisNode("self", allNode, "", "", "", n)
 		} else {
-			axeTyp = "parent"
+			opnd = newAxisNode("parent", allNode, "", "", "", n)
 		}
 		p.next()
-		opnd = newAxisNode(axeTyp, "", "", "", n)
 		if p.r.typ != itemLBracket {
 			return opnd
 		}
 	} else {
+		axisType := "child" // default axes value.
 		switch p.r.typ {
 		case itemAt:
+			axisType = "attribute"
 			p.next()
-			axeTyp = "attribute"
 		case itemAxe:
-			axeTyp = p.r.name
+			axisType = p.r.name
 			p.next()
 		case itemLParens:
 			return p.parseSequence(n)
 		}
-		opnd = p.parseNodeTest(n, axeTyp)
+		matchType := ElementNode
+		if axisType == "attribute" {
+			matchType = AttributeNode
+		}
+		opnd = p.parseNodeTest(n, axisType, matchType)
 	}
 	for p.r.typ == itemLBracket {
 		opnd = newFilterNode(opnd, p.parsePredicate(opnd))
@@ -451,7 +455,7 @@ func (p *parser) parseSequence(n node) (opnd node) {
 }
 
 // NodeTest ::= NameTest | nodeType '(' ')' | 'processing-instruction' '(' Literal ')'
-func (p *parser) parseNodeTest(n node, axeTyp string) (opnd node) {
+func (p *parser) parseNodeTest(n node, axeTyp string, matchType NodeType) (opnd node) {
 	switch p.r.typ {
 	case itemName:
 		if p.r.canBeFunc && isNodeType(p.r) {
@@ -469,7 +473,19 @@ func (p *parser) parseNodeTest(n node, axeTyp string) (opnd node) {
 				p.next()
 			}
 			p.skipItem(itemRParens)
-			opnd = newAxisNode(axeTyp, name, "", prop, n)
+			switch prop {
+			case "comment":
+				matchType = CommentNode
+			case "text":
+				matchType = TextNode
+			case "processing-instruction":
+			case "node":
+				matchType = allNode
+			default:
+				matchType = RootNode
+			}
+
+			opnd = newAxisNode(axeTyp, matchType, name, "", prop, n)
 		} else {
 			prefix := p.r.prefix
 			name := p.r.name
@@ -477,7 +493,7 @@ func (p *parser) parseNodeTest(n node, axeTyp string) (opnd node) {
 			if p.r.name == "*" {
 				name = ""
 			}
-			opnd = newAxisNode(axeTyp, name, prefix, "", n, func(a *axisNode) {
+			opnd = newAxisNode(axeTyp, matchType, name, prefix, "", n, func(a *axisNode) {
 				if prefix != "" && p.namespaces != nil {
 					if ns, ok := p.namespaces[prefix]; ok {
 						a.hasNamespaceURI = true
@@ -489,7 +505,7 @@ func (p *parser) parseNodeTest(n node, axeTyp string) (opnd node) {
 			})
 		}
 	case itemStar:
-		opnd = newAxisNode(axeTyp, "", "", "", n)
+		opnd = newAxisNode(axeTyp, matchType, "", "", "", n)
 		p.next()
 	default:
 		panic("expression must evaluate to a node-set")
@@ -582,17 +598,18 @@ type axisNode struct {
 	nodeType
 	Input           node
 	Prop            string // node-test name.[comment|text|processing-instruction|node]
-	AxeType         string // name of the axes.[attribute|ancestor|child|....]
+	AxisType        string // name of the axis.[attribute|ancestor|child|....]
 	LocalName       string // local part name of node.
 	Prefix          string // prefix name of node.
 	namespaceURI    string // namespace URI of node
 	hasNamespaceURI bool   // if namespace URI is set (can be "")
+	typeTest        NodeType
 }
 
 func (a *axisNode) String() string {
 	var b bytes.Buffer
-	if a.AxeType != "" {
-		b.Write([]byte(a.AxeType + "::"))
+	if a.AxisType != "" {
+		b.Write([]byte(a.AxisType + "::"))
 	}
 	if a.Prefix != "" {
 		b.Write([]byte(a.Prefix + ":"))

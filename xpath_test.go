@@ -658,7 +658,7 @@ func createBookExample() *TNode {
 			title:    Element{"Learning XML", map[string]string{"lang": "en"}},
 			year:     2003,
 			price:    39.95,
-			authors:  []string{"JErik T. Ray"},
+			authors:  []string{"Erik T. Ray"},
 		},
 	}
 

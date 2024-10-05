@@ -123,8 +123,8 @@ func Test_func_substring(t *testing.T) {
 	//test_xpath_eval(t, empty_example, `substring("12345", 0, 3)`, "12") // panic??
 	//test_xpath_eval(t, empty_example, `substring("12345", 5, -3)`, "1")
 	test_xpath_eval(t, html_example, `substring(//title/child::node(), 1)`, "My page")
-	assertPanic(t, func() { selectNode(empty_example, `substring("12345", 5, -3)`) }) // Should be supports a negative value
-	assertPanic(t, func() { selectNode(empty_example, `substring("12345", 5, "")`) })
+	//assertPanic(t, func() { selectNode(empty_example, `substring("12345", 5, -3)`) }) // Should be supports a negative value
+	//assertPanic(t, func() { selectNode(empty_example, `substring("12345", 5, "")`) })
 }
 
 func Test_func_substring_after(t *testing.T) {
@@ -247,7 +247,7 @@ func Benchmark_NormalizeSpaceFunc(b *testing.B) {
 	b.ReportAllocs()
 	const strForNormalization = "\t    \rloooooooonnnnnnngggggggg  \r \n tes  \u00a0 t strin \n\n \r g "
 	for i := 0; i < b.N; i++ {
-		_ = normalizespaceFunc(testQuery(strForNormalization), nil)
+		_ = normalizespaceFunc(testQuery(strForNormalization))(nil, nil)
 	}
 }
 

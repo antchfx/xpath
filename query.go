@@ -850,6 +850,9 @@ func (f *functionQuery) Evaluate(t iterator) interface{} {
 }
 
 func (f *functionQuery) Clone() query {
+	if f.Input == nil {
+		return &functionQuery{Func: f.Func}
+	}
 	return &functionQuery{Input: f.Input.Clone(), Func: f.Func}
 }
 
@@ -1187,18 +1190,18 @@ func (u *unionQuery) Properties() queryProp {
 	return queryProps.Merge
 }
 
-type lastQuery struct {
+type lastFuncQuery struct {
 	buffer  []NodeNavigator
 	counted bool
 
 	Input query
 }
 
-func (q *lastQuery) Select(t iterator) NodeNavigator {
+func (q *lastFuncQuery) Select(t iterator) NodeNavigator {
 	return nil
 }
 
-func (q *lastQuery) Evaluate(t iterator) interface{} {
+func (q *lastFuncQuery) Evaluate(t iterator) interface{} {
 	if !q.counted {
 		for {
 			node := q.Input.Select(t)
@@ -1212,15 +1215,15 @@ func (q *lastQuery) Evaluate(t iterator) interface{} {
 	return float64(len(q.buffer))
 }
 
-func (q *lastQuery) Clone() query {
-	return &lastQuery{Input: q.Input.Clone()}
+func (q *lastFuncQuery) Clone() query {
+	return &lastFuncQuery{Input: q.Input.Clone()}
 }
 
-func (q *lastQuery) ValueType() resultType {
+func (q *lastFuncQuery) ValueType() resultType {
 	return xpathResultType.Number
 }
 
-func (q *lastQuery) Properties() queryProp {
+func (q *lastFuncQuery) Properties() queryProp {
 	return queryProps.Merge
 }
 

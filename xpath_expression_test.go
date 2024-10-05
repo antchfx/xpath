@@ -149,3 +149,9 @@ func TestChineseCharactersExpression(t *testing.T) {
 	n.createChildNode("你好世界", TextNode)
 	test_xpath_values(t, doc, "//中文", "你好世界")
 }
+
+func TestBUG_104(t *testing.T) {
+	// BUG https://github.com/antchfx/xpath/issues/104
+	test_xpath_count(t, book_example, `//author[1]`, 4)
+	test_xpath_values(t, book_example, `//author[1]/text()`, "Giada De Laurentiis", "J K. Rowling", "James McGovern", "Erik T. Ray")
+}
