@@ -155,3 +155,12 @@ func TestBUG_104(t *testing.T) {
 	test_xpath_count(t, book_example, `//author[1]`, 4)
 	test_xpath_values(t, book_example, `//author[1]/text()`, "Giada De Laurentiis", "J K. Rowling", "James McGovern", "Erik T. Ray")
 }
+
+func TestNonEnglishPredicateExpression(t *testing.T) {
+	// https://github.com/antchfx/xpath/issues/106
+	doc := createNode("", RootNode)
+	n := doc.createChildNode("h1", ElementNode)
+	n.addAttribute("id", "断点")
+	n.createChildNode("Hello,World!", TextNode)
+	test_xpath_count(t, doc, "//h1[@id='断点']", 1)
+}
