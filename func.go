@@ -564,8 +564,17 @@ func replaceFunc(arg1, arg2, arg3 query) func(query, iterator) interface{} {
 		str := asString(t, functionArgs(arg1).Evaluate(t))
 		src := asString(t, functionArgs(arg2).Evaluate(t))
 		dst := asString(t, functionArgs(arg3).Evaluate(t))
+		e, err := getRegexp(src)
+		if err != nil {
+			panic(fmt.Errorf("replace() function second argument is not a valid regexp pattern, err: %s", err.Error()))
+		}
 
-		return strings.Replace(str, src, dst, -1)
+		// replace all $i to ${i} for golang regexp.Expand
+		for idx := e.NumSubexp(); idx > 0; idx-- {
+			dst = strings.ReplaceAll(dst, fmt.Sprintf("$%d", idx), fmt.Sprintf("${%d}", idx))
+		}
+
+		return e.ReplaceAllString(str, dst)
 	}
 }
 
