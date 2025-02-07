@@ -195,13 +195,16 @@ func Test_func_replace(t *testing.T) {
 	test_xpath_eval(t, empty_example, `replace("abracadabra", "a", "")`, "brcdbr")
 	// The below xpath expressions is not supported yet
 	//
-	//test_xpath_eval(t, empty_example, `replace("abracadabra", "a.*a", "*")`, "*")
-	//test_xpath_eval(t, empty_example, `replace("abracadabra", "a.*?a", "*")`, "*c*bra")
-	//test_xpath_eval(t, empty_example, `replace("abracadabra", ".*?", "$1")`, "*c*bra") // error, because the pattern matches the zero-length string
-	//test_xpath_eval(t, empty_example, `replace("AAAA", "A+", "b")`, "b")
-	//test_xpath_eval(t, empty_example, `replace("AAAA", "A+?", "b")`, "bbb")
-	//test_xpath_eval(t, empty_example, `replace("darted", "^(.*?)d(.*)$", "$1c$2")`, "carted")
-	//test_xpath_eval(t, empty_example, `replace("abracadabra", "a(.)", "a$1$1")`, "abbraccaddabbra")
+	test_xpath_eval(t, empty_example, `replace("abracadabra", "a.*a", "*")`, "*")
+	test_xpath_eval(t, empty_example, `replace("abracadabra", "a.*?a", "*")`, "*c*bra")
+	// test_xpath_eval(t, empty_example, `replace("abracadabra", ".*?", "$1")`, "*c*bra") // error, because the pattern matches the zero-length string
+	test_xpath_eval(t, empty_example, `replace("AAAA", "A+", "b")`, "b")
+	test_xpath_eval(t, empty_example, `replace("AAAA", "A+?", "b")`, "bbbb")
+	test_xpath_eval(t, empty_example, `replace("darted", "^(.*?)d(.*)$", "$1c$2")`, "carted")
+	test_xpath_eval(t, empty_example, `replace("abracadabra", "a(.)", "a$1$1")`, "abbraccaddabbra")
+	test_xpath_eval(t, empty_example, `replace("abcd", "(ab)|(a)", "[1=$1][2=$2]")`, "[1=ab][2=]cd")
+	test_xpath_eval(t, empty_example, `replace("1/1/c11/1", "(.*)/[^/]+$", "$1")`, "1/1/c11")
+	test_xpath_eval(t, empty_example, `replace("A/B/C/D/E/F/G/H/I/J/K/L", "([^/]*)/([^/]*)/([^/]*)/([^/]*)/([^/]*)/([^/]*)/([^/]*)/([^/]*)/([^/]*)/(.*)", "$1-$2-$3-$4-$5-$6-$7-$8-$9-$10")`, "A-B-C-D-E-F-G-H-I-J/K/L")
 }
 
 func Test_func_reverse(t *testing.T) {
