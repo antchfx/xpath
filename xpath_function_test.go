@@ -118,12 +118,14 @@ func Test_func_string_length(t *testing.T) {
 func Test_func_substring(t *testing.T) {
 	test_xpath_eval(t, empty_example, `substring("motor car", 6)`, " car")
 	test_xpath_eval(t, empty_example, `substring("metadata", 4, 3)`, "ada")
-	//test_xpath_eval(t, empty_example, `substring("12345", 5, -3)`, "") // ?? it should be 1 ??
-	//test_xpath_eval(t, empty_example, `substring("12345", 1.5, 2.6)`, "234")
-	//test_xpath_eval(t, empty_example, `substring("12345", 0, 3)`, "12") // panic??
-	//test_xpath_eval(t, empty_example, `substring("12345", 5, -3)`, "1")
+	test_xpath_eval(t, empty_example, `substring("12345", 5, -3)`, "")
+	test_xpath_eval(t, empty_example, `substring("12345", 1.5, 2.6)`, "234")
+	test_xpath_eval(t, empty_example, `substring("12345", 0, 3)`, "12")
+	test_xpath_eval(t, empty_example, `substring("12345", 5, -3)`, "")
+	test_xpath_eval(t, empty_example, `substring("12345", 0, 5)`, "1234")
+	test_xpath_eval(t, empty_example, `substring("12345", 1, 5)`, "12345")
+	test_xpath_eval(t, empty_example, `substring("12345", 1, 6)`, "12345")
 	test_xpath_eval(t, html_example, `substring(//title/child::node(), 1)`, "My page")
-	//assertPanic(t, func() { selectNode(empty_example, `substring("12345", 5, -3)`) }) // Should be supports a negative value
 	//assertPanic(t, func() { selectNode(empty_example, `substring("12345", 5, "")`) })
 }
 

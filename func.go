@@ -459,25 +459,42 @@ func substringFunc(arg1, arg2, arg3 query) func(query, iterator) interface{} {
 
 		var start, length float64
 		var ok bool
-
 		if start, ok = functionArgs(arg2).Evaluate(t).(float64); !ok {
-			panic(errors.New("substring() function first argument type must be int"))
-		} else if start < 1 {
-			panic(errors.New("substring() function first argument type must be >= 1"))
+			panic(errors.New("substring() function first argument type must be number"))
 		}
-		start--
-		if arg3 != nil {
-			if length, ok = functionArgs(arg3).Evaluate(t).(float64); !ok {
-				panic(errors.New("substring() function second argument type must be int"))
+		// fix https://github.com/antchfx/xpath/issues/109
+		start = math.Round(start)
+		if start > float64(len(m)) {
+			return ""
+		}
+		if arg3 == nil {
+			if start <= 0 {
+				return m
 			}
+			return m[int(start)-1:]
 		}
-		if (len(m) - int(start)) < int(length) {
-			panic(errors.New("substring() function start and length argument out of range"))
+
+		if length, ok = functionArgs(arg3).Evaluate(t).(float64); !ok {
+			panic(errors.New("substring() function second argument type must be number"))
 		}
-		if length > 0 {
-			return m[int(start):int(length+start)]
+		length = math.Round(length)
+		if length <= 0 {
+			return ""
 		}
-		return m[int(start):]
+		if length > float64(len(m)) {
+			length = float64(len(m))
+		}
+		if start < 0 {
+			length = length - math.Abs(start)
+			if length <= 1 {
+				return ""
+			}
+			return m[:int(length-1)]
+		}
+		if start == 0 {
+			return m[:int(length-1)]
+		}
+		return m[int(start-1):int(length+start-1)]
 	}
 }
 
