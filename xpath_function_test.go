@@ -262,3 +262,36 @@ func Benchmark_ConcatFunc(b *testing.B) {
 		_ = concatFunc(testQuery("a"), testQuery("b"))(nil, nil)
 	}
 }
+
+func Benchmark_GetHashCode(b *testing.B) {
+	// Create a more complex test node that will actually go through the full getHashCode paths
+	doc := createNavigator(book_example)
+	doc.MoveToRoot()
+	doc.MoveToChild() // Move to the first element
+	doc.MoveToChild() // Deeper
+	// Find a node with attributes
+	var node NodeNavigator
+	for {
+		if doc.NodeType() == AttributeNode || doc.NodeType() == TextNode || doc.NodeType() == CommentNode {
+			node = doc.Copy()
+			break
+		}
+		if !doc.MoveToNext() {
+			if !doc.MoveToChild() {
+				// If we can't find a suitable node, default to using the first element
+				doc.MoveToRoot()
+				doc.MoveToChild()
+				node = doc.Copy()
+				break
+			}
+		}
+	}
+
+	b.Run("getHashCode", func(b *testing.B) {
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			n := node.Copy()
+			_ = getHashCode(n)
+		}
+	})
+}
