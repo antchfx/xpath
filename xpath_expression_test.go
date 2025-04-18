@@ -164,3 +164,20 @@ func TestNonEnglishPredicateExpression(t *testing.T) {
 	n.createChildNode("Hello,World!", TextNode)
 	test_xpath_count(t, doc, "//h1[@id='断点']", 1)
 }
+
+// TestLibraryCrashMinimal isolates the crash observed with "//div[string()]"
+// using only the htmlquery and xpath libraries directly.
+// Adapted to use the test framework's TNode structure.
+func TestLibraryCrashMinimal(t *testing.T) {
+	// Create the equivalent of <div>hi</div> using TNode
+	doc := createNode("", RootNode)
+	div := doc.createChildNode("div", ElementNode)
+	div.lines = 1 // Assign a line number for the test helper
+	div.createChildNode("hi", TextNode)
+
+	xpathStr := `//div[string()]`
+
+	// Use the existing test helper to evaluate the XPath
+	// The expression selects the div if its string value ("hi") is true in a boolean context.
+	test_xpath_elements(t, doc, xpathStr, 1)
+}
