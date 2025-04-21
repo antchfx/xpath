@@ -100,6 +100,18 @@ func Test_func_string(t *testing.T) {
 	test_xpath_eval(t, empty_example, `string(3)`, "3")
 	test_xpath_eval(t, book_example, `string(//book/@category)`, "cooking")
 }
+func Test_func_string_empty(t *testing.T) {
+	// https://github.com/antchfx/xpath/issues/113
+	// Create the equivalent of <div>hi</div> using TNode
+	doc := createNode("", RootNode)
+	div := doc.createChildNode("div", ElementNode)
+	div.lines = 1 // Assign a line number for the test helper
+	div.createChildNode("hi", TextNode)
+
+	// Use the existing test helper to evaluate the XPath
+	// The expression selects the div if its string value ("hi") is true in a boolean context.
+	test_xpath_values(t, doc, `//div[string()]`, "hi")
+}
 
 func Test_func_string_join(t *testing.T) {
 	//(t, empty_example, `string-join(('Now', 'is', 'the', 'time', '...'), '')`, "Now is the time ...")
