@@ -27,7 +27,11 @@ func TestPositions(t *testing.T) {
 	test_xpath_elements(t, employee_example, `//employee[last()]`, 13)
 	test_xpath_elements(t, employee_example, `//employee[position() = last()]`, 13)
 	test_xpath_elements(t, book_example, `//book[@category = "web"][2]`, 25)
+	test_xpath_elements(t, book_example, `//book[@category = "web"][last()]`, 25)
 	test_xpath_elements(t, book_example, `(//book[@category = "web"])[2]`, 25)
+	test_xpath_elements(t, book_example, `(//book[@category = "web"])[last()]`, 25)
+	test_xpath_elements(t, employee_example, `(//employee)[last()]`, 13)
+	test_xpath_elements(t, book_example, `(//author)[last()]`, 27)
 }
 
 func TestPredicates(t *testing.T) {
