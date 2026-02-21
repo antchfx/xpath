@@ -985,15 +985,6 @@ type logicalQuery struct {
 }
 
 func (l *logicalQuery) Select(t iterator) NodeNavigator {
-	// When a XPath expr is logical expression.
-	node := t.Current().Copy()
-	val := l.Evaluate(t)
-	switch val.(type) {
-	case bool:
-		if val.(bool) == true {
-			return node
-		}
-	}
 	return nil
 }
 
