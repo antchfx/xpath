@@ -999,3 +999,19 @@ func createMyBookExample() *TNode {
 	}
 	return doc
 }
+
+func TestMergeQueryStaleStateAcrossEvaluations(t *testing.T) {
+	// A "//name" step compiles to a *mergeQuery; re-evaluating one compiled
+	// expression against a second document must not reuse the first document's
+	// node list.
+	doc := createNode("", RootNode)
+	foo := doc.createChildNode("foo", ElementNode)
+	foo.createChildNode("bar", ElementNode)
+	foo.createChildNode("bar", ElementNode)
+	empty := createNode("", RootNode)
+
+	expr := MustCompile("//bar[true()] and count(//foo)=0")
+	assertFalse(t, expr.Evaluate(createNavigator(empty)).(bool))
+	assertFalse(t, expr.Evaluate(createNavigator(doc)).(bool))
+	assertFalse(t, expr.Evaluate(createNavigator(empty)).(bool))
+}
