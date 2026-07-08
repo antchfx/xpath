@@ -1353,6 +1353,7 @@ func (m *mergeQuery) Select(t iterator) NodeNavigator {
 
 func (m *mergeQuery) Evaluate(t iterator) interface{} {
 	m.Input.Evaluate(t)
+	m.iterator = nil
 	return m
 }
 
