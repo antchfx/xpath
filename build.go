@@ -698,7 +698,8 @@ func (b *builder) processNode(root node, flags flag, props *builderProp) (q quer
 }
 
 // build builds a specified XPath expressions expr.
-func build(expr string, namespaces map[string]string) (q query, err error) {
+// build returns the query and the parser used for parsing.
+func build(expr string, namespaces map[string]string) (q query, p *parser, err error) {
 	defer func() {
 		if e := recover(); e != nil {
 			switch x := e.(type) {
@@ -711,8 +712,9 @@ func build(expr string, namespaces map[string]string) (q query, err error) {
 			}
 		}
 	}()
-	root := parse(expr, namespaces)
+	root, p := parse(expr, namespaces)
 	b := &builder{}
 	props := builderProps.None
-	return b.processNode(root, flagsEnum.None, &props)
+	q, err = b.processNode(root, flagsEnum.None, &props)
+	return q, p, err
 }

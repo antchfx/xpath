@@ -5,6 +5,17 @@ import (
 	"fmt"
 )
 
+// CompileOptions allows customizing the behavior of the XPath parser.
+type CompileOptions struct {
+	StrictEOF bool // If true, require full input consumption (no trailing tokens)
+	// Future strictness options can be added here
+}
+
+// StrictPreset enables all strictness options (update as new options are added)
+var StrictPreset = CompileOptions{
+	StrictEOF: true,
+}
+
 // NodeType represents a type of XPath node.
 type NodeType int
 
@@ -138,17 +149,7 @@ func (expr *Expr) String() string {
 
 // Compile compiles an XPath expression string.
 func Compile(expr string) (*Expr, error) {
-	if expr == "" {
-		return nil, errors.New("expr expression is nil")
-	}
-	qy, err := build(expr, nil)
-	if err != nil {
-		return nil, err
-	}
-	if qy == nil {
-		return nil, fmt.Errorf(fmt.Sprintf("undeclared variable in XPath expression: %s", expr))
-	}
-	return &Expr{s: expr, q: qy}, nil
+	return CompileWithOptionsAndNS(expr, CompileOptions{}, nil)
 }
 
 // MustCompile compiles an XPath expression string and ignored error.
@@ -162,15 +163,27 @@ func MustCompile(expr string) *Expr {
 
 // CompileWithNS compiles an XPath expression string, using given namespaces map.
 func CompileWithNS(expr string, namespaces map[string]string) (*Expr, error) {
+	return CompileWithOptionsAndNS(expr, CompileOptions{}, namespaces)
+}
+
+// CompileWithOptions compiles an XPath expression string with the given options.
+func CompileWithOptions(expr string, opts CompileOptions) (*Expr, error) {
+	return CompileWithOptionsAndNS(expr, opts, nil)
+}
+
+func CompileWithOptionsAndNS(expr string, opts CompileOptions, namespaces map[string]string) (*Expr, error) {
 	if expr == "" {
 		return nil, errors.New("expr expression is nil")
 	}
-	qy, err := build(expr, namespaces)
+	q, p, err := build(expr, namespaces)
 	if err != nil {
 		return nil, err
 	}
-	if qy == nil {
-		return nil, fmt.Errorf(fmt.Sprintf("undeclared variable in XPath expression: %s", expr))
+	if opts.StrictEOF && p != nil && p.r.typ != itemEOF {
+		return nil, fmt.Errorf("unexpected token after end of expression: %s", p.r.text[p.r.pos-p.r.currSize-1:])
 	}
-	return &Expr{s: expr, q: qy}, nil
+	if q == nil {
+		return nil, fmt.Errorf("undeclared variable in XPath expression: %s", expr)
+	}
+	return &Expr{s: expr, q: q}, nil
 }

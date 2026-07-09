@@ -96,26 +96,26 @@ func test_xpath_eval(t *testing.T, root *TNode, expr string, expected ...interfa
 func Test_Predicates_MultiParent(t *testing.T) {
 	// https://github.com/antchfx/xpath/issues/75
 	/*
-	   <measCollecFile xmlns="http://www.3gpp.org/ftp/specs/archive/32_series/32.435#measCollec">
-	   		<measData>
-	   			<measInfo>
-	   				<measType p="1">field1</measType>
-	   				<measType p="2">field2</measType>
-	   				<measValue>
-	   					<r p="1">31854</r>
-	   					<r p="2">159773</r>
-	   				</measValue>
-	   			</measInfo>
-	   			<measInfo measInfoId="metric_name2">
-	   				<measType p="1">field3</measType>
-	   				<measType p="2">field4</measType>
-	   				<measValue>
-	   					<r p="1">1234</r>
-	   					<r p="2">567</r>
-	   				</measValue>
-	   			</measInfo>
-	   		</measData>
-	   	</measCollecFile>
+		   <measCollecFile xmlns="http://www.3gpp.org/ftp/specs/archive/32_series/32.435#measCollec">
+				<measData>
+					<measInfo>
+						<measType p="1">field1</measType>
+						<measType p="2">field2</measType>
+						<measValue>
+							<r p="1">31854</r>
+							<r p="2">159773</r>
+						</measValue>
+					</measInfo>
+					<measInfo measInfoId="metric_name2">
+						<measType p="1">field3</measType>
+						<measType p="2">field4</measType>
+						<measValue>
+							<r p="1">1234</r>
+							<r p="2">567</r>
+						</measValue>
+					</measInfo>
+				</measData>
+			</measCollecFile>
 	*/
 	doc := createNode("", RootNode)
 	measCollecFile := doc.createChildNode("measCollecFile", ElementNode)
@@ -284,6 +284,88 @@ func TestNodeType(t *testing.T) {
 	n := selectNode(doc, "//comment()")
 	assertTrue(t, n != nil)
 	assertEqual(t, CommentNode, n.Type)
+}
+
+func TestCompileWithOptions_StrictEOF(t *testing.T) {
+	doc := createBookExample()
+
+	testCases := []struct {
+		name    string
+		expr    string
+		options CompileOptions
+		wantErr bool
+		wantLen int    // -1 if not applicable
+		errMsg  string // expected error message (substring match)
+	}{
+		{
+			name:    "StrictEOF: valid expression",
+			expr:    "//book",
+			options: CompileOptions{StrictEOF: true},
+			wantErr: false,
+			wantLen: 4,
+		},
+		{
+			name:    "StrictEOF: valid expression with predicate",
+			expr:    "//book[@category='web']",
+			options: CompileOptions{StrictEOF: true},
+			wantErr: false,
+			wantLen: 2,
+		},
+		{
+			name:    "StrictEOF: expression with extra trailing tokens returns error",
+			expr:    "//book,foo",
+			options: CompileOptions{StrictEOF: true},
+			wantErr: true,
+			wantLen: -1,
+			errMsg:  "unexpected token after end of expression: ,foo",
+		},
+		{
+			name:    "Default: expression with extra trailing tokens is accepted",
+			expr:    "//book,foo",
+			options: CompileOptions{},
+			wantErr: false,
+			wantLen: -1,
+		},
+		{
+			name:    "StrictPreset: valid expression",
+			expr:    "//book/title",
+			options: StrictPreset,
+			wantErr: false,
+			wantLen: 4,
+		},
+		{
+			name:    "StrictPreset: expression with extra trailing tokens returns error",
+			expr:    "//book/title,foo",
+			options: StrictPreset,
+			wantErr: true,
+			wantLen: -1,
+			errMsg:  "unexpected token after end of expression: ,foo",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			e, err := CompileWithOptions(tc.expr, tc.options)
+			if tc.wantErr {
+				if err == nil {
+					t.Errorf("expected error, got nil")
+					return
+				}
+				if tc.errMsg != "" && !strings.Contains(err.Error(), tc.errMsg) {
+					t.Errorf("expected error message to contain %q, got: %v", tc.errMsg, err)
+				}
+				return
+			}
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+				return
+			}
+			if tc.wantLen >= 0 {
+				nodes := iterateNodes(e.Select(createNavigator(doc)))
+				assertEqual(t, tc.wantLen, len(nodes))
+			}
+		})
+	}
 }
 
 func iterateNavs(t *NodeIterator) []*TNodeNavigator {
@@ -622,37 +704,37 @@ func createElement(line int, name string, children ...*TNode) *TNode {
 
 func createBookExample() *TNode {
 	/*
-	   <?xml version="1.0" encoding="UTF-8"?>
-	   <bookstore>
-	   <book category="cooking">
-	     <title lang="en">Everyday Italian</title>
-	     <author>Giada De Laurentiis</author>
-	     <year>2005</year>
-	     <price>30.00</price>
-	   </book>
-	   <book category="children">
-	     <title lang="en">Harry Potter</title>
-	     <author>J K. Rowling</author>
-	     <year>2005</year>
-	     <price>29.99</price>
-	   </book>
-	   <book category="web">
-	     <title lang="en">XQuery Kick Start</title>
-	     <author>James McGovern</author>
-	     <author>Per Bothner</author>
-	     <author>Kurt Cagle</author>
-	     <author>James Linn</author>
-	     <author>Vaidyanathan Nagarajan</author>
-	     <year>2003</year>
-	     <price>49.99</price>
-	   </book>
-	   <book category="web">
-	     <title lang="en">Learning XML</title>
-	     <author>Erik T. Ray</author>
-	     <year>2003</year>
-	     <price>39.95</price>
-	   </book>
-	   </bookstore>
+		   <?xml version="1.0" encoding="UTF-8"?>
+		   <bookstore>
+		   <book category="cooking">
+			 <title lang="en">Everyday Italian</title>
+			 <author>Giada De Laurentiis</author>
+			 <year>2005</year>
+			 <price>30.00</price>
+		   </book>
+		   <book category="children">
+			 <title lang="en">Harry Potter</title>
+			 <author>J K. Rowling</author>
+			 <year>2005</year>
+			 <price>29.99</price>
+		   </book>
+		   <book category="web">
+			 <title lang="en">XQuery Kick Start</title>
+			 <author>James McGovern</author>
+			 <author>Per Bothner</author>
+			 <author>Kurt Cagle</author>
+			 <author>James Linn</author>
+			 <author>Vaidyanathan Nagarajan</author>
+			 <year>2003</year>
+			 <price>49.99</price>
+		   </book>
+		   <book category="web">
+			 <title lang="en">Learning XML</title>
+			 <author>Erik T. Ray</author>
+			 <year>2003</year>
+			 <price>39.95</price>
+		   </book>
+		   </bookstore>
 	*/
 	type Element struct {
 		Data       string
@@ -741,24 +823,24 @@ func createBookExample() *TNode {
 // The example document from https://way2tutorial.com/xml/xpath-node-test.php
 func createEmployeeExample() *TNode {
 	/*
-	   <?xml version="1.0" standalone="yes"?>
-	   <empinfo>
-	     <employee id="1">
-	       <name>Opal Kole</name>
-	       <designation discipline="web" experience="3 year">Senior Engineer</designation>
-	       <email>OpalKole@myemail.com</email>
-	     </employee>
-	     <employee id="2">
-	       <name from="CA">Max Miller</name>
-	       <designation discipline="DBA" experience="2 year">DBA Engineer</designation>
-	       <email>maxmiller@email.com</email>
-	     </employee>
-	     <employee id="3">
-	       <name>Beccaa Moss</name>
-	       <designation discipline="appdev">Application Developer</designation>
-	       <email>beccaamoss@email.com</email>
-	     </employee>
-	   </empinfo>
+		   <?xml version="1.0" standalone="yes"?>
+		   <empinfo>
+			 <employee id="1">
+			   <name>Opal Kole</name>
+			   <designation discipline="web" experience="3 year">Senior Engineer</designation>
+			   <email>OpalKole@myemail.com</email>
+			 </employee>
+			 <employee id="2">
+			   <name from="CA">Max Miller</name>
+			   <designation discipline="DBA" experience="2 year">DBA Engineer</designation>
+			   <email>maxmiller@email.com</email>
+			 </employee>
+			 <employee id="3">
+			   <name>Beccaa Moss</name>
+			   <designation discipline="appdev">Application Developer</designation>
+			   <email>beccaamoss@email.com</email>
+			 </employee>
+		   </empinfo>
 	*/
 
 	type Element struct {
@@ -841,25 +923,25 @@ func createHtmlExample() *TNode {
 	/*
 		<html lang="en">
 		  <head>
-		    <title>My page</title>
-		    <meta name="language" content="en" />
+			<title>My page</title>
+			<meta name="language" content="en" />
 		  </head>
 		  <body>
-		    <h2>Welcome to my page</h2>
-		    <ul>
-		      <li>
-		        <a href="/">Home</a>
-		      </li>
-		      <li>
-		        <a href="/about">About</a>
-		      </li>
-		      <li>
-		        <a href="/account">Login</a>
-		      </li>
+			<h2>Welcome to my page</h2>
+			<ul>
+			  <li>
+				<a href="/">Home</a>
+			  </li>
+			  <li>
+				<a href="/about">About</a>
+			  </li>
+			  <li>
+				<a href="/account">Login</a>
+			  </li>
 			  <li></li>
-		    </ul>
-		    <p>This is the first paragraph.</p>
-		    <!-- this is the end -->
+			</ul>
+			<p>This is the first paragraph.</p>
+			<!-- this is the end -->
 		  </body>
 		</html>
 	*/
