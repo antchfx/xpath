@@ -245,6 +245,23 @@ func asBool(t iterator, v interface{}) bool {
 	}
 }
 
+// formatNumber converts a number to a string per the XPath 1.0 spec (REC 4.2):
+// no exponent for finite values, "Infinity"/"-Infinity", "NaN", and "0" for -0.
+func formatNumber(f float64) string {
+	switch {
+	case math.IsNaN(f):
+		return "NaN"
+	case math.IsInf(f, 1):
+		return "Infinity"
+	case math.IsInf(f, -1):
+		return "-Infinity"
+	case f == 0:
+		return "0"
+	default:
+		return strconv.FormatFloat(f, 'f', -1, 64)
+	}
+}
+
 func asString(t iterator, v interface{}) string {
 	switch v := v.(type) {
 	case nil:
@@ -255,7 +272,7 @@ func asString(t iterator, v interface{}) string {
 		}
 		return "false"
 	case float64:
-		return strconv.FormatFloat(v, 'g', -1, 64)
+		return formatNumber(v)
 	case string:
 		return v
 	case query:
@@ -621,16 +638,7 @@ func concatFunc(args ...query) func(query, iterator) interface{} {
 		b := builderPool.Get().(stringBuilder)
 		for _, v := range args {
 			v = functionArgs(v)
-
-			switch v := v.Evaluate(t).(type) {
-			case string:
-				b.WriteString(v)
-			case query:
-				node := v.Select(t)
-				if node != nil {
-					b.WriteString(node.Value())
-				}
-			}
+			b.WriteString(asString(t, v.Evaluate(t)))
 		}
 		result := b.String()
 		b.Reset()

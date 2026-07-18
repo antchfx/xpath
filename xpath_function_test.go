@@ -45,6 +45,13 @@ func Test_func_concat(t *testing.T) {
 	test_xpath_eval(t, book_example, `concat(//book[1]/title, ", ", //book[1]/year)`, "Everyday Italian, 2005")
 	result := concatFunc(testQuery("a"), testQuery("b"))(nil, nil).(string)
 	assertEqual(t, result, "ab")
+	// concat converts each argument with string() (REC 4.2); number and boolean
+	// arguments must be stringified, not silently dropped.
+	test_xpath_eval(t, empty_example, `concat("id-", 5, "-x")`, "id-5-x")
+	test_xpath_eval(t, empty_example, `concat(1, 2, 3)`, "123")
+	test_xpath_eval(t, empty_example, `concat("n=", 1 div 4)`, "n=0.25")
+	test_xpath_eval(t, empty_example, `concat("a", true(), "b")`, "atrueb")
+	test_xpath_eval(t, empty_example, `concat("a", 1 div 0, "z")`, "aInfinityz")
 }
 
 func Test_func_contains(t *testing.T) {
@@ -99,6 +106,23 @@ func Test_func_string(t *testing.T) {
 	test_xpath_eval(t, empty_example, `string(1.23)`, "1.23")
 	test_xpath_eval(t, empty_example, `string(3)`, "3")
 	test_xpath_eval(t, book_example, `string(//book/@category)`, "cooking")
+	// number->string per XPath 1.0 REC 4.2: decimal form, never an exponent.
+	test_xpath_eval(t, empty_example, `string(1000000)`, "1000000")
+	test_xpath_eval(t, empty_example, `string(1234567)`, "1234567")
+	test_xpath_eval(t, empty_example, `string(123456789)`, "123456789")
+	test_xpath_eval(t, empty_example, `string(0.00001)`, "0.00001")
+	test_xpath_eval(t, empty_example, `string(10000000000)`, "10000000000")
+	test_xpath_eval(t, empty_example, `string(100000000000000000000)`, "100000000000000000000")
+	// infinity, NaN and negative zero.
+	test_xpath_eval(t, empty_example, `string(1 div 0)`, "Infinity")
+	test_xpath_eval(t, empty_example, `string(-1 div 0)`, "-Infinity")
+	test_xpath_eval(t, empty_example, `string(0 div 0)`, "NaN")
+	test_xpath_eval(t, empty_example, `string(-0)`, "0")
+	test_xpath_eval(t, empty_example, `string(0 div -1)`, "0")
+	// unchanged finite cases (regression guard).
+	test_xpath_eval(t, empty_example, `string(0.5)`, "0.5")
+	test_xpath_eval(t, empty_example, `string(-3)`, "-3")
+	test_xpath_eval(t, empty_example, `string(0.25)`, "0.25")
 }
 func Test_func_string_empty(t *testing.T) {
 	// https://github.com/antchfx/xpath/issues/113
