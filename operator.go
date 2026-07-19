@@ -1,7 +1,5 @@
 package xpath
 
-import "math"
-
 // The XPath number operator function list.
 
 type logical func(iterator, string, interface{}, interface{}) bool
@@ -15,9 +13,6 @@ var logicalFuncs = [][]logical{
 
 // number vs number
 func cmpNumberNumberF(op string, a, b float64) bool {
-	if math.IsNaN(a) || math.IsNaN(b) {
-		return false
-	}
 	switch op {
 	case "=":
 		return a == b
@@ -109,7 +104,7 @@ func cmpNodeSetString(t iterator, op string, m, n interface{}) bool {
 		if node == nil {
 			break
 		}
-		if cmpStringStringF(op, b, node.Value()) {
+		if cmpStringStringF(op, node.Value(), b) {
 			return true
 		}
 	}
