@@ -257,9 +257,36 @@ func Test_func_reverse(t *testing.T) {
 }
 
 func Test_func_round(t *testing.T) {
-	test_xpath_eval(t, employee_example, `round(2.5)`, 3) // int
-	test_xpath_eval(t, employee_example, `round(2.5)`, 3)
-	test_xpath_eval(t, employee_example, `round(2.4999)`, 2)
+	// round() returns a number (float64), consistent with ceiling()/floor().
+	test_xpath_eval(t, empty_example, `round(2.5)`, float64(3))
+	test_xpath_eval(t, empty_example, `round(2.4999)`, float64(2))
+	test_xpath_eval(t, empty_example, `round(0.5)`, float64(1))
+	test_xpath_eval(t, empty_example, `round(3.5)`, float64(4))
+	// REC §4.4: halves round toward +Infinity, not away from zero.
+	test_xpath_eval(t, empty_example, `round(-0.5)`, float64(0))
+	test_xpath_eval(t, empty_example, `round(-1.5)`, float64(-1))
+	test_xpath_eval(t, empty_example, `round(-2.5)`, float64(-2))
+	test_xpath_eval(t, empty_example, `round(-0.6)`, float64(-1))
+	test_xpath_eval(t, empty_example, `round(-0.4)`, float64(0))
+	// ±Infinity pass through instead of overflowing an int conversion.
+	test_xpath_eval(t, empty_example, `round(1 div 0)`, math.Inf(1))
+	test_xpath_eval(t, empty_example, `round(-1 div 0)`, math.Inf(-1))
+	assertTrue(t, math.IsNaN(MustCompile(`round(0 div 0)`).Evaluate(createNavigator(empty_example)).(float64)))
+	// A number result composes in further arithmetic (was NaN when round returned int).
+	test_xpath_eval(t, empty_example, `round(2.5) + 0.5`, float64(3.5))
+}
+
+func Test_func_mod(t *testing.T) {
+	// REC §3.5: truncating remainder; sign follows the dividend.
+	test_xpath_eval(t, empty_example, `5 mod 3`, float64(2))
+	test_xpath_eval(t, empty_example, `5 mod -3`, float64(2))
+	test_xpath_eval(t, empty_example, `-5 mod 3`, float64(-2))
+	test_xpath_eval(t, empty_example, `6 mod 3`, float64(0))
+	// operands keep their fractional part (were truncated to int before).
+	test_xpath_eval(t, empty_example, `5.5 mod 2`, float64(1.5))
+	test_xpath_eval(t, empty_example, `7.5 mod 3`, float64(1.5))
+	// mod by zero is NaN, not a panic.
+	assertTrue(t, math.IsNaN(MustCompile(`5 mod 0`).Evaluate(createNavigator(empty_example)).(float64)))
 }
 
 func Test_func_namespace_uri(t *testing.T) {
