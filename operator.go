@@ -1,8 +1,6 @@
 package xpath
 
-import (
-	"strconv"
-)
+import "math"
 
 // The XPath number operator function list.
 
@@ -17,6 +15,9 @@ var logicalFuncs = [][]logical{
 
 // number vs number
 func cmpNumberNumberF(op string, a, b float64) bool {
+	if math.IsNaN(a) || math.IsNaN(b) {
+		return false
+	}
 	switch op {
 	case "=":
 		return a == b
@@ -39,16 +40,10 @@ func cmpStringStringF(op string, a, b string) bool {
 	switch op {
 	case "=":
 		return a == b
-	case ">":
-		return a > b
-	case "<":
-		return a < b
-	case ">=":
-		return a >= b
-	case "<=":
-		return a <= b
 	case "!=":
 		return a != b
+	case ">", "<", ">=", "<=":
+		return cmpNumberNumberF(op, stringToNumber(a), stringToNumber(b))
 	}
 	return false
 }
@@ -72,11 +67,7 @@ func cmpNumericNumeric(t iterator, op string, m, n interface{}) bool {
 func cmpNumericString(t iterator, op string, m, n interface{}) bool {
 	a := m.(float64)
 	b := n.(string)
-	num, err := strconv.ParseFloat(b, 64)
-	if err != nil {
-		panic(err)
-	}
-	return cmpNumberNumberF(op, a, num)
+	return cmpNumberNumberF(op, a, stringToNumber(b))
 }
 
 func cmpNumericNodeSet(t iterator, op string, m, n interface{}) bool {
@@ -88,11 +79,7 @@ func cmpNumericNodeSet(t iterator, op string, m, n interface{}) bool {
 		if node == nil {
 			break
 		}
-		num, err := strconv.ParseFloat(node.Value(), 64)
-		if err != nil {
-			panic(err)
-		}
-		if cmpNumberNumberF(op, a, num) {
+		if cmpNumberNumberF(op, a, stringToNumber(node.Value())) {
 			return true
 		}
 	}
@@ -107,11 +94,7 @@ func cmpNodeSetNumeric(t iterator, op string, m, n interface{}) bool {
 		if node == nil {
 			break
 		}
-		num, err := strconv.ParseFloat(node.Value(), 64)
-		if err != nil {
-			panic(err)
-		}
-		if cmpNumberNumberF(op, num, b) {
+		if cmpNumberNumberF(op, stringToNumber(node.Value()), b) {
 			return true
 		}
 	}
@@ -163,11 +146,7 @@ func cmpNodeSetNodeSet(t iterator, op string, m, n interface{}) bool {
 func cmpStringNumeric(t iterator, op string, m, n interface{}) bool {
 	a := m.(string)
 	b := n.(float64)
-	num, err := strconv.ParseFloat(a, 64)
-	if err != nil {
-		panic(err)
-	}
-	return cmpNumberNumberF(op, b, num)
+	return cmpNumberNumberF(op, stringToNumber(a), b)
 }
 
 func cmpStringString(t iterator, op string, m, n interface{}) bool {

@@ -18,6 +18,9 @@ func Test_func_boolean(t *testing.T) {
 	test_xpath_eval(t, empty_example, `boolean(1 > 2)`, false)
 	test_xpath_eval(t, book_example, `boolean(//*[@lang])`, true)
 	test_xpath_eval(t, book_example, `boolean(//*[@x])`, false)
+	test_xpath_eval(t, empty_example, `'14' > 0`, true)
+	test_xpath_eval(t, empty_example, `'abc' = 1`, false) // NaN
+	test_xpath_eval(t, empty_example, `'2' < '10'`, true)
 }
 
 func Test_func_name(t *testing.T) {

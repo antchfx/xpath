@@ -245,6 +245,15 @@ func asBool(t iterator, v interface{}) bool {
 	}
 }
 
+func stringToNumber(s string) float64 {
+	s = strings.TrimSpace(s)
+	f, err := strconv.ParseFloat(s, 64)
+	if err != nil {
+		return math.NaN()
+	}
+	return f
+}
+
 // formatNumber converts a number to a string per the XPath 1.0 spec (REC 4.2):
 // no exponent for finite values, "Infinity"/"-Infinity", "NaN", and "0" for -0.
 func formatNumber(f float64) string {
