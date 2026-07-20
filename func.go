@@ -123,16 +123,16 @@ func asNumber(t iterator, o interface{}) float64 {
 		if node == nil {
 			return math.NaN()
 		}
-		if v, err := strconv.ParseFloat(node.Value(), 64); err == nil {
-			return v
-		}
+		return stringToNumber(node.Value())
 	case float64:
 		return typ
 	case string:
-		v, err := strconv.ParseFloat(typ, 64)
-		if err == nil {
-			return v
+		return stringToNumber(typ)
+	case bool:
+		if typ {
+			return 1
 		}
+		return 0
 	}
 	return math.NaN()
 }
