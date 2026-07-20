@@ -1027,3 +1027,23 @@ func TestMergeQueryStaleStateAcrossEvaluations(t *testing.T) {
 	assertFalse(t, expr.Evaluate(createNavigator(doc)).(bool))
 	assertFalse(t, expr.Evaluate(createNavigator(empty)).(bool))
 }
+
+func TestMultiplyOperatorAfterName(t *testing.T) {
+	// https://github.com/antchfx/xpath/issues/126 — '*' is not a name character (XPath 1.0 §3.7).
+	// A name immediately followed by '*' with no surrounding spaces (e.g. `price*0.01`) must be
+	// scanned as name · MultiplyOperator · number. Before the fix it lexed as a single name
+	// "price*0.01", which selected an empty node-set and evaluated to NaN.
+	doc := createNode("", RootNode)
+	price := doc.createChildNode("price", ElementNode)
+	price.createChildNode("3231000", TextNode)
+
+	test_xpath_eval(t, doc, `price*0.01`, float64(32310))   // no spaces — the fix
+	test_xpath_eval(t, doc, `price * 0.01`, float64(32310)) // with spaces — already worked
+
+	// Namespace/axis wildcards must keep compiling ('*' handled outside isName).
+	for _, expr := range []string{`//*`, `//foo:*`, `child::*`} {
+		if _, err := Compile(expr); err != nil {
+			t.Errorf("Compile(%q) failed: %v", expr, err)
+		}
+	}
+}
