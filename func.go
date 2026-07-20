@@ -156,11 +156,26 @@ func floorFunc(arg query) func(query, iterator) interface{} {
 	}
 }
 
+// round implements XPath 1.0 round() (REC §4.4): halves round toward +Infinity
+// and NaN/±Infinity pass through, so the result stays a number.
+func round(f float64) float64 {
+	if math.IsNaN(f) || math.IsInf(f, 0) {
+		return f
+	}
+	if f >= -0.5 && f < 0.5 {
+		return f * 0 // keep the sign of zero per §4.4
+	}
+	r := math.Floor(f)
+	if f-r >= 0.5 {
+		r++
+	}
+	return r
+}
+
 // roundFunc is a XPath Node Set functions round(node-set).
 func roundFunc(arg query) func(query, iterator) interface{} {
 	return func(_ query, t iterator) interface{} {
 		val := asNumber(t, functionArgs(arg).Evaluate(t))
-		//return math.Round(val)
 		return round(val)
 	}
 }

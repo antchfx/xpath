@@ -1,5 +1,7 @@
 package xpath
 
+import "math"
+
 // The XPath number operator function list.
 
 type logical func(iterator, string, interface{}, interface{}) bool
@@ -257,6 +259,7 @@ var divFunc = func(t iterator, m, n interface{}) interface{} {
 // modFunc is an 'MOD' operator.
 var modFunc = func(t iterator, m, n interface{}) interface{} {
 	return numericExpr(t, m, n, func(a, b float64) float64 {
-		return float64(int(a) % int(b))
+		// XPath 1.0 REC §3.5: truncating IEEE remainder; mod by zero is NaN.
+		return math.Mod(a, b)
 	})
 }
