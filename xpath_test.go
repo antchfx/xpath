@@ -181,6 +181,18 @@ func TestInvalidXPath(t *testing.T) {
 	assertErr(t, err)
 }
 
+// A variable reference nested inside a larger expression used to compile
+// without error and then panic at select time, because the builder had no
+// case for variable nodes and left a nil sub-query behind. Compilation should
+// report it as undeclared, matching the bare "$x" case.
+func TestCompileUndeclaredVariable(t *testing.T) {
+	for _, expr := range []string{"$x", "$x/@attr", "$var + 1", "//a[$x]"} {
+		if _, err := Compile(expr); err == nil {
+			t.Errorf("Compile(%q) expected an error for the undeclared variable, got nil", expr)
+		}
+	}
+}
+
 func TestCompileWithNS(t *testing.T) {
 	_, err := CompileWithNS("/foo", nil)
 	assertNil(t, err)
