@@ -522,23 +522,13 @@ func substringFunc(arg1, arg2, arg3 query) func(query, iterator) interface{} {
 			panic(errors.New("substring() function second argument type must be number"))
 		}
 		length = math.Round(length)
-		if length <= 0 {
+		// keep positions p with start <= p < start+length, clipped to the string (REC 4.2)
+		first := math.Max(start, 1)
+		last := math.Min(start+length, float64(len(m))+1)
+		if !(last > first) {
 			return ""
 		}
-		if length > float64(len(m)) {
-			length = float64(len(m))
-		}
-		if start < 0 {
-			length = length - math.Abs(start)
-			if length <= 1 {
-				return ""
-			}
-			return m[:int(length-1)]
-		}
-		if start == 0 {
-			return m[:int(length-1)]
-		}
-		return m[int(start-1):int(length+start-1)]
+		return m[int(first)-1 : int(last)-1]
 	}
 }
 
