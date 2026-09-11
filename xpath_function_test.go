@@ -16,6 +16,9 @@ func Test_func_boolean(t *testing.T) {
 	test_xpath_eval(t, empty_example, `boolean(2)`, true)
 	test_xpath_eval(t, empty_example, `boolean(true)`, false)
 	test_xpath_eval(t, empty_example, `boolean(1 > 2)`, false)
+	test_xpath_eval(t, empty_example, `boolean('hello')`, true)
+	test_xpath_eval(t, empty_example, `boolean('')`, false)
+	test_xpath_eval(t, empty_example, `boolean(//non-existent-node)`, false)
 	test_xpath_eval(t, book_example, `boolean(//*[@lang])`, true)
 	test_xpath_eval(t, book_example, `boolean(//*[@x])`, false)
 	test_xpath_eval(t, empty_example, `'14' > 0`, true)
@@ -26,12 +29,19 @@ func Test_func_boolean(t *testing.T) {
 func Test_func_name(t *testing.T) {
 	test_xpath_eval(t, html_example, `name(//html/@lang)`, "lang")
 	test_xpath_eval(t, html_example, `name(html/head/title)`, "title")
+	test_xpath_eval(t, mybook_example, `name(//mybook:book)`, "mybook:book")
+	test_xpath_eval(t, empty_example, `name(//non-existent-node)`, "")
 	test_xpath_count(t, html_example, `//*[name() = "li"]`, 3)
+	test_xpath_elements(t, mybook_example, `//*[name() = 'mybook:book']`, 3, 9)
 }
 
 func Test_func_not(t *testing.T) {
-	//test_xpath_eval(t, empty_example, `not(0)`, true)
-	//test_xpath_eval(t, empty_example, `not(1)`, false)
+	test_xpath_eval(t, empty_example, `not(true())`, false)
+	test_xpath_eval(t, empty_example, `not(false())`, true)
+	test_xpath_eval(t, empty_example, `not(1 = 2)`, true)
+	test_xpath_eval(t, empty_example, `not(1 = 1)`, false)
+	test_xpath_eval(t, empty_example, `not(//non-existent-node)`, true)
+	test_xpath_eval(t, html_example, `not(//title)`, false)
 	test_xpath_elements(t, employee_example, `//employee[not(@id = "1")]`, 8, 13)
 	test_xpath_elements(t, book_example, `//book[not(year = 2005)]`, 15, 25)
 	test_xpath_count(t, book_example, `//book[not(title)]`, 0)
@@ -95,6 +105,8 @@ func Test_func_last(t *testing.T) {
 func Test_func_local_name(t *testing.T) {
 	test_xpath_eval(t, book_example, `local-name(bookstore)`, "bookstore")
 	test_xpath_eval(t, mybook_example, `local-name(//mybook:book)`, "book")
+	test_xpath_eval(t, empty_example, `local-name(//non-existent-node)`, "")
+	test_xpath_elements(t, book_example, `//*[local-name() = 'title']`, 4, 10, 16, 26)
 }
 
 func Test_func_starts_with(t *testing.T) {
@@ -109,6 +121,10 @@ func Test_func_string(t *testing.T) {
 	test_xpath_eval(t, empty_example, `string(1.23)`, "1.23")
 	test_xpath_eval(t, empty_example, `string(3)`, "3")
 	test_xpath_eval(t, book_example, `string(//book/@category)`, "cooking")
+	test_xpath_eval(t, empty_example, `string(true())`, "true")
+	test_xpath_eval(t, empty_example, `string(false())`, "false")
+	test_xpath_eval(t, empty_example, `string(//non-existent-node)`, "")
+	test_xpath_eval(t, employee_example, `string(//employee[1]/name)`, "Opal Kole")
 	// number->string per XPath 1.0 REC 4.2: decimal form, never an exponent.
 	test_xpath_eval(t, empty_example, `string(1000000)`, "1000000")
 	test_xpath_eval(t, empty_example, `string(1234567)`, "1234567")
@@ -299,6 +315,8 @@ func Test_func_mod(t *testing.T) {
 
 func Test_func_namespace_uri(t *testing.T) {
 	test_xpath_eval(t, mybook_example, `namespace-uri(//mybook:book)`, "http://www.contoso.com/books")
+	test_xpath_eval(t, book_example, `namespace-uri(bookstore)`, "")
+	test_xpath_eval(t, empty_example, `namespace-uri(//non-existent-node)`, "")
 	test_xpath_elements(t, mybook_example, `//*[namespace-uri()='http://www.contoso.com/books']`, 3, 9)
 }
 
