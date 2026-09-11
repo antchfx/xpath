@@ -173,11 +173,16 @@ func Test_func_string_length(t *testing.T) {
 func Test_func_substring(t *testing.T) {
 	test_xpath_eval(t, empty_example, `substring("motor car", 6)`, " car")
 	test_xpath_eval(t, empty_example, `substring("metadata", 4, 3)`, "ada")
-	test_xpath_eval(t, empty_example, `substring("12345", 5, -3)`, "")
 	test_xpath_eval(t, empty_example, `substring("12345", 1.5, 2.6)`, "234")
+	test_xpath_eval(t, empty_example, `substring("12345", 0, 1)`, "")
+	test_xpath_eval(t, empty_example, `substring("12345", 0, 2)`, "1")
 	test_xpath_eval(t, empty_example, `substring("12345", 0, 3)`, "12")
-	test_xpath_eval(t, empty_example, `substring("12345", 5, -3)`, "")
 	test_xpath_eval(t, empty_example, `substring("12345", 0, 5)`, "1234")
+	test_xpath_eval(t, empty_example, `substring("12345", -1, 4)`, "12")
+	test_xpath_eval(t, empty_example, `substring("12345", -2, 5)`, "12")
+	test_xpath_eval(t, empty_example, `substring("12345", -2, 2)`, "")
+	test_xpath_eval(t, empty_example, `substring("12345", -1)`, "12345")
+	test_xpath_eval(t, empty_example, `substring("12345", 0)`, "12345")
 	test_xpath_eval(t, empty_example, `substring("12345", 1, 5)`, "12345")
 	test_xpath_eval(t, empty_example, `substring("12345", 1, 6)`, "12345")
 	test_xpath_eval(t, empty_example, `substring("12345", 3, 5)`, "345")
@@ -188,18 +193,29 @@ func Test_func_substring(t *testing.T) {
 	test_xpath_eval(t, empty_example, `substring("12345", -1, 7)`, "12345")
 	test_xpath_eval(t, empty_example, `substring("12345", 1, number("abc"))`, "")
 	test_xpath_eval(t, empty_example, `substring("12345", number("abc"), 3)`, "")
+	test_xpath_eval(t, empty_example, `substring("12345", 1, 0)`, "")
+	test_xpath_eval(t, empty_example, `substring("12345", 6)`, "")
+	test_xpath_eval(t, empty_example, `substring("12345", 6, 2)`, "")
+	test_xpath_eval(t, empty_example, `substring(//non-existent-node, 1)`, "")
 	test_xpath_eval(t, html_example, `substring(//title/child::node(), 1)`, "My page")
-	//assertPanic(t, func() { selectNode(empty_example, `substring("12345", 5, "")`) })
 }
 
 func Test_func_substring_after(t *testing.T) {
 	test_xpath_eval(t, empty_example, `substring-after("tattoo", "tat")`, "too")
 	test_xpath_eval(t, empty_example, `substring-after("tattoo", "tattoo")`, "")
+	test_xpath_eval(t, empty_example, `substring-after("tattoo", "no-match")`, "")
+	test_xpath_eval(t, empty_example, `substring-after(//non-existent-node, "tat")`, "")
+	test_xpath_eval(t, empty_example, `substring-after("tattoo", //non-existent-node)`, "")
+	test_xpath_eval(t, empty_example, `substring-after("", "tat")`, "")
 }
 
 func Test_func_substring_before(t *testing.T) {
 	test_xpath_eval(t, empty_example, `substring-before("tattoo", "attoo")`, "t")
 	test_xpath_eval(t, empty_example, `substring-before("tattoo", "tatto")`, "")
+	test_xpath_eval(t, empty_example, `substring-before("tattoo", "no-match")`, "")
+	test_xpath_eval(t, empty_example, `substring-before(//non-existent-node, "tat")`, "")
+	test_xpath_eval(t, empty_example, `substring-before("tattoo", //non-existent-node)`, "")
+	test_xpath_eval(t, empty_example, `substring-before("", "tat")`, "")
 }
 
 func Test_func_sum(t *testing.T) {
