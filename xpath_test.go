@@ -1047,3 +1047,45 @@ func TestMultiplyOperatorAfterName(t *testing.T) {
 		}
 	}
 }
+
+func TestFractionalNumberLiterals(t *testing.T) {
+	// XPath 1.0 §3.7 Lexical Structure (https://www.w3.org/TR/1999/REC-xpath-19991116/#exprlex)
+	// defines Number as:
+	//   Digits ('.' Digits?)? | '.' Digits
+	// Numeric literals without leading zeros (e.g. `.5`, `-.5`, `.125`, `.0001`) must be
+	// scanned as numbers rather than dot tokens.
+	empty := createNode("", RootNode)
+
+	test_xpath_eval(t, empty, `.5`, float64(0.5))
+	test_xpath_eval(t, empty, `.125`, float64(0.125))
+	test_xpath_eval(t, empty, `.0`, float64(0.0))
+	test_xpath_eval(t, empty, `.0001`, float64(0.0001))
+	test_xpath_eval(t, empty, `-.5`, float64(-0.5))
+	test_xpath_eval(t, empty, `-.125`, float64(-0.125))
+	test_xpath_eval(t, empty, `.5 + .5`, float64(1.0))
+	test_xpath_eval(t, empty, `1 - .25`, float64(0.75))
+	test_xpath_eval(t, empty, `2 * .5`, float64(1.0))
+	test_xpath_eval(t, empty, `1 div .5`, float64(2.0))
+	test_xpath_eval(t, empty, `.75 mod .5`, float64(0.25))
+	test_xpath_eval(t, empty, `.5 = 0.5`, true)
+	test_xpath_eval(t, empty, `.5 = .5000`, true)
+	test_xpath_eval(t, empty, `.5 > .25`, true)
+	test_xpath_eval(t, empty, `.5 < .75`, true)
+	test_xpath_eval(t, empty, `.5 != .25`, true)
+	test_xpath_eval(t, empty, `.5 >= .5`, true)
+	test_xpath_eval(t, empty, `.5 <= .5`, true)
+
+	// Node filtering with fractional number predicates
+	doc := createNode("", RootNode)
+	item1 := doc.createChildNode("item", ElementNode)
+	score1 := item1.createChildNode("score", ElementNode)
+	score1.createChildNode("0.25", TextNode)
+	item2 := doc.createChildNode("item", ElementNode)
+	score2 := item2.createChildNode("score", ElementNode)
+	score2.createChildNode("0.75", TextNode)
+
+	test_xpath_count(t, doc, "//item[score > .5]", 1)
+	test_xpath_count(t, doc, "//item[score < .5]", 1)
+	test_xpath_count(t, doc, "//item[score = .25]", 1)
+	test_xpath_values(t, doc, "//item[score > .5]/score", "0.75")
+}
