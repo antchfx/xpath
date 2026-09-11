@@ -174,11 +174,100 @@ func TestCompile(t *testing.T) {
 }
 
 func TestInvalidXPath(t *testing.T) {
-	var err error
-	_, err = Compile("()")
-	assertErr(t, err)
-	_, err = Compile("(1,2,3)")
-	assertErr(t, err)
+	tests := []struct {
+		name string
+		expr string
+	}{
+		{"empty sequence", "()"},
+		{"multiple sequence values", "(1,2,3)"},
+		{"empty expression", ""},
+
+		// Function arity violations
+		{"matches with 1 arg", "matches('a')"},
+		{"matches with 3 args", "matches('a', 'b', 'c')"},
+		{"matches with invalid regex literal", "matches('test', '[a-')"},
+		{"substring with 1 arg", "substring('abc')"},
+		{"substring-before with 1 arg", "substring-before('abc')"},
+		{"substring-before with 3 args", "substring-before('a', 'b', 'c')"},
+		{"substring-after with 1 arg", "substring-after('abc')"},
+		{"substring-after with 3 args", "substring-after('a', 'b', 'c')"},
+		{"string-length with no args", "string-length()"},
+		{"replace with 2 args", "replace('a', 'b')"},
+		{"replace with 4 args", "replace('a', 'b', 'c', 'd')"},
+		{"translate with 2 args", "translate('a', 'b')"},
+		{"translate with 4 args", "translate('a', 'b', 'c', 'd')"},
+		{"not with no args", "not()"},
+		{"name with 2 args", "name(//a, //b)"},
+		{"local-name with 2 args", "local-name(//a, //b)"},
+		{"namespace-uri with 2 args", "namespace-uri(//a, //b)"},
+		{"boolean with 2 args", "boolean(1, 2)"},
+		{"number with 2 args", "number(1, 2)"},
+		{"string with 2 args", "string('a', 'b')"},
+		{"count with no args", "count()"},
+		{"sum with no args", "sum()"},
+		{"ceiling with no args", "ceiling()"},
+		{"floor with no args", "floor()"},
+		{"round with no args", "round()"},
+		{"concat with no args", "concat()"},
+		{"concat with 1 arg", "concat('a')"},
+		{"reverse with no args", "reverse()"},
+		{"string-join with 1 arg", "string-join(//a)"},
+		{"string-join with 3 args", "string-join(//a, ',', 'extra')"},
+
+		// Unsupported / unknown functions
+		{"unsupported function", "unsupportedFunction(1, 2)"},
+
+		// Nested invalid expression errors in function arguments
+		{"lower-case with invalid arg", "lower-case(())"},
+		{"starts-with with invalid arg 1", "starts-with((), 'a')"},
+		{"starts-with with invalid arg 2", "starts-with('a', ())"},
+		{"ends-with with invalid arg 1", "ends-with((), 'a')"},
+		{"ends-with with invalid arg 2", "ends-with('a', ())"},
+		{"contains with invalid arg 1", "contains((), 'a')"},
+		{"contains with invalid arg 2", "contains('a', ())"},
+		{"matches with invalid arg 1", "matches((), 'pattern')"},
+		{"matches with invalid arg 2", "matches('str', ())"},
+		{"substring with invalid arg 1", "substring((), 1)"},
+		{"substring with invalid arg 2", "substring('abc', ())"},
+		{"substring with invalid arg 3", "substring('abc', 1, ())"},
+		{"substring-before with invalid arg 1", "substring-before((), 'a')"},
+		{"substring-before with invalid arg 2", "substring-before('abc', ())"},
+		{"substring-after with invalid arg 1", "substring-after((), 'a')"},
+		{"substring-after with invalid arg 2", "substring-after('abc', ())"},
+		{"string-length with invalid arg", "string-length(())"},
+		{"normalize-space with invalid arg", "normalize-space(())"},
+		{"replace with invalid arg 1", "replace((), 'a', 'b')"},
+		{"replace with invalid arg 2", "replace('a', (), 'b')"},
+		{"replace with invalid arg 3", "replace('a', 'b', ())"},
+		{"translate with invalid arg 1", "translate((), 'a', 'b')"},
+		{"translate with invalid arg 2", "translate('a', (), 'b')"},
+		{"translate with invalid arg 3", "translate('a', 'b', ())"},
+		{"not with invalid arg", "not(())"},
+		{"name with invalid arg", "name(())"},
+		{"local-name with invalid arg", "local-name(())"},
+		{"namespace-uri with invalid arg", "namespace-uri(())"},
+		{"boolean with invalid arg", "boolean(())"},
+		{"number with invalid arg", "number(())"},
+		{"string with invalid arg", "string(())"},
+		{"count with invalid arg", "count(())"},
+		{"sum with invalid arg", "sum(())"},
+		{"ceiling with invalid arg", "ceiling(())"},
+		{"floor with invalid arg", "floor(())"},
+		{"round with invalid arg", "round(())"},
+		{"concat with invalid arg", "concat('a', ())"},
+		{"reverse with invalid arg", "reverse(())"},
+		{"string-join with invalid arg 1", "string-join((), ',')"},
+		{"string-join with invalid arg 2", "string-join(//a, ())"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := Compile(tt.expr)
+			if err == nil {
+				t.Errorf("Compile(%q) expected error for invalid XPath expression, got nil", tt.expr)
+			}
+		})
+	}
 }
 
 // A variable reference nested inside a larger expression used to compile
