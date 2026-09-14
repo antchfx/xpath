@@ -168,6 +168,9 @@ func Test_func_string_length(t *testing.T) {
 	test_xpath_eval(t, html_example, `string-length(//title/text())`, float64(len("My page")))
 	test_xpath_eval(t, html_example, `string-length(//html/@lang)`, float64(len("en")))
 	test_xpath_count(t, employee_example, `//employee[string-length(@id) > 0]`, 3) // = //employee[@id]
+	// characters, not bytes (REC 4.2)
+	test_xpath_eval(t, empty_example, `string-length("héllo")`, float64(5))
+	test_xpath_eval(t, empty_example, `string-length("日本語")`, float64(3))
 }
 
 func Test_func_substring(t *testing.T) {
@@ -189,6 +192,11 @@ func Test_func_substring(t *testing.T) {
 	test_xpath_eval(t, empty_example, `substring("12345", 2, 10)`, "2345")
 	test_xpath_eval(t, empty_example, `substring("12345", 5, 10)`, "5")
 	test_xpath_eval(t, empty_example, `substring("motor car", 6, 20)`, " car")
+	// positions count characters, not bytes
+	test_xpath_eval(t, empty_example, `substring("héllo", 1, 3)`, "hél")
+	test_xpath_eval(t, empty_example, `substring("日本語abc", 2, 2)`, "本語")
+	test_xpath_eval(t, empty_example, `substring("héllo", 2)`, "éllo")
+	test_xpath_eval(t, empty_example, `substring("héllo", 1, string-length("héllo"))`, "héllo")
 	test_xpath_eval(t, empty_example, `substring("12345", -3, 6)`, "12")
 	test_xpath_eval(t, empty_example, `substring("12345", -1, 7)`, "12345")
 	test_xpath_eval(t, empty_example, `substring("12345", 1, number("abc"))`, "")
@@ -231,6 +239,9 @@ func Test_func_translate(t *testing.T) {
 	test_xpath_eval(t, empty_example, `translate("--aaa--","abc-","ABC")`, "AAA")
 	test_xpath_eval(t, empty_example, `translate("abcdabc", "abc", "AB")`, "ABdAB")
 	test_xpath_eval(t, empty_example, `translate('The quick brown fox', 'brown', 'red')`, "The quick red fdx")
+	// src and dst pair by character position
+	test_xpath_eval(t, empty_example, `translate("abc", "ab", "áé")`, "áéc")
+	test_xpath_eval(t, empty_example, `translate("日本語", "日語", "ab")`, "a本b")
 }
 
 func Test_func_matches(t *testing.T) {
