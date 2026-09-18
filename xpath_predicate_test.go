@@ -29,6 +29,7 @@ func TestPositionalCondition(t *testing.T) {
 		{"*", newOperatorNode("*", newOperandNode("a"), newOperandNode("b")), true},
 		{"div", newOperatorNode("div", newOperandNode("a"), newOperandNode("b")), true},
 		{"mod", newOperatorNode("mod", newOperandNode("a"), newOperandNode("b")), true},
+		{"@href", newAxisNode("attribute", AttributeNode, "href", "", "", nil), false},
 		{"= non-positional", newOperatorNode("=", newOperandNode("a"), newOperandNode("b")), false},
 		{"!= non-positional", newOperatorNode("!=", newOperandNode("a"), newOperandNode("b")), false},
 		{"position()=1", newOperatorNode("=", newFunctionNode("position", "", nil), newOperandNode(float64(1))), true},
