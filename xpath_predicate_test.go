@@ -4,6 +4,46 @@ import (
 	"testing"
 )
 
+func TestPositionalCondition(t *testing.T) {
+	tests := []struct {
+		name string
+		node node
+		want bool
+	}{
+		{"numeric literal", newOperandNode(float64(1)), true},
+		{"string literal", newOperandNode("text"), false},
+		{"position()", newFunctionNode("position", "", nil), true},
+		{"last()", newFunctionNode("last", "", nil), true},
+		{"count()", newFunctionNode("count", "", nil), true},
+		{"sum()", newFunctionNode("sum", "", nil), true},
+		{"string-length()", newFunctionNode("string-length", "", nil), true},
+		{"number()", newFunctionNode("number", "", nil), true},
+		{"floor()", newFunctionNode("floor", "", nil), true},
+		{"ceiling()", newFunctionNode("ceiling", "", nil), true},
+		{"round()", newFunctionNode("round", "", nil), true},
+		{"name()", newFunctionNode("name", "", nil), false},
+		{"normalize-space()", newFunctionNode("normalize-space", "", nil), false},
+		{"string(count())", newFunctionNode("string", "", []node{newFunctionNode("count", "", nil)}), true},
+		{"+", newOperatorNode("+", newOperandNode("a"), newOperandNode("b")), true},
+		{"-", newOperatorNode("-", newOperandNode("a"), newOperandNode("b")), true},
+		{"*", newOperatorNode("*", newOperandNode("a"), newOperandNode("b")), true},
+		{"div", newOperatorNode("div", newOperandNode("a"), newOperandNode("b")), true},
+		{"mod", newOperatorNode("mod", newOperandNode("a"), newOperandNode("b")), true},
+		{"@href", newAxisNode("attribute", AttributeNode, "href", "", "", nil), false},
+		{"= non-positional", newOperatorNode("=", newOperandNode("a"), newOperandNode("b")), false},
+		{"!= non-positional", newOperatorNode("!=", newOperandNode("a"), newOperandNode("b")), false},
+		{"position()=1", newOperatorNode("=", newFunctionNode("position", "", nil), newOperandNode(float64(1))), true},
+		{"last()-1", newOperatorNode("-", newFunctionNode("last", "", nil), newOperandNode(float64(1))), true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := positionalCondition(tt.node); got != tt.want {
+				t.Errorf("positionalCondition(%s) = %v, want %v", tt.name, got, tt.want)
+			}
+		})
+	}
+}
+
 func TestLogicals(t *testing.T) {
 	test_xpath_elements(t, book_example, `//book[1 + 1]`, 9)
 	test_xpath_elements(t, book_example, `//book[1 * 2]`, 9)
