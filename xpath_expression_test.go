@@ -69,7 +69,7 @@ func TestAttributes(t *testing.T) {
 
 func TestExpressions(t *testing.T) {
 	test_xpath_elements(t, book_example, `//book[@category = "cooking"] | //book[@category = "children"]`, 3, 9)
-	test_xpath_elements(t, book_example, `//book[@category = "web"] and //book[price = "39.95"]`, 25)
+	test_xpath_eval(t, book_example, `//book[@category = "web"] and //book[price = "39.95"]`, true)
 	test_xpath_count(t, html_example, `//ul/*`, 3)
 	test_xpath_count(t, html_example, `//ul/*/a`, 3)
 	// Sequence
