@@ -433,7 +433,7 @@ func matchesFunc(arg1, arg2 query) func(query, iterator) interface{} {
 		case query:
 			node := typ.Select(t)
 			if node == nil {
-				return ""
+				return false
 			}
 			s = node.Value()
 		}

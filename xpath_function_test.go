@@ -261,6 +261,20 @@ func Test_func_matches(t *testing.T) {
 	assertErr(t, err)
 }
 
+func Test_func_matches_empty_nodeset(t *testing.T) {
+	// starts-with, ends-with and contains all answer false here.
+	test_xpath_eval(t, html_example, `matches(//no-such, 'x')`, false)
+	test_xpath_eval(t, html_example, `not(matches(//no-such, 'x'))`, true)
+	test_xpath_eval(t, html_example, `not(starts-with(//no-such, 'x'))`, true)
+	test_xpath_eval(t, html_example, `not(contains(//no-such, 'x'))`, true)
+	test_xpath_eval(t, html_example, `not(ends-with(//no-such, 'x'))`, true)
+	// boolean(X) and not(not(X)) have to agree
+	test_xpath_eval(t, html_example, `boolean(matches(//no-such, 'x'))`, false)
+	test_xpath_eval(t, html_example, `not(not(matches(//no-such, 'x')))`, false)
+	// a missing attribute reaches the same branch
+	test_xpath_eval(t, html_example, `not(matches(//html/@nosuchattr, 'x'))`, true)
+}
+
 func Test_func_number(t *testing.T) {
 	test_xpath_eval(t, empty_example, `number(10)`, float64(10))
 	test_xpath_eval(t, empty_example, `number(1.11)`, float64(1.11))
