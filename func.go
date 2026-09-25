@@ -436,6 +436,8 @@ func matchesFunc(arg1, arg2 query) func(query, iterator) interface{} {
 				return false
 			}
 			s = node.Value()
+		default:
+			s = asString(t, typ)
 		}
 		var pattern string
 		var ok bool
@@ -463,6 +465,8 @@ func normalizespaceFunc(arg1 query) func(query, iterator) interface{} {
 				return ""
 			}
 			m = node.Value()
+		default:
+			m = asString(t, typ)
 		}
 		var b = builderPool.Get().(stringBuilder)
 		b.Grow(len(m))
@@ -500,6 +504,8 @@ func substringFunc(arg1, arg2, arg3 query) func(query, iterator) interface{} {
 				return ""
 			}
 			m = node.Value()
+		default:
+			m = asString(t, typ)
 		}
 
 		var start, length float64
@@ -588,6 +594,8 @@ func stringLengthFunc(arg1 query) func(query, iterator) interface{} {
 				break
 			}
 			return float64(utf8.RuneCountInString(node.Value()))
+		default:
+			return float64(utf8.RuneCountInString(asString(t, v)))
 		}
 		return float64(0)
 	}
