@@ -564,12 +564,14 @@ func (p *parser) parseMethod(n node) node {
 }
 
 // Parse parsing the XPath express string expr and returns a tree node.
-func parse(expr string, namespaces map[string]string) node {
+// parse returns the root node and the parser used for parsing.
+func parse(expr string, namespaces map[string]string) (node, *parser) {
 	r := &scanner{text: expr}
 	r.nextChar()
 	r.nextItem()
 	p := &parser{r: r, namespaces: namespaces}
-	return p.parseExpression(nil)
+	root := p.parseExpression(nil)
+	return root, p
 }
 
 // rootNode holds a top-level node of tree.
