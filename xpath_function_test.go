@@ -171,6 +171,8 @@ func Test_func_string_length(t *testing.T) {
 	// characters, not bytes (REC 4.2)
 	test_xpath_eval(t, empty_example, `string-length("héllo")`, float64(5))
 	test_xpath_eval(t, empty_example, `string-length("日本語")`, float64(3))
+	test_xpath_eval(t, empty_example, `string-length(12345)`, float64(5))
+	test_xpath_eval(t, empty_example, `string-length(true())`, float64(4))
 }
 
 func Test_func_substring(t *testing.T) {
@@ -180,6 +182,8 @@ func Test_func_substring(t *testing.T) {
 	test_xpath_eval(t, empty_example, `substring("12345", 0, 1)`, "")
 	test_xpath_eval(t, empty_example, `substring("12345", 0, 2)`, "1")
 	test_xpath_eval(t, empty_example, `substring("12345", 0, 3)`, "12")
+	test_xpath_eval(t, empty_example, `substring(12345, 2, 3)`, "234")
+	test_xpath_eval(t, empty_example, `substring(1 div 0, 1, 3)`, "Inf")
 	test_xpath_eval(t, empty_example, `substring("12345", 0, 5)`, "1234")
 	test_xpath_eval(t, empty_example, `substring("12345", -1, 4)`, "12")
 	test_xpath_eval(t, empty_example, `substring("12345", -2, 5)`, "12")
@@ -246,6 +250,7 @@ func Test_func_translate(t *testing.T) {
 
 func Test_func_matches(t *testing.T) {
 	test_xpath_eval(t, empty_example, `matches("abracadabra", "bra")`, true)
+	test_xpath_eval(t, empty_example, `matches(123, "^123$")`, true)
 	test_xpath_eval(t, empty_example, `matches("abracadabra", "(?i)^A.*A$")`, true)
 	test_xpath_eval(t, empty_example, `matches("abracadabra", "^a.*a$")`, true)
 	test_xpath_eval(t, empty_example, `matches("abracadabra", "^bra")`, false)
@@ -366,6 +371,8 @@ func Test_func_normalize_space(t *testing.T) {
 	const expectedStr = `loooooooonnnnnnngggggggg tes t strin g`
 	test_xpath_eval(t, empty_example, `normalize-space("`+testStr+`")`, expectedStr)
 	test_xpath_eval(t, empty_example, `normalize-space(' abc ')`, "abc")
+	test_xpath_eval(t, empty_example, `normalize-space(12)`, "12")
+	test_xpath_eval(t, empty_example, `normalize-space(false())`, "false")
 	n := selectNode(employee_example, `//employee[@id="1"]/name`)
 	test_xpath_eval(t, n, `normalize-space()`, "Opal Kole")
 	test_xpath_eval(t, n, `normalize-space(.)`, "Opal Kole")
