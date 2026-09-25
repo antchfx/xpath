@@ -99,3 +99,12 @@ func TestNestedPredicates(t *testing.T) {
 	test_xpath_elements(t, employee_example, `//employee[./name[@from]]`, 8)
 	test_xpath_elements(t, employee_example, `//employee[.//name[@from = "CA"]]`, 8)
 }
+
+func TestChainedPredicateOnGroupedExpression(t *testing.T) {
+	test_xpath_count(t, employee_example, `(//employee)[1][false()]`, 0)
+	test_xpath_count(t, employee_example, `(//employee)[2][false()]`, 0)
+	test_xpath_count(t, employee_example, `(//employee)[1][@id = "2"]`, 0)
+	test_xpath_elements(t, employee_example, `(//employee)[1][true()]`, 3)
+	test_xpath_elements(t, employee_example, `(//employee)[1][@id = "1"]`, 3)
+	test_xpath_elements(t, employee_example, `(//employee)[2][@id = "2"]`, 8)
+}
