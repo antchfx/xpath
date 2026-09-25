@@ -4,6 +4,36 @@ import (
 	"testing"
 )
 
+// https://github.com/antchfx/xpath/pull/142/
+func TestBooleanExpressionsDoNotSelectNodes(t *testing.T) {
+	doc := createComparisonDoc()
+	nav := createNavigator(doc)
+	for _, tc := range []struct {
+		expr string
+		want bool
+	}{
+		{`//Low or //High`, true},
+		{`//Low and //High`, true},
+		{`1 = 1 or //Low`, true},
+		{`//Low and 1 = 1`, true},
+		{`//Missing or //Absent`, false},
+		{`//Low and //Absent`, false},
+	} {
+		t.Run(tc.expr, func(t *testing.T) {
+			compiled := MustCompile(tc.expr)
+			iter := compiled.Select(nav)
+			for i := 0; i < 2; i++ {
+				if iter.MoveNext() {
+					t.Fatalf("boolean expression %q selected a node on attempt %d", tc.expr, i+1)
+				}
+			}
+			if got := compiled.Evaluate(nav); got != tc.want {
+				t.Fatalf("boolean expression %q evaluated to %v, want %v", tc.expr, got, tc.want)
+			}
+		})
+	}
+}
+
 func Test_descendant_issue(t *testing.T) {
 	// Issue #93 https://github.com/antchfx/xpath/issues/93
 	/*
@@ -69,7 +99,7 @@ func TestAttributes(t *testing.T) {
 
 func TestExpressions(t *testing.T) {
 	test_xpath_elements(t, book_example, `//book[@category = "cooking"] | //book[@category = "children"]`, 3, 9)
-	test_xpath_elements(t, book_example, `//book[@category = "web"] and //book[price = "39.95"]`, 25)
+	test_xpath_eval(t, book_example, `//book[@category = "web"] and //book[price = "39.95"]`, true)
 	test_xpath_count(t, html_example, `//ul/*`, 3)
 	test_xpath_count(t, html_example, `//ul/*/a`, 3)
 	// Sequence
