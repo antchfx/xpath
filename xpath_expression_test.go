@@ -4,6 +4,88 @@ import (
 	"testing"
 )
 
+// https://github.com/antchfx/xpath/pull/145
+func TestBooleanComparison(t *testing.T) {
+	/*
+		<a>
+		  <b>1</b>
+		  <b>0</b>
+		  <b>foo</b>
+		  <b></b>
+		  <b>123</b>
+		  <b>-1</b>
+		  <empty/>
+		</a>
+	*/
+	doc := createNode("", RootNode)
+	a := doc.createChildNode("a", ElementNode)
+
+	for _, v := range []string{"1", "0", "foo", "", "123", "-1"} {
+		b := a.createChildNode("b", ElementNode)
+		if v != "" {
+			b.createChildNode(v, TextNode)
+		}
+	}
+	a.createChildNode("empty", ElementNode)
+	tests := []struct {
+		expr     string
+		expected int
+	}{
+		// boolean vs boolean
+		{"//b[true()=1]", 6},
+		{"//b[1=true()]", 6},
+		{"//b[false()=0]", 6},
+		{"//b[true()!='foo']", 6},
+		{"//b[not(false()) = 1]", 6},
+		{"//b[true()=0]", 0},
+		{"//b[false()='foo']", 0},
+		// number vs boolean
+		{"//b[1 = true()]", 6},
+		{"//b[0 = false()]", 6},
+		{"//b[2 = true()]", 0},
+		{"//b[0 = true()]", 0},
+		{"//b[1 != false()]", 6},
+		{"//b[0 != true()]", 6},
+		{"//b[-1 = false()]", 0},
+		{"//b[0.0 = false()]", 6},
+		{"//b[1.5 = true()]", 0},
+		// string vs boolean
+		{"//b['1' = true()]", 6},
+		{"//b['0' = false()]", 6},
+		{"//b['123' = true()]", 0},
+		{"//b['0' = true()]", 0},
+		{"//b['foo' != true()]", 6},
+		{"//b['' = false()]", 0},
+		{"//b['' != false()]", 6},
+		{"//b[' 1 ' = true()]", 6},
+		{"//b['-0' = false()]", 6},
+		// NodeSet vs boolean
+		{"//b[. = true()]", 1},
+		{"//b[. = false()]", 1},
+		{"//b[. != true()]", 5},
+		{"//b[//empty = false()]", 0},
+		{"//b[//empty != true()]", 6},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.expr, func(t *testing.T) {
+			expr, err := Compile(tt.expr)
+			if err != nil {
+				t.Fatalf("failed to compile expr %q: %v", tt.expr, err)
+			}
+			iter := expr.Select(createNavigator(doc))
+			count := 0
+			for iter.MoveNext() {
+				count++
+			}
+
+			if count != tt.expected {
+				t.Errorf("expr %q: expected %d nodes, got %d", tt.expr, tt.expected, count)
+			}
+		})
+	}
+}
+
 // https://github.com/antchfx/xpath/pull/142/
 func TestBooleanExpressionsDoNotSelectNodes(t *testing.T) {
 	doc := createComparisonDoc()
