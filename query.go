@@ -589,6 +589,9 @@ func (f *followingQuery) Test(n NodeNavigator) bool {
 }
 
 func (f *followingQuery) Clone() query {
+	if f.Input == nil {
+		return &followingQuery{Sibling: f.Sibling, Predicate: f.Predicate}
+	}
 	return &followingQuery{Input: f.Input.Clone(), Sibling: f.Sibling, Predicate: f.Predicate}
 }
 
@@ -678,6 +681,9 @@ func (p *precedingQuery) Test(n NodeNavigator) bool {
 }
 
 func (p *precedingQuery) Clone() query {
+	if p.Input == nil {
+		return &precedingQuery{Sibling: p.Sibling, Predicate: p.Predicate}
+	}
 	return &precedingQuery{Input: p.Input.Clone(), Sibling: p.Sibling, Predicate: p.Predicate}
 }
 
