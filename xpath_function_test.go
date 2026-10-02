@@ -179,6 +179,8 @@ func Test_func_substring(t *testing.T) {
 	test_xpath_eval(t, empty_example, `substring("motor car", 6)`, " car")
 	test_xpath_eval(t, empty_example, `substring("metadata", 4, 3)`, "ada")
 	test_xpath_eval(t, empty_example, `substring("12345", 1.5, 2.6)`, "234")
+	// round(-0.5) is 0, so the window is the first two characters.
+	test_xpath_eval(t, empty_example, `substring("12345", -0.5, 3)`, "12")
 	test_xpath_eval(t, empty_example, `substring("12345", 0, 1)`, "")
 	test_xpath_eval(t, empty_example, `substring("12345", 0, 2)`, "1")
 	test_xpath_eval(t, empty_example, `substring("12345", 0, 3)`, "12")
