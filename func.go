@@ -516,7 +516,9 @@ func substringFunc(arg1, arg2, arg3 query) func(query, iterator) interface{} {
 		// positions are in characters, not bytes (REC 4.2)
 		rs := []rune(m)
 		// fix https://github.com/antchfx/xpath/issues/109
-		start = math.Round(start)
+		// XPath round, not math.Round: -0.5 goes to 0, so
+		// substring("12345", -0.5, 3) is "12".
+		start = round(start)
 		if start > float64(len(rs)) {
 			return ""
 		}
@@ -530,7 +532,7 @@ func substringFunc(arg1, arg2, arg3 query) func(query, iterator) interface{} {
 		if length, ok = functionArgs(arg3).Evaluate(t).(float64); !ok {
 			panic(errors.New("substring() function second argument type must be number"))
 		}
-		length = math.Round(length)
+		length = round(length)
 		// keep positions p with start <= p < start+length, clipped to the string (REC 4.2)
 		first := math.Max(start, 1)
 		last := math.Min(start+length, float64(len(rs))+1)
