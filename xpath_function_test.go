@@ -221,6 +221,9 @@ func Test_func_substring_after(t *testing.T) {
 	test_xpath_eval(t, empty_example, `substring-after(//non-existent-node, "tat")`, "")
 	test_xpath_eval(t, empty_example, `substring-after("tattoo", //non-existent-node)`, "")
 	test_xpath_eval(t, empty_example, `substring-after("", "tat")`, "")
+	test_xpath_eval(t, empty_example, `substring-after(12345, 3)`, "45")
+	test_xpath_eval(t, empty_example, `substring-after("a1b", 1)`, "b")
+	test_xpath_eval(t, empty_example, `substring-after(1 div 0, "fin")`, "ity")
 }
 
 func Test_func_substring_before(t *testing.T) {
@@ -230,6 +233,8 @@ func Test_func_substring_before(t *testing.T) {
 	test_xpath_eval(t, empty_example, `substring-before(//non-existent-node, "tat")`, "")
 	test_xpath_eval(t, empty_example, `substring-before("tattoo", //non-existent-node)`, "")
 	test_xpath_eval(t, empty_example, `substring-before("", "tat")`, "")
+	test_xpath_eval(t, empty_example, `substring-before(12345, 3)`, "12")
+	test_xpath_eval(t, empty_example, `substring-before(true(), "u")`, "tr")
 }
 
 func Test_func_sum(t *testing.T) {

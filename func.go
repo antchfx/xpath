@@ -556,6 +556,8 @@ func substringIndFunc(arg1, arg2 query, after bool) func(query, iterator) interf
 				return ""
 			}
 			str = node.Value()
+		default:
+			str = asString(t, v)
 		}
 		var word string
 		switch v := functionArgs(arg2).Evaluate(t).(type) {
@@ -567,6 +569,8 @@ func substringIndFunc(arg1, arg2 query, after bool) func(query, iterator) interf
 				return ""
 			}
 			word = node.Value()
+		default:
+			word = asString(t, v)
 		}
 		if word == "" {
 			return ""
