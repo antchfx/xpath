@@ -628,6 +628,24 @@ func translateFunc(arg1, arg2, arg3 query) func(query, iterator) interface{} {
 	}
 }
 
+// translateFuncConst is the translate() fast path when src and dst are literal strings.
+func translateFuncConst(arg1 query, src, dst string) func(query, iterator) interface{} {
+	srcRunes := []rune(src)
+	dstRunes := []rune(dst)
+	replace := make([]string, 0, 2*len(srcRunes))
+	for i, s := range srcRunes {
+		d := ""
+		if i < len(dstRunes) {
+			d = string(dstRunes[i])
+		}
+		replace = append(replace, string(s), d)
+	}
+	replacer := strings.NewReplacer(replace...)
+	return func(_ query, t iterator) interface{} {
+		return replacer.Replace(asString(t, functionArgs(arg1).Evaluate(t)))
+	}
+}
+
 // replaceFunc is XPath functions replace() function returns a replaced string.
 func replaceFunc(arg1, arg2, arg3 query) func(query, iterator) interface{} {
 	return func(_ query, t iterator) interface{} {

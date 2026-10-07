@@ -491,6 +491,16 @@ func (b *builder) processFunction(root *functionNode, props *builderProp) (query
 		if arg1, err = b.processNode(root.Args[0], flagsEnum.None, props); err != nil {
 			return nil, err
 		}
+		if srcNode, ok := root.Args[1].(*operandNode); ok {
+			if src, ok := srcNode.Val.(string); ok {
+				if dstNode, ok := root.Args[2].(*operandNode); ok {
+					if dst, ok := dstNode.Val.(string); ok {
+						qyOutput = &functionQuery{Func: translateFuncConst(arg1, src, dst)}
+						break
+					}
+				}
+			}
+		}
 		if arg2, err = b.processNode(root.Args[1], flagsEnum.None, props); err != nil {
 			return nil, err
 		}

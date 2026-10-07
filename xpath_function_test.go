@@ -255,6 +255,42 @@ func Test_func_translate(t *testing.T) {
 	test_xpath_eval(t, empty_example, `translate("日本語", "日語", "ab")`, "a本b")
 }
 
+func Test_func_translate_const(t *testing.T) {
+	doc := createNode("", RootNode)
+	root := doc.createChildNode("root", ElementNode)
+	red := root.createChildNode("item", ElementNode)
+	red.addAttribute("style", "color:RED")
+	blue := root.createChildNode("item", ElementNode)
+	blue.addAttribute("style", "color:blue")
+	bg := root.createChildNode("item", ElementNode)
+	bg.addAttribute("style", "BACKGROUND-COLOR:#FF0000")
+
+	const upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	const lower = "abcdefghijklmnopqrstuvwxyz"
+
+	nodes := selectNodes(doc, `//item[translate(@style, "`+upper+`", "`+lower+`") = "color:red"]`)
+	assertEqual(t, 1, len(nodes))
+
+	// "background-color" contains "color", so all three match.
+	nodes = selectNodes(doc, `//item[contains(translate(@style, "`+upper+`", "`+lower+`"), "color")]`)
+	assertEqual(t, 3, len(nodes))
+
+	// Deletion: dst shorter than src removes unmatched chars. "color:RED"→"color"; "color:blue"→"colorblue".
+	nodes = selectNodes(doc, `//item[translate(@style, "`+upper+`:", "") = "color"]`)
+	assertEqual(t, 1, len(nodes))
+
+	uni := createNode("", RootNode)
+	uroot := uni.createChildNode("root", ElementNode)
+	ja := uroot.createChildNode("item", ElementNode)
+	ja.addAttribute("lang", "日本語")
+	nodes = selectNodes(uni, `//item[translate(@lang, "日語", "ab") = "a本b"]`)
+	assertEqual(t, 1, len(nodes))
+
+	// Empty src is a no-op. "BACKGROUND-COLOR" has uppercase COLOR, so only 2 items contain "color".
+	nodes = selectNodes(doc, `//item[contains(translate(@style, "", ""), "color")]`)
+	assertEqual(t, 2, len(nodes))
+}
+
 func Test_func_matches(t *testing.T) {
 	test_xpath_eval(t, empty_example, `matches("abracadabra", "bra")`, true)
 	test_xpath_eval(t, empty_example, `matches(123, "^123$")`, true)
