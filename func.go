@@ -519,7 +519,7 @@ func substringFunc(arg1, arg2, arg3 query) func(query, iterator) interface{} {
 		// XPath round, not math.Round: -0.5 goes to 0, so
 		// substring("12345", -0.5, 3) is "12".
 		start = round(start)
-		if start > float64(len(rs)) {
+		if math.IsNaN(start) || start > float64(len(rs)) {
 			return ""
 		}
 		if arg3 == nil {

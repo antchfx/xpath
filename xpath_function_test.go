@@ -214,6 +214,33 @@ func Test_func_substring(t *testing.T) {
 	test_xpath_eval(t, html_example, `substring(//title/child::node(), 1)`, "My page")
 }
 
+func Test_func_substring_non_finite_start(t *testing.T) {
+	tests := []struct {
+		expr string
+		want string
+	}{
+		{`substring("12345", number("abc"))`, ""},
+		{`substring("12345", 0 div 0)`, ""},
+		{`substring("", number("abc"))`, ""},
+		{`substring("héllo", number(""))`, ""},
+		{`substring(//title, number(//missing))`, ""},
+		{`substring("12345", number("abc"), 3)`, ""},
+		{`substring("12345", 1 div 0)`, ""},
+		{`substring("12345", -1 div 0)`, "12345"},
+		{`substring("12345", -1 div 0, 1 div 0)`, ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.expr, func(t *testing.T) {
+			defer func() {
+				if err := recover(); err != nil {
+					t.Fatalf("unexpected panic: %v", err)
+				}
+			}()
+			test_xpath_eval(t, html_example, tt.expr, tt.want)
+		})
+	}
+}
+
 func Test_func_substring_after(t *testing.T) {
 	test_xpath_eval(t, empty_example, `substring-after("tattoo", "tat")`, "too")
 	test_xpath_eval(t, empty_example, `substring-after("tattoo", "tattoo")`, "")
