@@ -209,11 +209,11 @@ func cmpBooleanBoolean(t iterator, op string, m, n interface{}) bool {
 }
 
 func cmpBooleanNumeric(t iterator, op string, m, n interface{}) bool {
-	a := n.(float64)
-	b := 0.0
+	a := 0.0
 	if m.(bool) {
-		b = 1.0
+		a = 1.0
 	}
+	b := n.(float64)
 	return cmpNumberNumberF(op, a, b)
 }
 

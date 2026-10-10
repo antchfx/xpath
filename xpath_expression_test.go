@@ -65,6 +65,16 @@ func TestBooleanComparison(t *testing.T) {
 		{"//b[. != true()]", 5},
 		{"//b[//empty = false()]", 0},
 		{"//b[//empty != true()]", 6},
+		// relational comparisons keep the operand order
+		{"//b[true() > 0]", 6},
+		{"//b[true() >= 1]", 6},
+		{"//b[false() < 1]", 6},
+		{"//b[false() <= 0]", 6},
+		{"//b[true() < 1]", 0},
+		{"//b[false() > 0]", 0},
+		{"//b[2 > 1 > 0]", 6},
+		{"//b[false() < //b]", 6},
+		{"//b[true() > //b]", 0},
 	}
 
 	for _, tt := range tests {
