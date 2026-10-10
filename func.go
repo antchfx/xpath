@@ -669,15 +669,7 @@ func replaceFunc(arg1, arg2, arg3 query) func(query, iterator) interface{} {
 // notFunc is XPATH functions not(expression) function operation.
 func notFunc(arg1 query) func(query, iterator) interface{} {
 	return func(_ query, t iterator) interface{} {
-		switch v := functionArgs(arg1).Evaluate(t).(type) {
-		case bool:
-			return !v
-		case query:
-			node := v.Select(t)
-			return node == nil
-		default:
-			return false
-		}
+		return !asBool(t, functionArgs(arg1).Evaluate(t))
 	}
 }
 
