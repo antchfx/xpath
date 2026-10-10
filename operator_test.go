@@ -68,6 +68,17 @@ func TestXPathComparisons(t *testing.T) {
 		{name: "string less than node set", expr: `'2' < //High`, want: true},
 		{name: "node set less or equal string", expr: `//Low <= '2'`, want: true},
 		{name: "string greater or equal node set", expr: `'10' >= //High`, want: true},
+
+		{name: "node set equals number of a later node", expr: `//Root/* = 10`, want: true},
+		{name: "number equals a later node in node set", expr: `10 = //Root/*`, want: true},
+		{name: "number less than a later node in node set", expr: `5 < //Root/*`, want: true},
+		{name: "node set equals string of a later node", expr: `//Root/* = 'abc'`, want: true},
+		{name: "string equals a later node in node set", expr: `'abc' = //Root/*`, want: true},
+		{name: "string equals node set lexically", expr: `'abc' = //Invalid`, want: true},
+		{name: "string differs from node set lexically", expr: `'02' != //Low`, want: true},
+		{name: "string matches no node in node set", expr: `'xyz' = //Root/*`, want: false},
+		{name: "number differs from empty node set", expr: `1 != //Missing`, want: false},
+		{name: "string differs from empty node set", expr: `'abc' != //Missing`, want: false},
 	}
 
 	for _, tt := range tests {

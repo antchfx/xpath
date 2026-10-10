@@ -83,15 +83,16 @@ func cmpNumericString(t iterator, op string, m, n interface{}) bool {
 func cmpNumericNodeSet(t iterator, op string, m, n interface{}) bool {
 	a := m.(float64)
 	b := n.(query)
-
-	node := b.Select(t)
-	if node == nil {
-		right := math.NaN()
-		return cmpNumberNumberF(op, a, right)
+	for {
+		node := b.Select(t)
+		if node == nil {
+			break
+		}
+		if cmpNumberNumberF(op, a, stringToNumber(node.Value())) {
+			return true
+		}
 	}
-
-	right := stringToNumber(node.Value())
-	return cmpNumberNumberF(op, a, right)
+	return false
 }
 
 func cmpNodeSetBoolean(t iterator, op string, m, n interface{}) bool {
@@ -189,16 +190,16 @@ func cmpStringString(t iterator, op string, m, n interface{}) bool {
 func cmpStringNodeSet(t iterator, op string, m, n interface{}) bool {
 	a := m.(string)
 	b := n.(query)
-
-	left := stringToNumber(a)
-
-	node := b.Select(t)
-	if node == nil {
-		return cmpNumberNumberF(op, left, math.NaN())
+	for {
+		node := b.Select(t)
+		if node == nil {
+			break
+		}
+		if cmpStringStringF(op, a, node.Value()) {
+			return true
+		}
 	}
-
-	right := stringToNumber(node.Value())
-	return cmpNumberNumberF(op, left, right)
+	return false
 }
 
 func cmpBooleanBoolean(t iterator, op string, m, n interface{}) bool {
