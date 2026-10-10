@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"unicode"
 	"unicode/utf8"
 )
 
@@ -452,6 +451,11 @@ func matchesFunc(arg1, arg2 query) func(query, iterator) interface{} {
 	}
 }
 
+// isXMLSpace matches the XML S production used by XPath normalize-space.
+func isXMLSpace(r rune) bool {
+	return r == ' ' || r == '\t' || r == '\r' || r == '\n'
+}
+
 // normalizespaceFunc is XPath functions normalize-space(string?)
 func normalizespaceFunc(arg1 query) func(query, iterator) interface{} {
 	return func(_ query, t iterator) interface{} {
@@ -471,12 +475,12 @@ func normalizespaceFunc(arg1 query) func(query, iterator) interface{} {
 		var b = builderPool.Get().(stringBuilder)
 		b.Grow(len(m))
 
-		runeStr := []rune(strings.TrimSpace(m))
+		runeStr := []rune(strings.Trim(m, " \t\r\n"))
 		l := len(runeStr)
 		for i := range runeStr {
 			r := runeStr[i]
-			isSpace := unicode.IsSpace(r)
-			if !(isSpace && (i+1 < l && unicode.IsSpace(runeStr[i+1]))) {
+			isSpace := isXMLSpace(r)
+			if !(isSpace && (i+1 < l && isXMLSpace(runeStr[i+1]))) {
 				if isSpace {
 					r = ' '
 				}

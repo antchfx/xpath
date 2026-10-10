@@ -436,9 +436,30 @@ func Test_func_namespace_uri(t *testing.T) {
 	test_xpath_elements(t, mybook_example, `//*[namespace-uri()='http://www.contoso.com/books']`, 3, 9)
 }
 
+func Test_func_normalize_space_preserves_non_xml_whitespace(t *testing.T) {
+	for _, tt := range []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{"empty", "", ""},
+		{"xml whitespace only", " \t\r\n ", ""},
+		{"xml whitespace runs", "\t a \r\n b ", "a b"},
+		{"nonbreaking edges", "\u00a0a\u00a0", "\u00a0a\u00a0"},
+		{"nonbreaking run", "a\u00a0\u00a0b", "a\u00a0\u00a0b"},
+		{"em space", "\u2003a\u2003", "\u2003a\u2003"},
+		{"narrow nonbreaking space", "a\u202fb", "a\u202fb"},
+		{"mixed whitespace", "\t\u00a0  a\n\u2003\r\n", "\u00a0 a \u2003"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			test_xpath_eval(t, empty_example, `normalize-space("`+tt.input+`")`, tt.want)
+		})
+	}
+}
+
 func Test_func_normalize_space(t *testing.T) {
 	const testStr = "\t    \rloooooooonnnnnnngggggggg  \r \n tes  \u00a0 t strin \n\n \r g "
-	const expectedStr = `loooooooonnnnnnngggggggg tes t strin g`
+	const expectedStr = "loooooooonnnnnnngggggggg tes \u00a0 t strin\u00a0 g"
 	test_xpath_eval(t, empty_example, `normalize-space("`+testStr+`")`, expectedStr)
 	test_xpath_eval(t, empty_example, `normalize-space(' abc ')`, "abc")
 	test_xpath_eval(t, empty_example, `normalize-space(12)`, "12")
