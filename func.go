@@ -508,11 +508,9 @@ func substringFunc(arg1, arg2, arg3 query) func(query, iterator) interface{} {
 			m = asString(t, typ)
 		}
 
-		var start, length float64
-		var ok bool
-		if start, ok = functionArgs(arg2).Evaluate(t).(float64); !ok {
-			panic(errors.New("substring() function first argument type must be number"))
-		}
+		// The position arguments are converted as if by number() (REC 4.2),
+		// so a string, boolean or node-set is accepted as well.
+		start := asNumber(t, functionArgs(arg2).Evaluate(t))
 		// positions are in characters, not bytes (REC 4.2)
 		rs := []rune(m)
 		// fix https://github.com/antchfx/xpath/issues/109
@@ -529,10 +527,7 @@ func substringFunc(arg1, arg2, arg3 query) func(query, iterator) interface{} {
 			return string(rs[int(start)-1:])
 		}
 
-		if length, ok = functionArgs(arg3).Evaluate(t).(float64); !ok {
-			panic(errors.New("substring() function second argument type must be number"))
-		}
-		length = round(length)
+		length := round(asNumber(t, functionArgs(arg3).Evaluate(t)))
 		// keep positions p with start <= p < start+length, clipped to the string (REC 4.2)
 		first := math.Max(start, 1)
 		last := math.Min(start+length, float64(len(rs))+1)
