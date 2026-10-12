@@ -242,6 +242,9 @@ func cmpBooleanNodeSet(t iterator, op string, m, n interface{}) bool {
 func eqFunc(t iterator, m, n interface{}) interface{} {
 	t1 := getXPathType(m)
 	t2 := getXPathType(n)
+	if t1 == xpathResultType.Boolean || t2 == xpathResultType.Boolean {
+		return asBool(t, m) == asBool(t, n)
+	}
 	return logicalFuncs[t1][t2](t, "=", m, n)
 }
 
@@ -277,6 +280,9 @@ func leFunc(t iterator, m, n interface{}) interface{} {
 func neFunc(t iterator, m, n interface{}) interface{} {
 	t1 := getXPathType(m)
 	t2 := getXPathType(n)
+	if t1 == xpathResultType.Boolean || t2 == xpathResultType.Boolean {
+		return asBool(t, m) != asBool(t, n)
+	}
 	return logicalFuncs[t1][t2](t, "!=", m, n)
 }
 
