@@ -561,16 +561,11 @@ func substringIndFunc(arg1, arg2 query, after bool) func(query, iterator) interf
 		case string:
 			word = v
 		case query:
-			node := v.Select(t)
-			if node == nil {
-				return ""
+			if node := v.Select(t); node != nil {
+				word = node.Value()
 			}
-			word = node.Value()
 		default:
 			word = asString(t, v)
-		}
-		if word == "" {
-			return ""
 		}
 
 		i := strings.Index(str, word)
