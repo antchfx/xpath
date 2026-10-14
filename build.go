@@ -41,6 +41,9 @@ var builderProps = struct {
 type builder struct {
 	parseDepth int
 	firstInput query
+	// pinStep keeps firstInput on the step whose predicate is being
+	// compiled. An axis inside that predicate must not replace it.
+	pinStep bool
 }
 
 // axisPredicate creates a predicate to predicating for this axis node.
@@ -75,7 +78,9 @@ func (b *builder) processAxis(root *axisNode, flags flag, props *builderProp) (q
 		qyInput  query
 		qyOutput query
 	)
-	b.firstInput = nil
+	if !b.pinStep {
+		b.firstInput = nil
+	}
 	predicate := axisPredicate(root)
 
 	if root.Input == nil {
@@ -211,17 +216,31 @@ func (b *builder) processFilter(root *filterNode, flags flag, props *builderProp
 		inputFlags |= flagsEnum.Filter
 	}
 
+	savedInput := b.firstInput
+	savedPin := b.pinStep
+	b.pinStep = false
 	qyInput, err := b.processNode(root.Input, inputFlags, props)
 	if err != nil {
+		b.pinStep = savedPin
+		b.firstInput = savedInput
 		return nil, err
 	}
-	firstInput := b.firstInput
+	step := b.firstInput
 
+	// position() and last() read firstInput while the predicate is
+	// compiled. A path in that predicate, such as @class or a child
+	// step, would otherwise replace the step they count.
+	b.pinStep = true
 	var propsCond builderProp
 	cond, err := b.processNode(root.Condition, flags, &propsCond)
+	b.pinStep = savedPin
+	if savedPin {
+		b.firstInput = savedInput
+	}
 	if err != nil {
 		return nil, err
 	}
+	firstInput := step
 
 	// Checking whether is number
 	if canBeNumber(cond) || ((propsCond & (builderProps.HasPosition | builderProps.HasLast)) != 0) {
@@ -316,14 +335,18 @@ func (b *builder) processFilter(root *filterNode, flags flag, props *builderProp
 					axisQuery.Input = rootQuery
 				}
 			}
-			b.firstInput = nil
+			if !savedPin {
+				b.firstInput = nil
+			}
 			child := &filterQuery{Input: qyInput, Predicate: cond, NoPosition: false}
 			if parent != nil {
 				return &mergeQuery{Input: parent, Child: child}, nil
 			}
 			return child, nil
 		}
-		b.firstInput = nil
+		if !savedPin {
+			b.firstInput = nil
+		}
 	}
 
 	resultQuery := &filterQuery{
@@ -730,10 +753,14 @@ func (b *builder) processNode(root node, flags flag, props *builderProp) (q quer
 		q = &absoluteQuery{}
 	case nodeAxis:
 		q, err = b.processAxis(root.(*axisNode), flags, props)
-		b.firstInput = q
+		if !b.pinStep {
+			b.firstInput = q
+		}
 	case nodeFilter:
 		q, err = b.processFilter(root.(*filterNode), flags, props)
-		b.firstInput = q
+		if !b.pinStep {
+			b.firstInput = q
+		}
 	case nodeFunction:
 		q, err = b.processFunction(root.(*functionNode), props)
 	case nodeOperator:
@@ -744,7 +771,9 @@ func (b *builder) processNode(root node, flags flag, props *builderProp) (q quer
 			return
 		}
 		q = &groupQuery{Input: q}
-		b.firstInput = q
+		if !b.pinStep {
+			b.firstInput = q
+		}
 	case nodeVariable:
 		// Variables have no binding in a compiled expression, so they cannot
 		// resolve to a query. A bare "$x" already surfaces as an undeclared
