@@ -264,6 +264,30 @@ func Test_func_substring_before(t *testing.T) {
 	test_xpath_eval(t, empty_example, `substring-before(true(), "u")`, "tr")
 }
 
+func Test_func_sum_node_conversion(t *testing.T) {
+	for _, tt := range []struct {
+		name   string
+		values []string
+		want   string
+	}{
+		{"empty set", nil, "0"},
+		{"numbers", []string{"2", "3"}, "5"},
+		{"whitespace", []string{" \t2\r\n", "3"}, "5"},
+		{"invalid first", []string{"invalid", "3"}, "NaN"},
+		{"invalid last", []string{"2", "invalid"}, "NaN"},
+		{"empty node", []string{"2", ""}, "NaN"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			root := createNode("", RootNode)
+			for _, value := range tt.values {
+				node := root.createChildNode("price", ElementNode)
+				node.createChildNode(value, TextNode)
+			}
+			test_xpath_eval(t, root, `string(sum(/price))`, tt.want)
+		})
+	}
+}
+
 func Test_func_sum(t *testing.T) {
 	test_xpath_eval(t, empty_example, `sum(1 + 2)`, float64(3))
 	test_xpath_eval(t, empty_example, `sum(1.1 + 2)`, float64(3.1))

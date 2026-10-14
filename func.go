@@ -100,9 +100,7 @@ func sumFunc(arg query) func(query, iterator) interface{} {
 		switch typ := functionArgs(arg).Evaluate(t).(type) {
 		case query:
 			for node := typ.Select(t); node != nil; node = typ.Select(t) {
-				if v, err := strconv.ParseFloat(node.Value(), 64); err == nil {
-					sum += v
-				}
+				sum += stringToNumber(node.Value())
 			}
 		case float64:
 			sum = typ
