@@ -222,6 +222,15 @@ func Test_func_substring(t *testing.T) {
 	test_xpath_eval(t, empty_example, `substring("12345", 6, 2)`, "")
 	test_xpath_eval(t, empty_example, `substring(//non-existent-node, 1)`, "")
 	test_xpath_eval(t, html_example, `substring(//title/child::node(), 1)`, "My page")
+	// start and length are converted as if by number()
+	test_xpath_eval(t, empty_example, `substring("12345", "2", "3")`, "234")
+	test_xpath_eval(t, empty_example, `substring("12345", " 2.5 ")`, "345")
+	test_xpath_eval(t, empty_example, `substring("12345", true(), true())`, "1")
+	test_xpath_eval(t, empty_example, `substring("12345", "abc")`, "")
+	test_xpath_eval(t, empty_example, `substring("12345", //non-existent-node)`, "")
+	test_xpath_eval(t, empty_example, `substring("12345", 1, //non-existent-node)`, "")
+	test_xpath_eval(t, html_example, `substring("12345", string-length(//title), 2)`, "")
+	test_xpath_eval(t, html_example, `substring("My page", count(//title), //title/child::node())`, "")
 }
 
 func Test_func_substring_non_finite_start(t *testing.T) {
