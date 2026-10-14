@@ -248,7 +248,7 @@ func asBool(t iterator, v interface{}) bool {
 	case bool:
 		return v
 	case float64:
-		return v != 0
+		return v != 0 && !math.IsNaN(v)
 	case string:
 		return v != ""
 	case query:

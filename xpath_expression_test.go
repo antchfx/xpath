@@ -1,6 +1,7 @@
 package xpath
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -35,36 +36,36 @@ func TestBooleanComparison(t *testing.T) {
 		{"//b[true()=1]", 6},
 		{"//b[1=true()]", 6},
 		{"//b[false()=0]", 6},
-		{"//b[true()!='foo']", 6},
+		{"//b[true()!='foo']", 0},
 		{"//b[not(false()) = 1]", 6},
 		{"//b[true()=0]", 0},
 		{"//b[false()='foo']", 0},
 		// number vs boolean
 		{"//b[1 = true()]", 6},
 		{"//b[0 = false()]", 6},
-		{"//b[2 = true()]", 0},
+		{"//b[2 = true()]", 6},
 		{"//b[0 = true()]", 0},
 		{"//b[1 != false()]", 6},
 		{"//b[0 != true()]", 6},
 		{"//b[-1 = false()]", 0},
 		{"//b[0.0 = false()]", 6},
-		{"//b[1.5 = true()]", 0},
+		{"//b[1.5 = true()]", 6},
 		// string vs boolean
 		{"//b['1' = true()]", 6},
-		{"//b['0' = false()]", 6},
-		{"//b['123' = true()]", 0},
-		{"//b['0' = true()]", 0},
-		{"//b['foo' != true()]", 6},
-		{"//b['' = false()]", 0},
-		{"//b['' != false()]", 6},
+		{"//b['0' = false()]", 0},
+		{"//b['123' = true()]", 6},
+		{"//b['0' = true()]", 6},
+		{"//b['foo' != true()]", 0},
+		{"//b['' = false()]", 6},
+		{"//b['' != false()]", 0},
 		{"//b[' 1 ' = true()]", 6},
-		{"//b['-0' = false()]", 6},
+		{"//b['-0' = false()]", 0},
 		// NodeSet vs boolean
-		{"//b[. = true()]", 1},
-		{"//b[. = false()]", 1},
-		{"//b[. != true()]", 5},
+		{"//b[. = true()]", 6},
+		{"//b[. = false()]", 0},
+		{"//b[. != true()]", 0},
 		{"//b[//empty = false()]", 0},
-		{"//b[//empty != true()]", 6},
+		{"//b[//empty != true()]", 0},
 		// relational comparisons keep the operand order
 		{"//b[true() > 0]", 6},
 		{"//b[true() >= 1]", 6},
@@ -123,6 +124,38 @@ func TestBooleanExpressionsDoNotSelectNodes(t *testing.T) {
 				t.Fatalf("boolean expression %q evaluated to %v, want %v", tc.expr, got, tc.want)
 			}
 		})
+	}
+}
+
+func TestBooleanEqualityConversion(t *testing.T) {
+	for _, tc := range []struct {
+		expression string
+		truth      bool
+	}{
+		{"2", true}, {"-1", true}, {"0", false},
+		{"number('invalid')", false}, {"'text'", true}, {"'0'", true},
+		{"''", false}, {"/", true}, {"missing", false},
+	} {
+		for _, operator := range []string{"=", "!="} {
+			want := tc.truth
+			if operator == "!=" {
+				want = !want
+			}
+			for _, expression := range []string{
+				fmt.Sprintf("%s %s true()", tc.expression, operator),
+				fmt.Sprintf("true() %s %s", operator, tc.expression),
+			} {
+				t.Run(expression, func(t *testing.T) {
+					compiled, err := Compile(expression)
+					if err != nil {
+						t.Fatal(err)
+					}
+					if got := compiled.Evaluate(createNavigator(empty_example)); got != want {
+						t.Errorf("Evaluate = %v, want %v", got, want)
+					}
+				})
+			}
+		}
 	}
 }
 
