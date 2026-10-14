@@ -440,10 +440,16 @@ func (b *builder) processFunction(root *functionNode, props *builderProp) (query
 		}
 	case "string-length":
 		// string-length( [string] )
-		if len(root.Args) < 1 {
-			return nil, errors.New("xpath: string-length function must have at least one parameter")
+		if len(root.Args) > 1 {
+			return nil, errors.New("xpath: string-length function must have at most one parameter")
 		}
-		arg1, err := b.processNode(root.Args[0], flagsEnum.None, props)
+		var arg node
+		if len(root.Args) > 0 {
+			arg = root.Args[0]
+		} else {
+			arg = newAxisNode("self", allNode, "", "", "", nil)
+		}
+		arg1, err := b.processNode(arg, flagsEnum.None, props)
 		if err != nil {
 			return nil, err
 		}

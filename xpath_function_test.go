@@ -179,6 +179,10 @@ func Test_func_string_length(t *testing.T) {
 	test_xpath_eval(t, empty_example, `string-length("日本語")`, float64(3))
 	test_xpath_eval(t, empty_example, `string-length(12345)`, float64(5))
 	test_xpath_eval(t, empty_example, `string-length(true())`, float64(4))
+	// no argument means the context node
+	n := selectNode(employee_example, `//employee[@id="1"]/name`)
+	test_xpath_eval(t, n, `string-length()`, float64(len("Opal Kole")))
+	test_xpath_elements(t, book_example, `//book/title[string-length() = 16]`, 4)
 }
 
 func Test_func_substring(t *testing.T) {

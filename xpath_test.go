@@ -191,7 +191,7 @@ func TestInvalidXPath(t *testing.T) {
 		{"substring-before with 3 args", "substring-before('a', 'b', 'c')"},
 		{"substring-after with 1 arg", "substring-after('abc')"},
 		{"substring-after with 3 args", "substring-after('a', 'b', 'c')"},
-		{"string-length with no args", "string-length()"},
+		{"string-length with 2 args", "string-length('a', 'b')"},
 		{"replace with 2 args", "replace('a', 'b')"},
 		{"replace with 4 args", "replace('a', 'b', 'c', 'd')"},
 		{"translate with 2 args", "translate('a', 'b')"},
