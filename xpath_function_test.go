@@ -405,6 +405,19 @@ func Test_func_number(t *testing.T) {
 	test_xpath_eval(t, empty_example, `number(//non-existent-node) = 0`, false)
 	assertTrue(t, math.IsNaN(MustCompile(`number(//non-existent-node)`).Evaluate(createNavigator(empty_example)).(float64)))
 	assertTrue(t, math.IsNaN(MustCompile(`number("123a")`).Evaluate(createNavigator(empty_example)).(float64)))
+	test_xpath_eval(t, empty_example, `number(" -12.5 ")`, float64(-12.5))
+	test_xpath_eval(t, empty_example, `number(".5")`, float64(0.5))
+	test_xpath_eval(t, empty_example, `number("5.")`, float64(5))
+	test_xpath_eval(t, empty_example, `number("1e3")`, float64(1000))
+	// only an optional minus sign followed by a decimal number is a number
+	for _, s := range []string{"", "-", ".", "+5", "- 5", "Infinity", "-Infinity", "inf", "NaN", "0x10", "0x1p4", "1_000", "1e", "--5", "\u00a05"} {
+		v := MustCompile(`number('` + s + `')`).Evaluate(createNavigator(empty_example))
+		if !math.IsNaN(v.(float64)) {
+			t.Errorf("number('%s') = %v, want NaN", s, v)
+		}
+	}
+	test_xpath_eval(t, empty_example, `"+1" = 1`, false)
+	test_xpath_eval(t, empty_example, `"Infinity" = 1 div 0`, false)
 }
 
 func Test_func_position(t *testing.T) {

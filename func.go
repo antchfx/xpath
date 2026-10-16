@@ -258,13 +258,38 @@ func asBool(t iterator, v interface{}) bool {
 	}
 }
 
+// stringToNumber converts a string to a number as described in XPath 1.0
+// (REC 4.4): optional whitespace, an optional minus sign, a number and
+// optional whitespace. Anything else, like "+1", "Infinity" or "0x10", is NaN.
+// Exponents such as "1e3" are still accepted, as libxml2 does.
 func stringToNumber(s string) float64 {
-	s = strings.TrimSpace(s)
+	s = strings.Trim(s, " \t\r\n")
+	if !isNumberString(s) {
+		return math.NaN()
+	}
 	f, err := strconv.ParseFloat(s, 64)
 	if err != nil {
 		return math.NaN()
 	}
 	return f
+}
+
+// isNumberString reports whether s only contains characters allowed in an
+// optionally signed decimal number, leaving the syntax checks to ParseFloat.
+func isNumberString(s string) bool {
+	s = strings.TrimPrefix(s, "-")
+	if s == "" || s[0] != '.' && (s[0] < '0' || s[0] > '9') {
+		return false
+	}
+	for i := 1; i < len(s); i++ {
+		switch c := s[i]; {
+		case c >= '0' && c <= '9', c == '.', c == 'e', c == 'E':
+		case (c == '+' || c == '-') && (s[i-1] == 'e' || s[i-1] == 'E'):
+		default:
+			return false
+		}
+	}
+	return true
 }
 
 // formatNumber converts a number to a string per the XPath 1.0 spec (REC 4.2):
