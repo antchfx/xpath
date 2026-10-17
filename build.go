@@ -338,7 +338,7 @@ func (b *builder) processFilter(root *filterNode, flags flag, props *builderProp
 			if !savedPin {
 				b.firstInput = nil
 			}
-			child := &filterQuery{Input: qyInput, Predicate: cond, NoPosition: false}
+			child := &filterQuery{Input: qyInput, Predicate: cond, NoPosition: false, Positional: true}
 			if parent != nil {
 				return &mergeQuery{Input: parent, Child: child}, nil
 			}
@@ -353,6 +353,7 @@ func (b *builder) processFilter(root *filterNode, flags flag, props *builderProp
 		Input:      qyInput,
 		Predicate:  cond,
 		NoPosition: (propsCond & builderProps.HasPosition) == 0,
+		Positional: (propsCond & builderProps.HasPosition) != 0,
 	}
 	return resultQuery, nil
 }

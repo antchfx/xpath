@@ -782,12 +782,26 @@ type filterQuery struct {
 	Input      query
 	Predicate  query
 	NoPosition bool
+	Positional bool
 
 	posit    int
 	positmap map[int]int
 }
 
+// positionIterator is the iterator a positional predicate is evaluated with.
+// When the predicate filters the result of an earlier predicate or of a
+// parenthesized expression, valid is set and pos is the position of the
+// current node within that node-set, which position() must report.
+type positionIterator struct {
+	iterator
+	pos   int
+	valid bool
+}
+
 func (f *filterQuery) do(t iterator) bool {
+	if f.Positional {
+		t = positionIterator{iterator: t, pos: getNodePosition(f.Input)}
+	}
 	val := reflect.ValueOf(f.Predicate.Evaluate(t))
 	switch val.Kind() {
 	case reflect.Bool:
@@ -841,7 +855,7 @@ func (f *filterQuery) Evaluate(t iterator) interface{} {
 }
 
 func (f *filterQuery) Clone() query {
-	return &filterQuery{Input: f.Input.Clone(), Predicate: f.Predicate.Clone()}
+	return &filterQuery{Input: f.Input.Clone(), Predicate: f.Predicate.Clone(), Positional: f.Positional}
 }
 
 func (f *filterQuery) ValueType() resultType {

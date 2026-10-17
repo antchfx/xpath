@@ -108,3 +108,34 @@ func TestChainedPredicateOnGroupedExpression(t *testing.T) {
 	test_xpath_elements(t, employee_example, `(//employee)[1][@id = "1"]`, 3)
 	test_xpath_elements(t, employee_example, `(//employee)[2][@id = "2"]`, 8)
 }
+
+func TestPositionAfterEarlierPredicate(t *testing.T) {
+	// position() counts the nodes the earlier predicate kept, as a numeric
+	// predicate does.
+	test_xpath_elements(t, employee_example, `/empinfo/employee[@id != "2"][1]`, 3)
+	test_xpath_elements(t, employee_example, `/empinfo/employee[@id != "2"][2]`, 13)
+	test_xpath_elements(t, employee_example, `/empinfo/employee[@id != "2"][position()=1]`, 3)
+	test_xpath_elements(t, employee_example, `/empinfo/employee[@id != "2"][position()=2]`, 13)
+	test_xpath_elements(t, employee_example, `/empinfo/employee[@id != "1"][position()=1]`, 8)
+	test_xpath_elements(t, employee_example, `/empinfo/employee[@id != "2"][position()<2]`, 3)
+	test_xpath_elements(t, employee_example, `//employee[@id != "2"][position()=2]`, 13)
+	// A parenthesized node-set is numbered the same way.
+	test_xpath_elements(t, employee_example, `(//employee[@id != "2"])[position()=2]`, 13)
+	// A nested step keeps its own position.
+	test_xpath_elements(t, employee_example, `/empinfo/employee[@id != "2"][name[position()=1]]`, 3, 13)
+}
+
+func TestPositionFunctionFollowsAxisOrder(t *testing.T) {
+	// position() is the position along the axis, so [position()=n] selects
+	// what [n] does.
+	doc := createElement(0, "", createElement(1, "r",
+		createElement(2, "a"), createElement(3, "b"), createElement(4, "a"),
+		createElement(5, "c"), createElement(6, "a", createElement(7, "b"))))
+	test_xpath_elements(t, doc, `/r/b/following-sibling::a[position()=1]`, 4)
+	test_xpath_elements(t, doc, `/r/b/following-sibling::a[position()=2]`, 6)
+	test_xpath_elements(t, doc, `/r/c/preceding-sibling::a[position()=1]`, 4)
+	test_xpath_elements(t, doc, `/r/c/preceding-sibling::a[position()=2]`, 2)
+	test_xpath_elements(t, doc, `/descendant::*[position()=3]`, 3)
+	test_xpath_elements(t, doc, `/r/a/b/ancestor::*[position()=1]`, 6)
+	test_xpath_elements(t, doc, `/r/a/b/ancestor::*[position()=2]`, 1)
+}
