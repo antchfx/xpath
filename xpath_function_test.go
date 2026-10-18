@@ -2,6 +2,7 @@ package xpath
 
 import (
 	"math"
+	"strings"
 	"testing"
 )
 
@@ -409,6 +410,9 @@ func Test_func_number(t *testing.T) {
 	test_xpath_eval(t, empty_example, `number(".5")`, float64(0.5))
 	test_xpath_eval(t, empty_example, `number("5.")`, float64(5))
 	test_xpath_eval(t, empty_example, `number("1e3")`, float64(1000))
+	test_xpath_eval(t, empty_example, `number("1e309")`, math.Inf(1))
+	test_xpath_eval(t, empty_example, `number("-1e309")`, math.Inf(-1))
+	test_xpath_eval(t, empty_example, `number("`+strings.Repeat("9", 400)+`")`, math.Inf(1))
 	// only an optional minus sign followed by a decimal number is a number
 	for _, s := range []string{"", "-", ".", "+5", "- 5", "Infinity", "-Infinity", "inf", "NaN", "0x10", "0x1p4", "1_000", "1e", "--5", "\u00a05"} {
 		v := MustCompile(`number('` + s + `')`).Evaluate(createNavigator(empty_example))
