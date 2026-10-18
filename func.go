@@ -372,10 +372,9 @@ func startwithFunc(arg1, arg2 query) func(query, iterator) interface{} {
 			m = typ
 		case query:
 			node := typ.Select(t)
-			if node == nil {
-				return false
+			if node != nil {
+				m = node.Value()
 			}
-			m = node.Value()
 		default:
 			panic(errors.New("starts-with() function argument type must be string"))
 		}
@@ -399,10 +398,9 @@ func endwithFunc(arg1, arg2 query) func(query, iterator) interface{} {
 			m = typ
 		case query:
 			node := typ.Select(t)
-			if node == nil {
-				return false
+			if node != nil {
+				m = node.Value()
 			}
-			m = node.Value()
 		default:
 			panic(errors.New("ends-with() function argument type must be string"))
 		}
@@ -426,10 +424,9 @@ func containsFunc(arg1, arg2 query) func(query, iterator) interface{} {
 			m = typ
 		case query:
 			node := typ.Select(t)
-			if node == nil {
-				return false
+			if node != nil {
+				m = node.Value()
 			}
-			m = node.Value()
 		default:
 			panic(errors.New("contains() function argument type must be string"))
 		}
