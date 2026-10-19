@@ -55,6 +55,16 @@ func cmpBooleanBooleanF(op string, a, b bool) bool {
 		return a || b
 	case "and":
 		return a && b
+	case ">", "<", ">=", "<=":
+		// relational operators compare booleans as numbers (REC 3.4)
+		x, y := 0.0, 0.0
+		if a {
+			x = 1.0
+		}
+		if b {
+			y = 1.0
+		}
+		return cmpNumberNumberF(op, x, y)
 	}
 	return false
 }
@@ -95,18 +105,9 @@ func cmpNumericNodeSet(t iterator, op string, m, n interface{}) bool {
 	return false
 }
 
+// A node-set compared with a boolean is converted to a boolean (REC 3.4).
 func cmpNodeSetBoolean(t iterator, op string, m, n interface{}) bool {
-	q := m.(query)
-	b := 0.0
-	if n.(bool) {
-		b = 1.0
-	}
-	node := q.Select(t)
-	if node == nil {
-		return cmpNumericNumeric(t, op, math.NaN(), b)
-	}
-	a := stringToNumber(node.Value())
-	return cmpNumericNumeric(t, op, a, b)
+	return cmpBooleanBooleanF(op, asBool(t, m), n.(bool))
 }
 
 func cmpNodeSetNumeric(t iterator, op string, m, n interface{}) bool {
@@ -227,15 +228,7 @@ func cmpBooleanString(t iterator, op string, m, n interface{}) bool {
 }
 
 func cmpBooleanNodeSet(t iterator, op string, m, n interface{}) bool {
-	a := m.(bool)
-	q := n.(query)
-
-	node := q.Select(t)
-	if node == nil {
-		return cmpBooleanNumeric(t, op, a, math.NaN())
-	}
-	num := stringToNumber(node.Value())
-	return cmpBooleanNumeric(t, op, a, num)
+	return cmpBooleanBooleanF(op, m.(bool), asBool(t, n))
 }
 
 // eqFunc is an `=` operator.
