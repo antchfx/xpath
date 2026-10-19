@@ -47,8 +47,9 @@ func TestPositionalCondition(t *testing.T) {
 func TestLogicals(t *testing.T) {
 	test_xpath_elements(t, book_example, `//book[1 + 1]`, 9)
 	test_xpath_elements(t, book_example, `//book[1 * 2]`, 9)
-	test_xpath_elements(t, book_example, `//book[5 div 2]`, 9) // equal to `//book[2]`
-	test_xpath_elements(t, book_example, `//book[3 div 2]`, 3)
+	test_xpath_elements(t, book_example, `//book[4 div 2]`, 9)
+	test_xpath_count(t, book_example, `//book[5 div 2]`, 0) // 2.5 is not a position
+	test_xpath_count(t, book_example, `//book[3 div 2]`, 0)
 	test_xpath_elements(t, book_example, `//book[3 - 2]`, 3)
 	test_xpath_elements(t, book_example, `//book[price > 35]`, 15, 25)
 	test_xpath_elements(t, book_example, `//book[price >= 30]`, 3, 15, 25)
@@ -72,6 +73,20 @@ func TestPositions(t *testing.T) {
 	test_xpath_elements(t, book_example, `(//book[@category = "web"])[last()]`, 25)
 	test_xpath_elements(t, employee_example, `(//employee)[last()]`, 13)
 	test_xpath_elements(t, book_example, `(//author)[last()]`, 27)
+}
+
+func TestFractionalPositions(t *testing.T) {
+	// A number predicate is true only when it equals the context position,
+	// so a number that is not an integer selects nothing.
+	test_xpath_count(t, employee_example, `//employee[1.5]`, 0)
+	test_xpath_count(t, employee_example, `//employee[0.5]`, 0)
+	test_xpath_count(t, employee_example, `/empinfo/employee[2.5]`, 0)
+	test_xpath_count(t, employee_example, `(//employee)[1.5]`, 0)
+	test_xpath_count(t, employee_example, `//employee[@id][1.5]`, 0)
+	test_xpath_count(t, employee_example, `//employee[last() div 2]`, 0)
+	test_xpath_count(t, employee_example, `//employee[number("a")]`, 0)
+	test_xpath_elements(t, employee_example, `//employee[2.0]`, 8)
+	test_xpath_elements(t, book_example, `//book[last() div 2]`, 9)
 }
 
 func TestPredicates(t *testing.T) {
