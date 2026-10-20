@@ -268,7 +268,7 @@ func stringToNumber(s string) float64 {
 		return math.NaN()
 	}
 	f, err := strconv.ParseFloat(s, 64)
-	if err != nil {
+	if err != nil && !errors.Is(err, strconv.ErrRange) {
 		return math.NaN()
 	}
 	return f
