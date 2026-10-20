@@ -112,6 +112,24 @@ func TestBooleanComparison(t *testing.T) {
 		{"//b[2 > 1 > 0]", 6},
 		{"//b[false() < //b]", 6},
 		{"//b[true() > //b]", 0},
+		// relational comparisons between booleans compare them as numbers
+		{"//b[true() > false()]", 6},
+		{"//b[true() >= true()]", 6},
+		{"//b[false() < true()]", 6},
+		{"//b[false() <= false()]", 6},
+		{"//b[true() < false()]", 0},
+		{"//b[false() >= true()]", 0},
+		{"//b[(1 < 2) > (2 < 1)]", 6},
+		// a node-set is converted to a boolean, not to a number
+		{"//b[. > false()]", 6},
+		{"//b[. >= true()]", 6},
+		{"//b[. < true()]", 0},
+		{"//b[. <= false()]", 0},
+		{"//b[false() < .]", 6},
+		{"//b[true() > .]", 0},
+		{"//b[//empty > false()]", 6},
+		{"//b[//missing < true()]", 6},
+		{"//b[true() > //missing]", 6},
 	}
 
 	for _, tt := range tests {
