@@ -39,6 +39,9 @@ func predicate(q query) func(NodeNavigator) bool {
 // positionFunc is a XPath Node Set functions position().
 func positionFunc() func(query, iterator) interface{} {
 	return func(q query, t iterator) interface{} {
+		if p, ok := t.(positionIterator); ok {
+			return float64(p.pos)
+		}
 		var (
 			count = 1
 			node  = t.Current().Copy()
