@@ -781,7 +781,6 @@ func (s *selfQuery) Properties() queryProp {
 type filterQuery struct {
 	Input      query
 	Predicate  query
-	NoPosition bool
 	Positional bool
 
 	posit    int
