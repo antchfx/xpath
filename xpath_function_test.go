@@ -82,7 +82,16 @@ func Test_func_contains(t *testing.T) {
 	//test_xpath_eval(t, empty_example, `contains("", ())`, true)
 	test_xpath_elements(t, book_example, `//book[contains(title, "Potter")]`, 9)
 	test_xpath_elements(t, book_example, `//book[contains(year, "2005")]`, 3, 9)
-	assertPanic(t, func() { selectNode(html_example, "//*[contains(0, 0)]") })
+	// both arguments are converted as if by string() (REC 4.2)
+	test_xpath_eval(t, empty_example, `contains(0, 0)`, true)
+	test_xpath_eval(t, empty_example, `contains(12345, 34)`, true)
+	test_xpath_eval(t, empty_example, `contains("a1b", 1)`, true)
+	test_xpath_eval(t, empty_example, `contains(true(), "ru")`, true)
+	test_xpath_eval(t, empty_example, `contains("is false", false())`, true)
+	test_xpath_eval(t, empty_example, `contains(1 div 0, "fin")`, true)
+	test_xpath_eval(t, empty_example, `contains("tattoo", //missing)`, true)
+	test_xpath_elements(t, book_example, `//book[contains(year, 5)]`, 3, 9)
+	test_xpath_elements(t, book_example, `//book[contains(year, //book[3]/year)]`, 15, 25)
 }
 
 func Test_func_count(t *testing.T) {
@@ -122,8 +131,15 @@ func Test_func_starts_with(t *testing.T) {
 	test_xpath_eval(t, employee_example, `starts-with("tattoo", "tat")`, true)
 	test_xpath_eval(t, employee_example, `starts-with("tattoo", "att")`, false)
 	test_xpath_elements(t, book_example, `//book[starts-with(title,'Everyday')]`, 3)
-	assertPanic(t, func() { selectNode(html_example, `//*[starts-with(0, 0)]`) })
-	assertPanic(t, func() { selectNode(html_example, `//*[starts-with(name(), 0)]`) })
+	// both arguments are converted as if by string() (REC 4.2)
+	test_xpath_eval(t, empty_example, `starts-with(0, 0)`, true)
+	test_xpath_eval(t, empty_example, `starts-with(12345, 12)`, true)
+	test_xpath_eval(t, empty_example, `starts-with(-1.5, "-1.")`, true)
+	test_xpath_eval(t, empty_example, `starts-with(true(), "t")`, true)
+	test_xpath_eval(t, empty_example, `starts-with("tattoo", //missing)`, true)
+	test_xpath_elements(t, book_example, `//book[starts-with(price, 3)]`, 3, 25)
+	test_xpath_elements(t, book_example, `//book[starts-with(year, //book[1]/year)]`, 3, 9)
+	test_xpath_count(t, html_example, `//*[starts-with(name(), 0)]`, 0)
 }
 
 func Test_func_string(t *testing.T) {
