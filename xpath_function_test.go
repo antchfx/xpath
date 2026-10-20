@@ -75,6 +75,7 @@ func Test_func_concat(t *testing.T) {
 }
 
 func Test_func_contains(t *testing.T) {
+	test_xpath_eval(t, empty_example, `contains(//missing, "")`, true)
 	test_xpath_eval(t, empty_example, `contains("tattoo", "t")`, true)
 	test_xpath_eval(t, empty_example, `contains("tattoo", "T")`, false)
 	test_xpath_eval(t, empty_example, `contains("tattoo", "ttt")`, false)
@@ -117,6 +118,7 @@ func Test_func_local_name(t *testing.T) {
 }
 
 func Test_func_starts_with(t *testing.T) {
+	test_xpath_eval(t, empty_example, `starts-with("missing", "x")`, false)
 	test_xpath_eval(t, employee_example, `starts-with("tattoo", "tat")`, true)
 	test_xpath_eval(t, employee_example, `starts-with("tattoo", "att")`, false)
 	test_xpath_elements(t, book_example, `//book[starts-with(title,'Everyday')]`, 3)
@@ -395,6 +397,7 @@ func Test_func_matches_empty_nodeset(t *testing.T) {
 	test_xpath_eval(t, html_example, `not(not(matches(//no-such, 'x')))`, false)
 	// a missing attribute reaches the same branch
 	test_xpath_eval(t, html_example, `not(matches(//html/@nosuchattr, 'x'))`, true)
+	test_xpath_eval(t, empty_example, `ends-with("", "")`, true)
 }
 
 func Test_func_number(t *testing.T) {
