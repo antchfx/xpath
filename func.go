@@ -366,25 +366,9 @@ func stringFunc(arg1 query) func(query, iterator) interface{} {
 // startwithFunc is a XPath functions starts-with(string, string).
 func startwithFunc(arg1, arg2 query) func(query, iterator) interface{} {
 	return func(_ query, t iterator) interface{} {
-		var (
-			m, n string
-			ok   bool
-		)
-		switch typ := functionArgs(arg1).Evaluate(t).(type) {
-		case string:
-			m = typ
-		case query:
-			node := typ.Select(t)
-			if node != nil {
-				m = node.Value()
-			}
-		default:
-			panic(errors.New("starts-with() function argument type must be string"))
-		}
-		n, ok = functionArgs(arg2).Evaluate(t).(string)
-		if !ok {
-			panic(errors.New("starts-with() function argument type must be string"))
-		}
+		// both arguments are converted as if by string() (REC 4.2)
+		m := asString(t, functionArgs(arg1).Evaluate(t))
+		n := asString(t, functionArgs(arg2).Evaluate(t))
 		return strings.HasPrefix(m, n)
 	}
 }
@@ -418,27 +402,9 @@ func endwithFunc(arg1, arg2 query) func(query, iterator) interface{} {
 // containsFunc is a XPath functions contains(string or @attr, string).
 func containsFunc(arg1, arg2 query) func(query, iterator) interface{} {
 	return func(_ query, t iterator) interface{} {
-		var (
-			m, n string
-			ok   bool
-		)
-		switch typ := functionArgs(arg1).Evaluate(t).(type) {
-		case string:
-			m = typ
-		case query:
-			node := typ.Select(t)
-			if node != nil {
-				m = node.Value()
-			}
-		default:
-			panic(errors.New("contains() function argument type must be string"))
-		}
-
-		n, ok = functionArgs(arg2).Evaluate(t).(string)
-		if !ok {
-			panic(errors.New("contains() function argument type must be string"))
-		}
-
+		// both arguments are converted as if by string() (REC 4.2)
+		m := asString(t, functionArgs(arg1).Evaluate(t))
+		n := asString(t, functionArgs(arg2).Evaluate(t))
 		return strings.Contains(m, n)
 	}
 }
