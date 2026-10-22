@@ -200,6 +200,7 @@ func TestInvalidXPath(t *testing.T) {
 		{"name with 2 args", "name(//a, //b)"},
 		{"local-name with 2 args", "local-name(//a, //b)"},
 		{"namespace-uri with 2 args", "namespace-uri(//a, //b)"},
+		{"boolean with no args", "boolean()"},
 		{"boolean with 2 args", "boolean(1, 2)"},
 		{"number with 2 args", "number(1, 2)"},
 		{"string with 2 args", "string('a', 'b')"},
