@@ -299,17 +299,11 @@ Loop:
 
 // UnaryExpr ::= UnionExpr | '-' UnaryExpr
 func (p *parser) parseUnaryExpr(n node) node {
-	minus := false
-	// ignore '-' sequence
-	for p.r.typ == itemMinus {
+	if p.r.typ == itemMinus {
 		p.next()
-		minus = !minus
+		return newOperatorNode("*", p.parseUnaryExpr(n), newOperandNode(float64(-1)))
 	}
-	opnd := p.parseUnionExpr(n)
-	if minus {
-		opnd = newOperatorNode("*", opnd, newOperandNode(float64(-1)))
-	}
-	return opnd
+	return p.parseUnionExpr(n)
 }
 
 // UnionExpr ::= PathExpr | UnionExpr '|' PathExpr
