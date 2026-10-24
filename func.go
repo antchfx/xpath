@@ -644,7 +644,7 @@ func replaceFunc(arg1, arg2, arg3 query) func(query, iterator) interface{} {
 		}
 
 		// replace all $i to ${i} for golang regexp.Expand
-		for idx := e.NumSubexp(); idx > 0; idx-- {
+		for idx := e.NumSubexp(); idx >= 0; idx-- {
 			dst = strings.ReplaceAll(dst, fmt.Sprintf("$%d", idx), fmt.Sprintf("${%d}", idx))
 		}
 

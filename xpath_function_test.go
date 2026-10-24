@@ -457,6 +457,9 @@ func Test_func_position(t *testing.T) {
 }
 
 func Test_func_replace(t *testing.T) {
+	test_xpath_eval(t, empty_example, `replace("abc", "b", "$0x")`, "abxc")
+	test_xpath_eval(t, empty_example, `replace("abc", "b", "$0_suffix")`, "ab_suffixc")
+	test_xpath_eval(t, empty_example, `replace("abcd", "(bc)", "$0x/$1y")`, "abcx/bcyd")
 	test_xpath_eval(t, empty_example, `replace('aa-bb-cc','bb','ee')`, "aa-ee-cc")
 	test_xpath_eval(t, empty_example, `replace("abracadabra", "bra", "*")`, "a*cada*")
 	test_xpath_eval(t, empty_example, `replace("abracadabra", "a", "")`, "brcdbr")
