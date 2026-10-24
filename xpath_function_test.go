@@ -441,6 +441,10 @@ func Test_func_number(t *testing.T) {
 	}
 	test_xpath_eval(t, empty_example, `"+1" = 1`, false)
 	test_xpath_eval(t, empty_example, `"Infinity" = 1 div 0`, false)
+	// no argument means the context node
+	n := selectNode(book_example, `//book[1]/price`)
+	test_xpath_eval(t, n, `number()`, float64(30))
+	test_xpath_count(t, book_example, `//book/price[number() > 35]`, 2)
 }
 
 func Test_func_position(t *testing.T) {

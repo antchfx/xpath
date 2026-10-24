@@ -347,6 +347,9 @@ func booleanFunc(arg1 query) func(query, iterator) interface{} {
 // numberFunc is a XPath functions number([node-set]).
 func numberFunc(arg1 query) func(query, iterator) interface{} {
 	return func(_ query, t iterator) interface{} {
+		if arg1 == nil {
+			return stringToNumber(t.Current().Value())
+		}
 		v := functionArgs(arg1).Evaluate(t)
 		return asNumber(t, v)
 	}

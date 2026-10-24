@@ -586,6 +586,9 @@ func (b *builder) processFunction(root *functionNode, props *builderProp) (query
 		if len(root.Args) > 1 {
 			return nil, fmt.Errorf("xpath: %s function must have at most one parameter", root.FuncName)
 		}
+		if len(root.Args) == 0 && root.FuncName == "boolean" {
+			return nil, errors.New("xpath: boolean function must have one parameter")
+		}
 		if len(root.Args) == 1 {
 			argQuery, err := b.processNode(root.Args[0], flagsEnum.None, props)
 			if err != nil {
