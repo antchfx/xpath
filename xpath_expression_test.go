@@ -2,6 +2,7 @@ package xpath
 
 import (
 	"fmt"
+	"math"
 	"testing"
 )
 
@@ -211,6 +212,18 @@ func TestBooleanEqualityConversion(t *testing.T) {
 			}
 		}
 	}
+}
+
+func TestUnaryMinus(t *testing.T) {
+	test_xpath_eval(t, book_example, `-'2'`, float64(-2))
+	test_xpath_eval(t, book_example, `--'2'`, float64(2))
+	test_xpath_eval(t, book_example, `---'2'`, float64(-2))
+	test_xpath_eval(t, book_example, `--true()`, float64(1))
+	test_xpath_eval(t, book_example, `--//book[1]/price`, float64(30))
+	test_xpath_eval(t, book_example, `string(--'02')`, "2")
+	test_xpath_eval(t, book_example, `boolean(--'0')`, false)
+	v, ok := MustCompile(`--'abc'`).Evaluate(createNavigator(book_example)).(float64)
+	assertTrue(t, ok && math.IsNaN(v))
 }
 
 func Test_descendant_issue(t *testing.T) {
