@@ -101,12 +101,34 @@ func Test_parent(t *testing.T) {
 func Test_attribute(t *testing.T) {
 	test_xpath_values(t, employee_example, `//attribute::id`, "1", "2", "3")
 	test_xpath_count(t, employee_example, `//attribute::*`, 9)
+	test_xpath_count(t, employee_example, `//attribute::*[1]`, 7)
 
-	// test failed
-	//test_xpath_tags(t, employee_example, `//attribute::*[1]`, "id", "discipline", "id", "from", "discipline", "id", "discipline")
 	// test failed(random): the return values is expected but the order of value is random.
 	//test_xpath_tags(t, employee_example, `//attribute::*`, "id", "discipline", "experience", "id", "from", "discipline", "experience", "id", "discipline")
 
+}
+
+func Test_attribute_position(t *testing.T) {
+	// The attributes are added in a fixed order: employee_example fills them from a map.
+	item1 := createElement(2, "item")
+	item1.addAttribute("a", "1")
+	item1.addAttribute("b", "2")
+	item1.addAttribute("c", "3")
+	item2 := createElement(3, "item")
+	item2.addAttribute("a", "4")
+	item2.addAttribute("b", "5")
+	item3 := createElement(4, "item")
+	item3.addAttribute("c", "6")
+	doc := createElement(0, "", createElement(1, "root", item1, item2, item3))
+
+	test_xpath_values(t, doc, `/root/item[1]/@*[1]`, "1")
+	test_xpath_values(t, doc, `/root/item[1]/@*[2]`, "2")
+	test_xpath_values(t, doc, `/root/item[1]/attribute::*[3]`, "3")
+	test_xpath_values(t, doc, `/root/item[1]/@*[position()=2]`, "2")
+	test_xpath_values(t, doc, `/root/item[1]/@*[position()>1]`, "2", "3")
+	test_xpath_values(t, doc, `/root/item/@*[1]`, "1", "4", "6")
+	test_xpath_values(t, doc, `/root/item/@*[2]`, "2", "5")
+	test_xpath_values(t, doc, `/root/item/@b[1]`, "2", "5")
 }
 
 func Test_following(t *testing.T) {

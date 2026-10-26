@@ -232,6 +232,7 @@ func (a *ancestorQuery) position() int {
 // attributeQuery is an XPath attribute node query.(@*)
 type attributeQuery struct {
 	name     string
+	posit    int
 	iterator func() NodeNavigator
 
 	Input     query
@@ -241,6 +242,7 @@ type attributeQuery struct {
 func (a *attributeQuery) Select(t iterator) NodeNavigator {
 	for {
 		if a.iterator == nil {
+			a.posit = 0
 			node := a.Input.Select(t)
 			if node == nil {
 				return nil
@@ -260,6 +262,7 @@ func (a *attributeQuery) Select(t iterator) NodeNavigator {
 		}
 
 		if node := a.iterator(); node != nil {
+			a.posit++
 			return node
 		}
 		a.iterator = nil
@@ -286,6 +289,11 @@ func (a *attributeQuery) ValueType() resultType {
 
 func (a *attributeQuery) Properties() queryProp {
 	return queryProps.Merge
+}
+
+// position returns a position of current NodeNavigator.
+func (a *attributeQuery) position() int {
+	return a.posit
 }
 
 // childQuery is an XPath child node query.(child::*)
