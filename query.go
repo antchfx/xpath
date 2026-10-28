@@ -247,6 +247,10 @@ func (a *attributeQuery) Select(t iterator) NodeNavigator {
 			if node == nil {
 				return nil
 			}
+			if node.NodeType() == AttributeNode {
+				// An attribute node has no attributes.
+				continue
+			}
 			node = node.Copy()
 			a.iterator = func() NodeNavigator {
 				for {

@@ -131,6 +131,24 @@ func Test_attribute_position(t *testing.T) {
 	test_xpath_values(t, doc, `/root/item/@b[1]`, "2", "5")
 }
 
+func Test_attribute_of_attribute(t *testing.T) {
+	item := createElement(2, "item")
+	item.addAttribute("a", "1")
+	item.addAttribute("b", "2")
+	item.addAttribute("c", "3")
+	doc := createElement(0, "", createElement(1, "root", item))
+
+	// An attribute node has no attributes.
+	test_xpath_count(t, doc, `/root/item/@a/@*`, 0)
+	test_xpath_count(t, doc, `/root/item/@a/attribute::*`, 0)
+	test_xpath_count(t, doc, `/root/item/@b/@c`, 0)
+	test_xpath_count(t, doc, `/root/item/@*/@*`, 0)
+	test_xpath_count(t, doc, `/root/item/@a/self::node()/@*`, 0)
+	test_xpath_eval(t, doc, `count(/root/item/@a/@*)`, float64(0))
+	test_xpath_eval(t, doc, `boolean(/root/item/@a/@*)`, false)
+	test_xpath_values(t, doc, `/root/item/@a/parent::*/@c`, "3")
+}
+
 func Test_following(t *testing.T) {
 	test_xpath_elements(t, employee_example, `//employee[@id=1]/following::*`, 8, 9, 10, 11, 13, 14, 15, 16)
 }
