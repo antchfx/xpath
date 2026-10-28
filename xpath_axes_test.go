@@ -1,6 +1,9 @@
 package xpath
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
 
 func Test_self(t *testing.T) {
 	test_xpath_elements(t, employee_example, `//name/self::*`, 4, 9, 14)
@@ -96,6 +99,27 @@ func Test_ancestor_or_self(t *testing.T) {
 func Test_parent(t *testing.T) {
 	test_xpath_elements(t, employee_example, `//name/parent::*`, 3, 8, 13)
 	test_xpath_elements(t, employee_example, `//name/parent::employee`, 3, 8, 13)
+}
+
+func Test_parent_no_duplicates(t *testing.T) {
+	// Each employee has three element children, but a node-set holds each
+	// parent once. selectNodes removes duplicates itself, so check count()
+	// and the raw iterator.
+	for _, expr := range []string{
+		`//employee/*/..`,
+		`//employee/*/parent::*`,
+		`//employee/*/parent::*[1]`,
+		`//employee/*/ancestor::*[1]`,
+	} {
+		test_xpath_eval(t, employee_example, `count(`+expr+`)`, float64(3))
+		lines := []int{}
+		for _, n := range iterateNodes(Select(createNavigator(employee_example), expr)) {
+			lines = append(lines, n.lines)
+		}
+		if !reflect.DeepEqual(lines, []int{3, 8, 13}) {
+			t.Fatalf("%s: expected lines [3 8 13], got %v", expr, lines)
+		}
+	}
 }
 
 func Test_attribute(t *testing.T) {
