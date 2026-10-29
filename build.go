@@ -365,12 +365,18 @@ func (b *builder) processFunction(root *functionNode, props *builderProp) (query
 	var qyOutput query
 	switch root.FuncName {
 	case "lower-case":
+		if len(root.Args) != 1 {
+			return nil, errors.New("xpath: lower-case function must have one parameter")
+		}
 		arg, err := b.processNode(root.Args[0], flagsEnum.None, props)
 		if err != nil {
 			return nil, err
 		}
 		qyOutput = &functionQuery{Func: lowerCaseFunc(arg)}
 	case "starts-with":
+		if len(root.Args) != 2 {
+			return nil, errors.New("xpath: starts-with function must have two parameters")
+		}
 		arg1, err := b.processNode(root.Args[0], flagsEnum.None, props)
 		if err != nil {
 			return nil, err
@@ -381,6 +387,9 @@ func (b *builder) processFunction(root *functionNode, props *builderProp) (query
 		}
 		qyOutput = &functionQuery{Func: startwithFunc(arg1, arg2)}
 	case "ends-with":
+		if len(root.Args) != 2 {
+			return nil, errors.New("xpath: ends-with function must have two parameters")
+		}
 		arg1, err := b.processNode(root.Args[0], flagsEnum.None, props)
 		if err != nil {
 			return nil, err
@@ -391,6 +400,9 @@ func (b *builder) processFunction(root *functionNode, props *builderProp) (query
 		}
 		qyOutput = &functionQuery{Func: endwithFunc(arg1, arg2)}
 	case "contains":
+		if len(root.Args) != 2 {
+			return nil, errors.New("xpath: contains function must have two parameters")
+		}
 		arg1, err := b.processNode(root.Args[0], flagsEnum.None, props)
 		if err != nil {
 			return nil, err
@@ -424,8 +436,8 @@ func (b *builder) processFunction(root *functionNode, props *builderProp) (query
 		qyOutput = &functionQuery{Func: matchesFunc(arg1, arg2)}
 	case "substring":
 		//substring( string , start [, length] )
-		if len(root.Args) < 2 {
-			return nil, errors.New("xpath: substring function must have at least two parameter")
+		if len(root.Args) < 2 || len(root.Args) > 3 {
+			return nil, errors.New("xpath: substring function must have two or three parameters")
 		}
 		var (
 			arg1, arg2, arg3 query
@@ -478,6 +490,9 @@ func (b *builder) processFunction(root *functionNode, props *builderProp) (query
 		}
 		qyOutput = &functionQuery{Func: stringLengthFunc(arg1)}
 	case "normalize-space":
+		if len(root.Args) > 1 {
+			return nil, errors.New("xpath: normalize-space function must have at most one parameter")
+		}
 		var arg node
 		if len(root.Args) > 0 {
 			arg = root.Args[0]
@@ -538,8 +553,8 @@ func (b *builder) processFunction(root *functionNode, props *builderProp) (query
 		}
 		qyOutput = &functionQuery{Func: translateFunc(arg1, arg2, arg3)}
 	case "not":
-		if len(root.Args) == 0 {
-			return nil, errors.New("xpath: not function must have at least one parameter")
+		if len(root.Args) != 1 {
+			return nil, errors.New("xpath: not function must have one parameter")
 		}
 		argQuery, err := b.processNode(root.Args[0], flagsEnum.None, props)
 		if err != nil {
@@ -569,6 +584,9 @@ func (b *builder) processFunction(root *functionNode, props *builderProp) (query
 			qyOutput = &functionQuery{Func: namespaceFunc(arg)}
 		}
 	case "true", "false":
+		if len(root.Args) != 0 {
+			return nil, fmt.Errorf("xpath: %s function must have no parameters", root.FuncName)
+		}
 		val := root.FuncName == "true"
 		qyOutput = &functionQuery{
 			Func: func(_ query, _ iterator) interface{} {
@@ -576,9 +594,15 @@ func (b *builder) processFunction(root *functionNode, props *builderProp) (query
 			},
 		}
 	case "last":
+		if len(root.Args) != 0 {
+			return nil, errors.New("xpath: last function must have no parameters")
+		}
 		qyOutput = &functionQuery{Input: b.firstInput, Func: lastFunc()}
 		*props |= builderProps.HasLast
 	case "position":
+		if len(root.Args) != 0 {
+			return nil, errors.New("xpath: position function must have no parameters")
+		}
 		qyOutput = &functionQuery{Input: b.firstInput, Func: positionFunc()}
 		*props |= builderProps.HasPosition
 	case "boolean", "number", "string":
@@ -605,8 +629,8 @@ func (b *builder) processFunction(root *functionNode, props *builderProp) (query
 			qyOutput = &functionQuery{Func: numberFunc(inp)}
 		}
 	case "count":
-		if len(root.Args) == 0 {
-			return nil, fmt.Errorf("xpath: count(node-sets) function must with have parameters node-sets")
+		if len(root.Args) != 1 {
+			return nil, errors.New("xpath: count function must have one parameter")
 		}
 		argQuery, err := b.processNode(root.Args[0], flagsEnum.None, props)
 		if err != nil {
@@ -614,8 +638,8 @@ func (b *builder) processFunction(root *functionNode, props *builderProp) (query
 		}
 		qyOutput = &functionQuery{Func: countFunc(argQuery)}
 	case "sum":
-		if len(root.Args) == 0 {
-			return nil, fmt.Errorf("xpath: sum(node-sets) function must with have parameters node-sets")
+		if len(root.Args) != 1 {
+			return nil, errors.New("xpath: sum function must have one parameter")
 		}
 		argQuery, err := b.processNode(root.Args[0], flagsEnum.None, props)
 		if err != nil {
@@ -623,8 +647,8 @@ func (b *builder) processFunction(root *functionNode, props *builderProp) (query
 		}
 		qyOutput = &functionQuery{Func: sumFunc(argQuery)}
 	case "ceiling", "floor", "round":
-		if len(root.Args) == 0 {
-			return nil, fmt.Errorf("xpath: ceiling(node-sets) function must with have parameters node-sets")
+		if len(root.Args) != 1 {
+			return nil, fmt.Errorf("xpath: %s function must have one parameter", root.FuncName)
 		}
 		argQuery, err := b.processNode(root.Args[0], flagsEnum.None, props)
 		if err != nil {
@@ -652,8 +676,8 @@ func (b *builder) processFunction(root *functionNode, props *builderProp) (query
 		}
 		qyOutput = &functionQuery{Func: concatFunc(args...)}
 	case "reverse":
-		if len(root.Args) == 0 {
-			return nil, fmt.Errorf("xpath: reverse(node-sets) function must with have parameters node-sets")
+		if len(root.Args) != 1 {
+			return nil, errors.New("xpath: reverse function must have one parameter")
 		}
 		argQuery, err := b.processNode(root.Args[0], flagsEnum.None, props)
 		if err != nil {
