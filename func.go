@@ -379,25 +379,21 @@ func startwithFunc(arg1, arg2 query) func(query, iterator) interface{} {
 // endwithFunc is a XPath functions ends-with(string, string).
 func endwithFunc(arg1, arg2 query) func(query, iterator) interface{} {
 	return func(_ query, t iterator) interface{} {
-		var (
-			m, n string
-			ok   bool
-		)
-		switch typ := functionArgs(arg1).Evaluate(t).(type) {
-		case string:
-			m = typ
-		case query:
-			node := typ.Select(t)
-			if node != nil {
-				m = node.Value()
+		stringValue := func(arg query) string {
+			switch typ := functionArgs(arg).Evaluate(t).(type) {
+			case string:
+				return typ
+			case query:
+				node := typ.Select(t)
+				if node != nil {
+					return node.Value()
+				}
+				return ""
+			default:
+				panic(errors.New("ends-with() function argument type must be string"))
 			}
-		default:
-			panic(errors.New("ends-with() function argument type must be string"))
 		}
-		n, ok = functionArgs(arg2).Evaluate(t).(string)
-		if !ok {
-			panic(errors.New("ends-with() function argument type must be string"))
-		}
+		m, n := stringValue(arg1), stringValue(arg2)
 		return strings.HasSuffix(m, n)
 	}
 }
