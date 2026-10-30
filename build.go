@@ -160,7 +160,8 @@ func (b *builder) processAxis(root *axisNode, flags flag, props *builderProp) (q
 	case "self":
 		qyOutput = &selfQuery{Input: qyInput, Predicate: predicate}
 	case "namespace":
-		// haha,what will you do someting??
+		// NodeNavigator cannot move to namespace nodes.
+		return nil, errors.New("xpath: namespace axis is not supported")
 	default:
 		err = fmt.Errorf("unknown axe type: %s", root.AxisType)
 		return nil, err

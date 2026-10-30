@@ -283,6 +283,26 @@ func TestCompileUndeclaredVariable(t *testing.T) {
 	}
 }
 
+func TestCompileNamespaceAxis(t *testing.T) {
+	for _, expr := range []string{
+		"namespace::*",
+		"//a/namespace::x",
+		"count(namespace::*)",
+		"boolean(/a/namespace::*)",
+		"string(/a/namespace::*)",
+		"//*[namespace::*]",
+		"/a/namespace::*[1]",
+		"/a/namespace::* | /a",
+	} {
+		_, err := Compile(expr)
+		if err == nil {
+			t.Errorf("Compile(%q) expected an error for the namespace axis, got nil", expr)
+		} else if !strings.Contains(err.Error(), "namespace axis") {
+			t.Errorf("Compile(%q) got error %q, want a namespace axis error", expr, err)
+		}
+	}
+}
+
 func TestCompileWithNS(t *testing.T) {
 	_, err := CompileWithNS("/foo", nil)
 	assertNil(t, err)
