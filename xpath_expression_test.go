@@ -386,3 +386,25 @@ func TestNonEnglishPredicateExpression(t *testing.T) {
 	n.createChildNode("Hello,World!", TextNode)
 	test_xpath_count(t, doc, "//h1[@id='断点']", 1)
 }
+
+func TestUnionDocumentOrder(t *testing.T) {
+	// A union is a node-set, so its nodes come back in document order no
+	// matter how the operands are written.
+	test_xpath_elements(t, employee_example, `//email | //name`, 4, 6, 9, 11, 14, 16)
+	test_xpath_elements(t, employee_example, `//name | //email | //employee/name`, 4, 6, 9, 11, 14, 16)
+	test_xpath_elements(t, employee_example, `//email | (//designation | //name)`, 4, 5, 6, 9, 10, 11, 14, 15, 16)
+	test_xpath_elements(t, employee_example, `(//email | //designation) | //name`, 4, 5, 6, 9, 10, 11, 14, 15, 16)
+	test_xpath_elements(t, employee_example, `//email | //employee | /empinfo`, 2, 3, 6, 8, 11, 13, 16)
+	test_xpath_elements(t, employee_example, `(//email | //name)[1]`, 4)
+	test_xpath_elements(t, employee_example, `(//email | //name)[last()]`, 16)
+	test_xpath_elements(t, employee_example, `(//email | //name)[position() = 2]`, 6)
+	test_xpath_eval(t, employee_example, `string((//email | //name)[1])`, "Opal Kole")
+	test_xpath_eval(t, employee_example, `string(//email | //name)`, "Opal Kole")
+	test_xpath_eval(t, employee_example, `count(//email | //name)`, float64(6))
+	// unions evaluated relative to each context node
+	test_xpath_elements(t, employee_example, `//employee[string((email | name)[1]) = "Max Miller"]`, 8)
+	// an attribute follows its element and precedes the element's children
+	test_xpath_values(t, employee_example, `//designation | //@from`, "Senior Engineer", "CA", "DBA Engineer", "Application Developer")
+	test_xpath_values(t, employee_example, `//@from | //name`, "Opal Kole", "Max Miller", "CA", "Beccaa Moss")
+	test_xpath_values(t, employee_example, `//employee[2]/* | //employee[2]/@id`, "2", "Max Miller", "DBA Engineer", "maxmiller@email.com")
+}
