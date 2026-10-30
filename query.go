@@ -709,9 +709,16 @@ func (p *precedingQuery) position() int {
 type parentQuery struct {
 	Input     query
 	Predicate func(NodeNavigator) bool
+
+	// table holds the parents already returned, so that siblings in the
+	// input do not yield the same parent node more than once.
+	table map[uint64]bool
 }
 
 func (p *parentQuery) Select(t iterator) NodeNavigator {
+	if p.table == nil {
+		p.table = make(map[uint64]bool)
+	}
 	for {
 		node := p.Input.Select(t)
 		if node == nil {
@@ -719,6 +726,11 @@ func (p *parentQuery) Select(t iterator) NodeNavigator {
 		}
 		node = node.Copy()
 		if node.MoveToParent() && p.Predicate(node) {
+			node_id := getHashCode(node.Copy())
+			if _, ok := p.table[node_id]; ok {
+				continue
+			}
+			p.table[node_id] = true
 			return node
 		}
 	}
@@ -726,6 +738,8 @@ func (p *parentQuery) Select(t iterator) NodeNavigator {
 
 func (p *parentQuery) Evaluate(t iterator) interface{} {
 	p.Input.Evaluate(t)
+	// Reset the table when re-evaluating to ensure clean state
+	p.table = nil
 	return p
 }
 
@@ -1351,9 +1365,16 @@ type mergeQuery struct {
 	Child query
 
 	iterator func() NodeNavigator
+	// table holds the nodes already returned. Different input nodes can
+	// select the same node, e.g. the shared parent in //b/parent::*[1],
+	// and a node-set must not contain it twice.
+	table map[uint64]bool
 }
 
 func (m *mergeQuery) Select(t iterator) NodeNavigator {
+	if m.table == nil {
+		m.table = make(map[uint64]bool)
+	}
 	for {
 		if m.iterator == nil {
 			root := m.Input.Select(t)
@@ -1365,6 +1386,11 @@ func (m *mergeQuery) Select(t iterator) NodeNavigator {
 			t.Current().MoveTo(root)
 			var list []NodeNavigator
 			for node := m.Child.Select(t); node != nil; node = m.Child.Select(t) {
+				node_id := getHashCode(node.Copy())
+				if _, ok := m.table[node_id]; ok {
+					continue
+				}
+				m.table[node_id] = true
 				list = append(list, node.Copy())
 			}
 			i := 0
@@ -1388,6 +1414,7 @@ func (m *mergeQuery) Select(t iterator) NodeNavigator {
 func (m *mergeQuery) Evaluate(t iterator) interface{} {
 	m.Input.Evaluate(t)
 	m.iterator = nil
+	m.table = nil
 	return m
 }
 
