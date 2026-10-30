@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"hash/fnv"
 	"reflect"
+	"sort"
 	"strconv"
 )
 
@@ -1207,6 +1208,7 @@ func (u *unionQuery) Select(t iterator) NodeNavigator {
 			}
 		}
 		t.Current().MoveTo(root)
+		n := len(list)
 		for {
 			node := u.Right.Select(t)
 			if node == nil {
@@ -1217,6 +1219,11 @@ func (u *unionQuery) Select(t iterator) NodeNavigator {
 				m[code] = true
 				list = append(list, node.Copy())
 			}
+		}
+		// A union is a node-set; return it in document order. If only one
+		// operand selected nodes, keep that operand's order unchanged.
+		if n > 0 && n < len(list) {
+			sortDocumentOrder(list)
 		}
 		var i int
 		u.iterator = func() NodeNavigator {
@@ -1477,6 +1484,63 @@ func getHashCode(n NodeNavigator) uint64 {
 	h := fnv.New64a()
 	h.Write(sb.Bytes())
 	return h.Sum64()
+}
+
+// getNodeOrderKey returns the sibling index of each ancestor of n from
+// the root down to n. An attribute gets an extra -1 so that it sorts after
+// its element and before the element's children.
+func getNodeOrderKey(n NodeNavigator) []int {
+	var key []int
+	if n.NodeType() == AttributeNode {
+		key = append(key, -1)
+		n.MoveToParent()
+	}
+	for {
+		d := 0
+		for n.MoveToPrevious() {
+			d++
+		}
+		key = append(key, d)
+		if !n.MoveToParent() {
+			break
+		}
+	}
+	for i, j := 0, len(key)-1; i < j; i, j = i+1, j-1 {
+		key[i], key[j] = key[j], key[i]
+	}
+	return key
+}
+
+// sortDocumentOrder sorts nodes in document order. The relative order of
+// attributes of the same element is kept as given.
+func sortDocumentOrder(nodes []NodeNavigator) {
+	keys := make([][]int, len(nodes))
+	for i, node := range nodes {
+		keys[i] = getNodeOrderKey(node.Copy())
+	}
+	sort.Stable(nodesByOrder{nodes, keys})
+}
+
+type nodesByOrder struct {
+	nodes []NodeNavigator
+	keys  [][]int
+}
+
+func (s nodesByOrder) Len() int { return len(s.nodes) }
+
+func (s nodesByOrder) Swap(i, j int) {
+	s.nodes[i], s.nodes[j] = s.nodes[j], s.nodes[i]
+	s.keys[i], s.keys[j] = s.keys[j], s.keys[i]
+}
+
+func (s nodesByOrder) Less(i, j int) bool {
+	a, b := s.keys[i], s.keys[j]
+	for k := 0; k < len(a) && k < len(b); k++ {
+		if a[k] != b[k] {
+			return a[k] < b[k]
+		}
+	}
+	return len(a) < len(b)
 }
 
 func getNodePosition(q query) int {
