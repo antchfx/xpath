@@ -279,6 +279,18 @@ func (b *builder) processFilter(root *filterNode, flags flag, props *builderProp
 				rootQuery = &contextQuery{}
 				parent    query
 			)
+			// In a[@x][1], firstInput is the filter for [@x]. The position
+			// counts the nodes the step selects for each context node, so
+			// rewrite the step below the earlier predicates. last() is
+			// counted over the whole input by lastFuncQuery and is left
+			// as it is.
+			for (propsCond & builderProps.HasLast) == 0 {
+				f, ok := firstInput.(*filterQuery)
+				if !ok {
+					break
+				}
+				firstInput = f.Input
+			}
 			switch axisQuery := firstInput.(type) {
 			case *ancestorQuery:
 				if _, ok := axisQuery.Input.(*contextQuery); !ok {
