@@ -34,6 +34,13 @@ func Test_func_name(t *testing.T) {
 	test_xpath_eval(t, empty_example, `name(//non-existent-node)`, "")
 	test_xpath_count(t, html_example, `//*[name() = "li"]`, 3)
 	test_xpath_elements(t, mybook_example, `//*[name() = 'mybook:book']`, 3, 9)
+	// text and comment nodes have no name (REC 4.1)
+	test_xpath_eval(t, html_example, `name(//title/text())`, "")
+	test_xpath_count(t, html_example, `//title/node()[name() = ""]`, 1)
+
+	doc := createNode("", RootNode)
+	doc.createChildNode("a comment", CommentNode)
+	test_xpath_eval(t, doc, `name(//comment())`, "")
 }
 
 func Test_func_not(t *testing.T) {
@@ -124,6 +131,13 @@ func Test_func_local_name(t *testing.T) {
 	test_xpath_eval(t, mybook_example, `local-name(//mybook:book)`, "book")
 	test_xpath_eval(t, empty_example, `local-name(//non-existent-node)`, "")
 	test_xpath_elements(t, book_example, `//*[local-name() = 'title']`, 4, 10, 16, 26)
+	// text and comment nodes have no name (REC 4.1)
+	test_xpath_eval(t, html_example, `local-name(//title/text())`, "")
+	test_xpath_count(t, html_example, `//title/node()[local-name() = ""]`, 1)
+
+	doc := createNode("", RootNode)
+	doc.createChildNode("a comment", CommentNode)
+	test_xpath_eval(t, doc, `local-name(//comment())`, "")
 }
 
 func Test_func_starts_with(t *testing.T) {

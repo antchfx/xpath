@@ -193,12 +193,25 @@ func nameFunc(arg query) func(query, iterator) interface{} {
 				return ""
 			}
 		}
+		if !hasName(v) {
+			return ""
+		}
 		ns := v.Prefix()
 		if ns == "" {
 			return v.LocalName()
 		}
 		return ns + ":" + v.LocalName()
 	}
+}
+
+// hasName reports whether the node has an expanded-name. Text and comment
+// nodes have none, so name() and local-name() return an empty string for them.
+func hasName(v NodeNavigator) bool {
+	switch v.NodeType() {
+	case TextNode, CommentNode:
+		return false
+	}
+	return true
 }
 
 // localNameFunc is a XPath functions local-name([node-set]).
@@ -212,6 +225,9 @@ func localNameFunc(arg query) func(query, iterator) interface{} {
 			if v == nil {
 				return ""
 			}
+		}
+		if !hasName(v) {
+			return ""
 		}
 		return v.LocalName()
 	}
