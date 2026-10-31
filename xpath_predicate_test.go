@@ -155,3 +155,30 @@ func TestPositionFunctionFollowsAxisOrder(t *testing.T) {
 	test_xpath_elements(t, doc, `/r/a/b/ancestor::*[position()=1]`, 6)
 	test_xpath_elements(t, doc, `/r/a/b/ancestor::*[position()=2]`, 1)
 }
+
+func TestPositionAfterAnotherPredicate(t *testing.T) {
+	// In a[@x][1], the position counts the a elements with an x attribute
+	// for each context node, so every p contributes its first one.
+	doc := createElement(0, "", createElement(1, "r",
+		createElement(2, "p",
+			createElement(3, "a"),
+			createElementAttr(4, "a", map[string]string{"x": "1"}),
+			createElementAttr(5, "a", map[string]string{"x": "2"})),
+		createElement(6, "p",
+			createElementAttr(7, "a", map[string]string{"x": "3"}),
+			createElement(8, "a"),
+			createElementAttr(9, "a", map[string]string{"x": "4"}))))
+	test_xpath_elements(t, doc, `//a[@x][1]`, 4, 7)
+	test_xpath_elements(t, doc, `//a[@x][2]`, 5, 9)
+	test_xpath_elements(t, doc, `//a[@x][position()=1]`, 4, 7)
+	test_xpath_elements(t, doc, `/r/p/a[@x][1]`, 4, 7)
+	test_xpath_elements(t, doc, `//a[not(@x)][1]`, 3, 8)
+	test_xpath_elements(t, doc, `//a[@x][@x][1]`, 4, 7)
+	test_xpath_elements(t, doc, `//a[@x][1][@x]`, 4, 7)
+	test_xpath_elements(t, doc, `//*[@x][1]`, 4, 7)
+	test_xpath_count(t, doc, `//a[@x][1]/@x`, 2)
+	test_xpath_eval(t, doc, `count(//a[@x][1])`, float64(2))
+	// With a single context node, the position is over the whole node-set.
+	test_xpath_elements(t, doc, `/descendant::a[@x][1]`, 4)
+	test_xpath_elements(t, doc, `(//a[@x])[2]`, 5)
+}
