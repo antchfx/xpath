@@ -441,6 +441,7 @@ type descendantQuery struct {
 	iterator func() NodeNavigator
 	posit    int
 	level    int
+	table    map[uint64]bool
 
 	Self      bool
 	Input     query
@@ -488,9 +489,11 @@ func (d *descendantQuery) Select(t iterator) NodeNavigator {
 			}
 		}
 
-		if node := d.iterator(); node != nil {
-			d.posit++
-			return node
+		for node := d.iterator(); node != nil; node = d.iterator() {
+			if firstVisit(&d.table, d.Input, node) {
+				d.posit++
+				return node
+			}
 		}
 		d.iterator = nil
 	}
@@ -499,6 +502,7 @@ func (d *descendantQuery) Select(t iterator) NodeNavigator {
 func (d *descendantQuery) Evaluate(t iterator) interface{} {
 	d.Input.Evaluate(t)
 	d.iterator = nil
+	d.table = nil
 	return d
 }
 
@@ -531,6 +535,7 @@ func (d *descendantQuery) Properties() queryProp {
 type followingQuery struct {
 	posit    int
 	iterator func() NodeNavigator
+	table    map[uint64]bool
 
 	Input     query
 	Sibling   bool // The matching sibling node of current node.
@@ -585,8 +590,10 @@ func (f *followingQuery) Select(t iterator) NodeNavigator {
 			}
 		}
 
-		if node := f.iterator(); node != nil {
-			return node
+		for node := f.iterator(); node != nil; node = f.iterator() {
+			if firstVisit(&f.table, f.Input, node) {
+				return node
+			}
 		}
 		f.iterator = nil
 	}
@@ -596,6 +603,7 @@ func (f *followingQuery) Evaluate(t iterator) interface{} {
 	f.Input.Evaluate(t)
 	f.iterator = nil
 	f.posit = 0
+	f.table = nil
 	return f
 }
 
@@ -623,6 +631,7 @@ func (f *followingQuery) position() int {
 type precedingQuery struct {
 	iterator  func() NodeNavigator
 	posit     int
+	table     map[uint64]bool
 	Input     query
 	Sibling   bool // The matching sibling node of current node.
 	Predicate func(NodeNavigator) bool
@@ -676,8 +685,10 @@ func (p *precedingQuery) Select(t iterator) NodeNavigator {
 				}
 			}
 		}
-		if node := p.iterator(); node != nil {
-			return node
+		for node := p.iterator(); node != nil; node = p.iterator() {
+			if firstVisit(&p.table, p.Input, node) {
+				return node
+			}
 		}
 		p.iterator = nil
 	}
@@ -687,6 +698,7 @@ func (p *precedingQuery) Evaluate(t iterator) interface{} {
 	p.Input.Evaluate(t)
 	p.iterator = nil
 	p.posit = 0
+	p.table = nil
 	return p
 }
 
@@ -1299,6 +1311,7 @@ type descendantOverDescendantQuery struct {
 	level       int
 	posit       int
 	currentNode NodeNavigator
+	table       map[uint64]bool
 
 	Input     query
 	MatchSelf bool
@@ -1333,7 +1346,7 @@ func (d *descendantOverDescendantQuery) Select(t iterator) NodeNavigator {
 			}
 			d.currentNode = node.Copy()
 			d.posit = 0
-			if d.MatchSelf && d.Predicate(d.currentNode) {
+			if d.MatchSelf && d.Predicate(d.currentNode) && firstVisit(&d.table, d.Input, d.currentNode) {
 				d.posit = 1
 				return d.currentNode
 			}
@@ -1342,7 +1355,7 @@ func (d *descendantOverDescendantQuery) Select(t iterator) NodeNavigator {
 			continue
 		}
 		for ok := true; ok; ok = d.moveToFirstChild() {
-			if d.Predicate(d.currentNode) {
+			if d.Predicate(d.currentNode) && firstVisit(&d.table, d.Input, d.currentNode) {
 				d.posit++
 				return d.currentNode
 			}
@@ -1352,6 +1365,7 @@ func (d *descendantOverDescendantQuery) Select(t iterator) NodeNavigator {
 
 func (d *descendantOverDescendantQuery) Evaluate(t iterator) interface{} {
 	d.Input.Evaluate(t)
+	d.table = nil
 	return d
 }
 
@@ -1439,6 +1453,26 @@ func (m *mergeQuery) ValueType() resultType {
 
 func (m *mergeQuery) Properties() queryProp {
 	return queryProps.Position | queryProps.Count | queryProps.Cached | queryProps.Merge
+}
+
+// firstVisit records n in table and reports whether it was not there yet. The
+// axes of different input nodes can overlap, e.g. //div//a with nested div
+// elements, and a node-set must not contain a node twice. An input of the
+// context or root node is a single node, so its axis cannot repeat a node.
+func firstVisit(table *map[uint64]bool, input query, n NodeNavigator) bool {
+	switch input.(type) {
+	case *contextQuery, *absoluteQuery:
+		return true
+	}
+	if *table == nil {
+		*table = make(map[uint64]bool)
+	}
+	id := getHashCode(n.Copy())
+	if (*table)[id] {
+		return false
+	}
+	(*table)[id] = true
+	return true
 }
 
 func getHashCode(n NodeNavigator) uint64 {
