@@ -177,6 +177,16 @@ func Test_following(t *testing.T) {
 	test_xpath_elements(t, employee_example, `//employee[@id=1]/following::*`, 8, 9, 10, 11, 13, 14, 15, 16)
 }
 
+func Test_following_position(t *testing.T) {
+	// Positions count across all the following nodes of the context node,
+	// not from 1 again in each following subtree.
+	test_xpath_elements(t, employee_example, `//employee[@id=1]/following::*[1]`, 8)
+	test_xpath_elements(t, employee_example, `//employee[@id=1]/following::*[2]`, 9)
+	test_xpath_elements(t, employee_example, `//employee[@id=1]/following::*[5]`, 13)
+	test_xpath_elements(t, employee_example, `//employee[@id=1]/following::*[position()=8]`, 16)
+	test_xpath_elements(t, employee_example, `//employee[@id=1]/following::*[position()>6]`, 15, 16)
+}
+
 func Test_following_sibling(t *testing.T) {
 	test_xpath_elements(t, employee_example, `//employee[@id=1]/following-sibling::*`, 8, 13)
 	test_xpath_elements(t, employee_example, `//employee[@id=1]/following-sibling::employee`, 8, 13)

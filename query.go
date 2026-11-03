@@ -576,7 +576,7 @@ func (f *followingQuery) Select(t iterator) NodeNavigator {
 							t.Current().MoveTo(node)
 						}
 						if node := q.Select(t); node != nil {
-							f.posit = q.posit
+							f.posit++
 							return node
 						}
 						q = nil
