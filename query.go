@@ -2,11 +2,12 @@ package xpath
 
 import (
 	"bytes"
+	"encoding/binary"
 	"fmt"
 	"hash/fnv"
 	"reflect"
 	"sort"
-	"strconv"
+	"sync"
 )
 
 // The return type of the XPath expression.
@@ -187,7 +188,7 @@ func (a *ancestorQuery) Select(t iterator) NodeNavigator {
 		}
 
 		for node := a.iterator(); node != nil; node = a.iterator() {
-			node_id := getHashCode(node.Copy())
+			node_id := getHashCode(node)
 			if _, ok := a.table[node_id]; !ok {
 				a.table[node_id] = true
 				// Increase position for each matched node in current input context
@@ -731,7 +732,7 @@ func (p *parentQuery) Select(t iterator) NodeNavigator {
 		}
 		node = node.Copy()
 		if node.MoveToParent() && p.Predicate(node) {
-			node_id := getHashCode(node.Copy())
+			node_id := getHashCode(node)
 			if _, ok := p.table[node_id]; ok {
 				continue
 			}
@@ -1201,7 +1202,7 @@ func (u *unionQuery) Select(t iterator) NodeNavigator {
 			if node == nil {
 				break
 			}
-			code := getHashCode(node.Copy())
+			code := getHashCode(node)
 			if _, ok := m[code]; !ok {
 				m[code] = true
 				list = append(list, node.Copy())
@@ -1214,7 +1215,7 @@ func (u *unionQuery) Select(t iterator) NodeNavigator {
 			if node == nil {
 				break
 			}
-			code := getHashCode(node.Copy())
+			code := getHashCode(node)
 			if _, ok := m[code]; !ok {
 				m[code] = true
 				list = append(list, node.Copy())
@@ -1397,7 +1398,7 @@ func (m *mergeQuery) Select(t iterator) NodeNavigator {
 			t.Current().MoveTo(root)
 			var list []NodeNavigator
 			for node := m.Child.Select(t); node != nil; node = m.Child.Select(t) {
-				node_id := getHashCode(node.Copy())
+				node_id := getHashCode(node)
 				if _, ok := m.table[node_id]; ok {
 					continue
 				}
@@ -1441,48 +1442,73 @@ func (m *mergeQuery) Properties() queryProp {
 	return queryProps.Position | queryProps.Count | queryProps.Cached | queryProps.Merge
 }
 
+var hashBufferPool = sync.Pool{
+	New: func() interface{} {
+		return &bytes.Buffer{}
+	},
+}
+
 func getHashCode(n NodeNavigator) uint64 {
-	var sb bytes.Buffer
+	n = n.Copy()
+	buf := hashBufferPool.Get().(*bytes.Buffer)
+	defer func() {
+		if buf.Cap() > 1024 {
+			return
+		}
+		buf.Reset()
+		hashBufferPool.Put(buf)
+	}()
+	writeString := func(s string) {
+		var l [4]byte
+		binary.LittleEndian.PutUint32(l[:], uint32(len(s)))
+		buf.Write(l[:])
+		buf.WriteString(s)
+	}
+	writeUint32 := func(v uint32) {
+		var l [4]byte
+		binary.LittleEndian.PutUint32(l[:], v)
+		buf.Write(l[:])
+	}
+
 	switch n.NodeType() {
 	case AttributeNode, TextNode, CommentNode:
-		sb.WriteString(n.LocalName())
-		sb.WriteByte('=')
-		sb.WriteString(n.Value())
+		buf.WriteByte(byte(n.NodeType()))
+		writeString(n.LocalName())
+		writeString(n.Value())
 		// https://github.com/antchfx/htmlquery/issues/25
-		d := 1
+		d := uint32(1)
 		for n.MoveToPrevious() {
 			d++
 		}
-		sb.WriteByte('-')
-		sb.WriteString(strconv.Itoa(d))
+		writeUint32(d)
 		for n.MoveToParent() {
 			d = 1
 			for n.MoveToPrevious() {
 				d++
 			}
-			sb.WriteByte('-')
-			sb.WriteString(strconv.Itoa(d))
+			writeUint32(d)
 		}
 	case ElementNode:
-		sb.WriteString(n.Prefix() + n.LocalName())
-		d := 1
+		writeString(n.Prefix())
+		writeString(n.LocalName())
+
+		d := uint32(1)
 		for n.MoveToPrevious() {
 			d++
 		}
-		sb.WriteByte('-')
-		sb.WriteString(strconv.Itoa(d))
+		writeUint32(d)
 
 		for n.MoveToParent() {
 			d = 1
 			for n.MoveToPrevious() {
 				d++
 			}
-			sb.WriteByte('-')
-			sb.WriteString(strconv.Itoa(d))
+			writeUint32(d)
 		}
 	}
+
 	h := fnv.New64a()
-	h.Write(sb.Bytes())
+	h.Write(buf.Bytes())
 	return h.Sum64()
 }
 

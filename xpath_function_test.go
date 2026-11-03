@@ -681,8 +681,7 @@ func Benchmark_GetHashCode(b *testing.B) {
 	b.Run("getHashCode", func(b *testing.B) {
 		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
-			n := node.Copy()
-			_ = getHashCode(n)
+			_ = getHashCode(node)
 		}
 	})
 }
