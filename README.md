@@ -137,7 +137,7 @@ The gxpath supported three types: number, boolean, string.
 | `generate-id()`         | ✗         |
 | `id()`                  | ✗         |
 | `key()`                 | ✗         |
-| `lang()`                | ✗         |
+| `lang()`                | ✓         |
 | `last()`                | ✓         |
 | `local-name()`          | ✓         |
 | `lower-case()`[^1]      | ✓         |

@@ -671,6 +671,41 @@ func notFunc(arg1 query) func(query, iterator) interface{} {
 	}
 }
 
+// langFunc is XPath functions lang(string). It reports whether the
+// xml:lang of the context node, or of its nearest ancestor that has one,
+// is the given language or a sublanguage of it, ignoring case (REC 4.3).
+func langFunc(arg1 query) func(query, iterator) interface{} {
+	return func(_ query, t iterator) interface{} {
+		// Copy the context node first: a predicate in the argument
+		// moves t.Current() while it is evaluated.
+		node := t.Current().Copy()
+		lang := asString(t, functionArgs(arg1).Evaluate(t))
+		for {
+			if node.NodeType() == ElementNode {
+				if v, ok := xmlLang(node.Copy()); ok {
+					if len(v) > len(lang) && v[len(lang)] == '-' {
+						v = v[:len(lang)]
+					}
+					return strings.EqualFold(v, lang)
+				}
+			}
+			if !node.MoveToParent() {
+				return false
+			}
+		}
+	}
+}
+
+// xmlLang returns the value of the xml:lang attribute of the element n.
+func xmlLang(n NodeNavigator) (string, bool) {
+	for n.MoveToNextAttribute() {
+		if n.LocalName() == "lang" && n.Prefix() == "xml" {
+			return n.Value(), true
+		}
+	}
+	return "", false
+}
+
 // concatFunc is the concat function concatenates two or more
 // strings and returns the resulting string.
 // concat( string1 , string2 [, stringn]* )

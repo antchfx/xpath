@@ -582,6 +582,63 @@ func Test_func_lower_case(t *testing.T) {
 	//test_xpath_eval(t, employee_example, `//employee/name/lower-case(text())`, "opal kole", "max miller", "beccaa moss")
 }
 
+func Test_func_lang(t *testing.T) {
+	/*
+		<root>
+			<para/>
+			<doc xml:lang="en">
+				<para/>
+				<para xml:lang="en-US"/>
+				<para xml:lang="EN-gb"/>
+				<para xml:lang="fr"/>
+				<div xml:lang="de-CH">
+					<para>text</para>
+					<para xml:lang="en"/>
+				</div>
+				<para xml:lang=""/>
+				<para lang="fr"/>
+			</doc>
+		</root>
+	*/
+	lang := func(line int, value string) *TNode {
+		return createElementAttr(line, "para", map[string]string{"xml:lang": value})
+	}
+	text := createElement(9, "para")
+	text.createChildNode("text", TextNode)
+	doc := createElement(0, "",
+		createElement(1, "root",
+			createElement(2, "para"),
+			createElementAttr(3, "doc", map[string]string{"xml:lang": "en"},
+				createElement(4, "para"),
+				lang(5, "en-US"),
+				lang(6, "EN-gb"),
+				lang(7, "fr"),
+				createElementAttr(8, "div", map[string]string{"xml:lang": "de-CH"},
+					text,
+					lang(10, "en"),
+				),
+				lang(12, ""),
+				createElementAttr(13, "para", map[string]string{"lang": "fr"}),
+			),
+		),
+	)
+
+	test_xpath_elements(t, doc, `//para[lang('en')]`, 4, 5, 6, 10, 13)
+	test_xpath_elements(t, doc, `//para[lang('EN')]`, 4, 5, 6, 10, 13)
+	test_xpath_elements(t, doc, `//para[lang('en-us')]`, 5)
+	test_xpath_elements(t, doc, `//para[lang('fr')]`, 7)
+	test_xpath_elements(t, doc, `//*[lang('de')]`, 8, 9)
+	test_xpath_elements(t, doc, `//para[lang('e')]`)
+	test_xpath_elements(t, doc, `//para[lang('en-')]`)
+	test_xpath_elements(t, doc, `//para[not(lang('en'))]`, 2, 7, 9, 12)
+	test_xpath_elements(t, doc, `//para[lang(../@xml:lang)]`, 4, 5, 6, 9, 13)
+	test_xpath_elements(t, doc, `//para[lang(//div[@xml:lang]/@xml:lang)]`, 9)
+	test_xpath_count(t, doc, `//text()[lang('de')]`, 1)
+	test_xpath_count(t, doc, `//@*[lang('fr')]`, 1)
+	test_xpath_eval(t, doc, `lang('en')`, false)
+	test_xpath_eval(t, doc, `boolean(/root/para[lang('en')])`, false)
+}
+
 func Benchmark_NormalizeSpaceFunc(b *testing.B) {
 	b.ReportAllocs()
 	const strForNormalization = "\t    \rloooooooonnnnnnngggggggg  \r \n tes  \u00a0 t strin \n\n \r g "

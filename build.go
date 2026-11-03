@@ -606,6 +606,15 @@ func (b *builder) processFunction(root *functionNode, props *builderProp) (query
 				return val
 			},
 		}
+	case "lang":
+		if len(root.Args) != 1 {
+			return nil, errors.New("xpath: lang function must have one parameter")
+		}
+		argQuery, err := b.processNode(root.Args[0], flagsEnum.None, props)
+		if err != nil {
+			return nil, err
+		}
+		qyOutput = &functionQuery{Func: langFunc(argQuery)}
 	case "last":
 		if len(root.Args) != 0 {
 			return nil, errors.New("xpath: last function must have no parameters")

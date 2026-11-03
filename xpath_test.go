@@ -214,6 +214,8 @@ func TestInvalidXPath(t *testing.T) {
 		{"reverse with no args", "reverse()"},
 		{"string-join with 1 arg", "string-join(//a)"},
 		{"string-join with 3 args", "string-join(//a, ',', 'extra')"},
+		{"lang with no args", "lang()"},
+		{"lang with 2 args", "lang('en', 'fr')"},
 
 		// Unsupported / unknown functions
 		{"unsupported function", "unsupportedFunction(1, 2)"},
@@ -259,6 +261,7 @@ func TestInvalidXPath(t *testing.T) {
 		{"reverse with invalid arg", "reverse(())"},
 		{"string-join with invalid arg 1", "string-join((), ',')"},
 		{"string-join with invalid arg 2", "string-join(//a, ())"},
+		{"lang with invalid arg", "lang(())"},
 	}
 
 	for _, tt := range tests {
@@ -532,10 +535,10 @@ func (n *TNodeNavigator) NodeType() NodeType {
 }
 
 func (n *TNodeNavigator) LocalName() string {
-	if n.attr != -1 {
-		return n.curr.Attr[n.attr].Key
-	}
 	name := n.curr.Data
+	if n.attr != -1 {
+		name = n.curr.Attr[n.attr].Key
+	}
 	if strings.Contains(name, ":") {
 		return strings.Split(name, ":")[1]
 	}
@@ -543,8 +546,12 @@ func (n *TNodeNavigator) LocalName() string {
 }
 
 func (n *TNodeNavigator) Prefix() string {
-	if n.attr == -1 && strings.Contains(n.curr.Data, ":") {
-		return strings.Split(n.curr.Data, ":")[0]
+	name := n.curr.Data
+	if n.attr != -1 {
+		name = n.curr.Attr[n.attr].Key
+	}
+	if strings.Contains(name, ":") {
+		return strings.Split(name, ":")[0]
 	}
 	return n.curr.Prefix
 }
