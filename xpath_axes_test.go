@@ -2,6 +2,7 @@ package xpath
 
 import (
 	"reflect"
+	"sort"
 	"testing"
 )
 
@@ -118,6 +119,34 @@ func Test_parent_no_duplicates(t *testing.T) {
 		}
 		if !reflect.DeepEqual(lines, []int{3, 8, 13}) {
 			t.Fatalf("%s: expected lines [3 8 13], got %v", expr, lines)
+		}
+	}
+}
+
+func Test_axes_no_duplicates(t *testing.T) {
+	// The axes of different input nodes overlap, but a node-set holds each
+	// node once. selectNodes removes duplicates itself, so check count() and
+	// the raw iterator.
+	for _, tt := range []struct {
+		expr  string
+		lines []int
+	}{
+		{`//*//email`, []int{6, 11, 16}},
+		{`//*/descendant::email`, []int{6, 11, 16}},
+		{`//*/descendant-or-self::email`, []int{6, 11, 16}},
+		{`//employee/following-sibling::*`, []int{8, 13}},
+		{`//employee/preceding-sibling::*`, []int{3, 8}},
+		{`//name/following::email`, []int{6, 11, 16}},
+		{`//email/preceding::name`, []int{4, 9, 14}},
+	} {
+		test_xpath_eval(t, employee_example, `count(`+tt.expr+`)`, float64(len(tt.lines)))
+		lines := []int{}
+		for _, n := range iterateNodes(Select(createNavigator(employee_example), tt.expr)) {
+			lines = append(lines, n.lines)
+		}
+		sort.Ints(lines)
+		if !reflect.DeepEqual(lines, tt.lines) {
+			t.Fatalf("%s: expected lines %v, got %v", tt.expr, tt.lines, lines)
 		}
 	}
 }
