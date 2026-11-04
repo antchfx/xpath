@@ -29,6 +29,36 @@ func Test_descendant_or_self(t *testing.T) {
 	test_xpath_count(t, employee_example, `//descendant-or-self::employee`, 3)
 }
 
+func Test_descendant_or_self_node_test(t *testing.T) {
+	// "//step" expands to descendant-or-self::node()/step, but an explicit
+	// descendant-or-self step with a name test is a different expression: the
+	// node test decides which nodes the following step starts from.
+	for _, tt := range []struct {
+		expr string
+		want float64
+	}{
+		{`count(descendant-or-self::collaborator/*)`, 0},
+		{`count(descendant-or-self::empty/*)`, 0},
+		{`count(descendant-or-self::name/*)`, 0},
+		{`count(descendant-or-self::designation/*)`, 0},
+		{`count(descendant-or-self::collaborator/name)`, 0},
+		{`count(descendant-or-self::employee/*)`, 9},
+		{`count(descendant-or-self::employee/name)`, 3},
+		{`count(descendant-or-self::employee/email)`, 3},
+		{`count(descendant-or-self::name/text())`, 3},
+		// The node() node test is the universal one and keeps the "//" meaning.
+		{`count(descendant-or-self::node()/*)`, 13},
+		{`count(descendant-or-self::node())`, 23},
+		{`count(descendant-or-self::*)`, 13},
+	} {
+		test_xpath_eval(t, employee_example, tt.expr, tt.want)
+	}
+
+	test_xpath_elements(t, employee_example, `descendant-or-self::name/*`)
+	test_xpath_elements(t, employee_example, `descendant-or-self::employee/name`, 4, 9, 14)
+	test_xpath_values(t, employee_example, `descendant-or-self::employee/name`, "Opal Kole", "Max Miller", "Beccaa Moss")
+}
+
 func Test_ancestor(t *testing.T) {
 	test_xpath_tags(t, employee_example, `//employee/ancestor::*`, "empinfo")
 	test_xpath_tags(t, employee_example, `//employee/ancestor::empinfo`, "empinfo")
