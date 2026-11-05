@@ -1209,36 +1209,27 @@ type unionQuery struct {
 func (u *unionQuery) Select(t iterator) NodeNavigator {
 	if u.iterator == nil {
 		var list []NodeNavigator
-		var m = make(map[uint64]bool)
 		root := t.Current().Copy()
 		for {
 			node := u.Left.Select(t)
 			if node == nil {
 				break
 			}
-			code := getHashCode(node)
-			if _, ok := m[code]; !ok {
-				m[code] = true
-				list = append(list, node.Copy())
-			}
+			list = append(list, node.Copy())
+
 		}
 		t.Current().MoveTo(root)
-		n := len(list)
 		for {
 			node := u.Right.Select(t)
 			if node == nil {
 				break
 			}
-			code := getHashCode(node)
-			if _, ok := m[code]; !ok {
-				m[code] = true
-				list = append(list, node.Copy())
-			}
+			list = append(list, node.Copy())
 		}
 		// A union is a node-set; return it in document order. If only one
 		// operand selected nodes, keep that operand's order unchanged.
-		if n > 0 && n < len(list) {
-			sortDocumentOrder(list)
+		if len(list) > 0 {
+			sortAndDedupNodes(list)
 		}
 		var i int
 		u.iterator = func() NodeNavigator {
@@ -1573,14 +1564,42 @@ func getNodeOrderKey(n NodeNavigator) []int {
 	return key
 }
 
-// sortDocumentOrder sorts nodes in document order. The relative order of
-// attributes of the same element is kept as given.
-func sortDocumentOrder(nodes []NodeNavigator) {
-	keys := make([][]int, len(nodes))
+// sortAndDedupNodes sorts nodes in document order and removes duplicates
+// in a single pass, without using a hash map.
+func sortAndDedupNodes(nodes []NodeNavigator) []NodeNavigator {
+	n := len(nodes)
+	if n <= 1 {
+		return nodes
+	}
+
+	keys := make([][]int, n)
 	for i, node := range nodes {
 		keys[i] = getNodeOrderKey(node.Copy())
 	}
 	sort.Stable(nodesByOrder{nodes, keys})
+	keysEqual := func(a, b []int) bool {
+		if len(a) != len(b) {
+			return false
+		}
+		for k := range a {
+			if a[k] != b[k] {
+				return false
+			}
+		}
+		return true
+	}
+	w := 1
+	for i := 1; i < n; i++ {
+		if keysEqual(keys[i], keys[w-1]) {
+			continue
+		}
+		if w != i {
+			nodes[w] = nodes[i]
+			keys[w] = keys[i]
+		}
+		w++
+	}
+	return nodes[:w]
 }
 
 type nodesByOrder struct {
