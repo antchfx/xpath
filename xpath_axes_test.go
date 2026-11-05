@@ -224,7 +224,15 @@ func Test_following_sibling(t *testing.T) {
 func Test_preceding(t *testing.T) {
 	//testXPath3(t, html, "//li[last()]/preceding-sibling::*[2]", selectNode(html, "//li[position()=2]"))
 	//testXPath3(t, html, "//li/preceding::*[1]", selectNode(html, "//h1"))
-	test_xpath_elements(t, employee_example, `//employee[@id=3]/preceding::*`, 8, 9, 10, 11, 3, 4, 5, 6)
+	test_xpath_elements(t, employee_example, `//employee[@id=3]/preceding::*`, 11, 10, 9, 8, 6, 5, 4, 3)
+}
+
+func Test_preceding_position(t *testing.T) {
+	// preceding is a reverse axis, so positions count back from the context node.
+	test_xpath_elements(t, employee_example, `//employee[@id=3]/preceding::*[1]`, 11)
+	test_xpath_elements(t, employee_example, `//employee[@id=3]/preceding::*[4]`, 8)
+	test_xpath_elements(t, employee_example, `//employee[@id=3]/preceding::*[position()<3]`, 11, 10)
+	test_xpath_elements(t, employee_example, `//employee[@id=3]/name/preceding::*[5]`, 6)
 }
 
 func Test_preceding_sibling(t *testing.T) {

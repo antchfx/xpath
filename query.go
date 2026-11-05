@@ -660,29 +660,31 @@ func (p *precedingQuery) Select(t iterator) NodeNavigator {
 					}
 				}
 			} else {
-				var q query
+				// nodes holds the matching nodes of the current preceding
+				// subtree in document order; they are returned from the end
+				// so that the axis is walked in reverse document order.
+				var nodes []NodeNavigator
 				p.iterator = func() NodeNavigator {
-					for {
-						if q == nil {
-							for !node.MoveToPrevious() {
-								if !node.MoveToParent() {
-									return nil
-								}
-								p.posit = 0
+					for len(nodes) == 0 {
+						for !node.MoveToPrevious() {
+							if !node.MoveToParent() {
+								return nil
 							}
-							q = &descendantQuery{
-								Self:      true,
-								Input:     &contextQuery{},
-								Predicate: p.Predicate,
-							}
-							t.Current().MoveTo(node)
 						}
-						if node := q.Select(t); node != nil {
-							p.posit++
-							return node
+						q := &descendantQuery{
+							Self:      true,
+							Input:     &contextQuery{},
+							Predicate: p.Predicate,
 						}
-						q = nil
+						t.Current().MoveTo(node)
+						for n := q.Select(t); n != nil; n = q.Select(t) {
+							nodes = append(nodes, n.Copy())
+						}
 					}
+					n := nodes[len(nodes)-1]
+					nodes = nodes[:len(nodes)-1]
+					p.posit++
+					return n
 				}
 			}
 		}
