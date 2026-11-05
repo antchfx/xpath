@@ -1394,16 +1394,23 @@ func (m *mergeQuery) Select(t iterator) NodeNavigator {
 	if m.table == nil {
 		m.table = make(map[uint64]bool)
 	}
-	for {
-		if m.iterator == nil {
+	if m.iterator == nil {
+		// The nodes are collected for each input node in turn, so with more
+		// than one input node they are not in document order, e.g. //b[1]
+		// with nested b elements. A node-set is returned in document order,
+		// so collect them all and sort them if more than one input node
+		// selected any.
+		var list []NodeNavigator
+		inputs := 0
+		for {
 			root := m.Input.Select(t)
 			if root == nil {
-				return nil
+				break
 			}
 			m.Child.Evaluate(t)
 			root = root.Copy()
 			t.Current().MoveTo(root)
-			var list []NodeNavigator
+			n := len(list)
 			for node := m.Child.Select(t); node != nil; node = m.Child.Select(t) {
 				node_id := getHashCode(node)
 				if _, ok := m.table[node_id]; ok {
@@ -1412,22 +1419,24 @@ func (m *mergeQuery) Select(t iterator) NodeNavigator {
 				m.table[node_id] = true
 				list = append(list, node.Copy())
 			}
-			i := 0
-			m.iterator = func() NodeNavigator {
-				if i >= len(list) {
-					return nil
-				}
-				result := list[i]
-				i++
-				return result
+			if len(list) > n {
+				inputs++
 			}
 		}
-
-		if node := m.iterator(); node != nil {
-			return node
+		if inputs > 1 {
+			sortDocumentOrder(list)
 		}
-		m.iterator = nil
+		i := 0
+		m.iterator = func() NodeNavigator {
+			if i >= len(list) {
+				return nil
+			}
+			result := list[i]
+			i++
+			return result
+		}
 	}
+	return m.iterator()
 }
 
 func (m *mergeQuery) Evaluate(t iterator) interface{} {
