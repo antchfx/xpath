@@ -1573,6 +1573,34 @@ func getNodeOrderKey(n NodeNavigator) []int {
 	return key
 }
 
+// firstNodeInDocumentOrder applies the XPath scalar-conversion rule without
+// changing reverse-axis predicate order. Forward queries keep their cheap
+// first-node path; reverse axes must consider every selected node.
+func firstNodeInDocumentOrder(t iterator, q query) NodeNavigator {
+	order := q
+	for {
+		group, ok := order.(*groupQuery)
+		if !ok {
+			break
+		}
+		order = group.Input
+	}
+	reverse := order.Properties()&queryProps.Reverse != 0
+	if merge, ok := order.(*mergeQuery); ok {
+		reverse = merge.Child.Properties()&queryProps.Reverse != 0
+	}
+	first := q.Select(t)
+	if first == nil || !reverse {
+		return first
+	}
+	nodes := []NodeNavigator{first.Copy()}
+	for node := q.Select(t); node != nil; node = q.Select(t) {
+		nodes = append(nodes, node.Copy())
+	}
+	sortDocumentOrder(nodes)
+	return nodes[0]
+}
+
 // sortDocumentOrder sorts nodes in document order. The relative order of
 // attributes of the same element is kept as given.
 func sortDocumentOrder(nodes []NodeNavigator) {

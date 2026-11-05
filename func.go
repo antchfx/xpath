@@ -120,7 +120,7 @@ func sumFunc(arg query) func(query, iterator) interface{} {
 func asNumber(t iterator, o interface{}) float64 {
 	switch typ := o.(type) {
 	case query:
-		node := typ.Select(t)
+		node := firstNodeInDocumentOrder(t, typ)
 		if node == nil {
 			return math.NaN()
 		}
@@ -188,7 +188,7 @@ func nameFunc(arg query) func(query, iterator) interface{} {
 		if arg == nil {
 			v = t.Current()
 		} else {
-			v = arg.Clone().Select(t)
+			v = firstNodeInDocumentOrder(t, arg.Clone())
 			if v == nil {
 				return ""
 			}
@@ -221,7 +221,7 @@ func localNameFunc(arg query) func(query, iterator) interface{} {
 		if arg == nil {
 			v = t.Current()
 		} else {
-			v = arg.Clone().Select(t)
+			v = firstNodeInDocumentOrder(t, arg.Clone())
 			if v == nil {
 				return ""
 			}
@@ -241,7 +241,7 @@ func namespaceFunc(arg query) func(query, iterator) interface{} {
 			v = t.Current()
 		} else {
 			// Get the first node in the node-set if specified.
-			v = arg.Clone().Select(t)
+			v = firstNodeInDocumentOrder(t, arg.Clone())
 			if v == nil {
 				return ""
 			}
@@ -342,7 +342,7 @@ func asString(t iterator, v interface{}) string {
 	case string:
 		return v
 	case query:
-		node := v.Select(t)
+		node := firstNodeInDocumentOrder(t, v)
 		if node == nil {
 			return ""
 		}
@@ -400,7 +400,7 @@ func endwithFunc(arg1, arg2 query) func(query, iterator) interface{} {
 			case string:
 				return typ
 			case query:
-				node := typ.Select(t)
+				node := firstNodeInDocumentOrder(t, typ)
 				if node != nil {
 					return node.Value()
 				}
@@ -434,7 +434,7 @@ func matchesFunc(arg1, arg2 query) func(query, iterator) interface{} {
 		case string:
 			s = typ
 		case query:
-			node := typ.Select(t)
+			node := firstNodeInDocumentOrder(t, typ)
 			if node == nil {
 				return false
 			}
@@ -468,7 +468,7 @@ func normalizespaceFunc(arg1 query) func(query, iterator) interface{} {
 		case string:
 			m = typ
 		case query:
-			node := typ.Select(t)
+			node := firstNodeInDocumentOrder(t, typ)
 			if node == nil {
 				return ""
 			}
@@ -507,7 +507,7 @@ func substringFunc(arg1, arg2, arg3 query) func(query, iterator) interface{} {
 		case string:
 			m = typ
 		case query:
-			node := typ.Select(t)
+			node := firstNodeInDocumentOrder(t, typ)
 			if node == nil {
 				return ""
 			}
@@ -554,7 +554,7 @@ func substringIndFunc(arg1, arg2 query, after bool) func(query, iterator) interf
 		case string:
 			str = v
 		case query:
-			node := v.Select(t)
+			node := firstNodeInDocumentOrder(t, v)
 			if node == nil {
 				return ""
 			}
@@ -567,7 +567,7 @@ func substringIndFunc(arg1, arg2 query, after bool) func(query, iterator) interf
 		case string:
 			word = v
 		case query:
-			if node := v.Select(t); node != nil {
+			if node := firstNodeInDocumentOrder(t, v); node != nil {
 				word = node.Value()
 			}
 		default:
@@ -593,7 +593,7 @@ func stringLengthFunc(arg1 query) func(query, iterator) interface{} {
 		case string:
 			return float64(utf8.RuneCountInString(v))
 		case query:
-			node := v.Select(t)
+			node := firstNodeInDocumentOrder(t, v)
 			if node == nil {
 				break
 			}
@@ -760,7 +760,7 @@ func stringJoinFunc(q, arg1 query) func(query, iterator) interface{} {
 		case string:
 			separator = v
 		case query:
-			node := v.Select(t)
+			node := firstNodeInDocumentOrder(t, v)
 			if node != nil {
 				separator = node.Value()
 			}
