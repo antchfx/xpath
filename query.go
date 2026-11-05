@@ -1476,7 +1476,7 @@ func firstVisit(table *map[uint64]bool, input query, n NodeNavigator) bool {
 	if *table == nil {
 		*table = make(map[uint64]bool)
 	}
-	id := getHashCode(n.Copy())
+	id := getHashCode(n)
 	if (*table)[id] {
 		return false
 	}
