@@ -537,6 +537,8 @@ type followingQuery struct {
 	posit    int
 	iterator func() NodeNavigator
 	table    map[uint64]bool
+	context  NodeNavigator
+	size     int
 
 	Input     query
 	Sibling   bool // The matching sibling node of current node.
@@ -552,6 +554,8 @@ func (f *followingQuery) Select(t iterator) NodeNavigator {
 				return nil
 			}
 			node = node.Copy()
+			f.context = node.Copy()
+			f.size = -1
 			if f.Sibling {
 				f.iterator = func() NodeNavigator {
 					for {
@@ -626,6 +630,52 @@ func (f *followingQuery) Properties() queryProp {
 
 func (f *followingQuery) position() int {
 	return f.posit
+}
+
+// contextSize returns the number of nodes the query selects on the
+// following or following-sibling axis of the current context node.
+func (f *followingQuery) contextSize() int {
+	if f.context == nil {
+		return 0
+	}
+	if f.size >= 0 {
+		return f.size
+	}
+	f.size = 0
+	node := f.context.Copy()
+	if f.Sibling {
+		for node.MoveToNext() {
+			if f.Predicate(node) {
+				f.size++
+			}
+		}
+		return f.size
+	}
+	for {
+		for !node.MoveToNext() {
+			if !node.MoveToParent() {
+				return f.size
+			}
+		}
+		// Count node and its descendants.
+		level := 0
+		for {
+			if f.Predicate(node) {
+				f.size++
+			}
+			if node.MoveToChild() {
+				level++
+				continue
+			}
+			for level > 0 && !node.MoveToNext() {
+				node.MoveToParent()
+				level--
+			}
+			if level == 0 {
+				break
+			}
+		}
+	}
 }
 
 // precedingQuery is an XPath preceding node query.(preceding::*)
@@ -831,15 +881,18 @@ type filterQuery struct {
 // When the predicate filters the result of an earlier predicate or of a
 // parenthesized expression, valid is set and pos is the position of the
 // current node within that node-set, which position() must report.
+// input is the query the predicate filters, which last() asks for the
+// context size.
 type positionIterator struct {
 	iterator
 	pos   int
 	valid bool
+	input query
 }
 
 func (f *filterQuery) do(t iterator) bool {
 	if f.Positional {
-		t = positionIterator{iterator: t, pos: getNodePosition(f.Input)}
+		t = positionIterator{iterator: t, pos: getNodePosition(f.Input), input: f.Input}
 	}
 	val := reflect.ValueOf(f.Predicate.Evaluate(t))
 	switch val.Kind() {
@@ -1611,6 +1664,19 @@ func getNodePosition(q query) int {
 		return count.position()
 	}
 	return 1
+}
+
+// getContextSize returns the number of nodes the query q selects for its
+// current context node, which is the context size last() returns, and
+// whether q can count them.
+func getContextSize(q query) (int, bool) {
+	type contextSize interface {
+		contextSize() int
+	}
+	if s, ok := q.(contextSize); ok {
+		return s.contextSize(), true
+	}
+	return 0, false
 }
 
 func getNodeDepth(q query) int {
