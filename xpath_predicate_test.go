@@ -182,3 +182,38 @@ func TestPositionAfterAnotherPredicate(t *testing.T) {
 	test_xpath_elements(t, doc, `/descendant::a[@x][1]`, 4)
 	test_xpath_elements(t, doc, `(//a[@x])[2]`, 5)
 }
+
+func TestPositionalPredicateDocumentOrder(t *testing.T) {
+	// <root>
+	//   <list>
+	//     <item/>
+	//     <list>
+	//       <item/>
+	//       <item/>
+	//     </list>
+	//     <item/>
+	//   </list>
+	// </root>
+	doc := createElement(0, "",
+		createElement(1, "root",
+			createElement(2, "list",
+				createElement(3, "item"),
+				createElement(4, "list",
+					createElement(5, "item"),
+					createElement(6, "item"),
+				),
+				createElement(8, "item"),
+			),
+		),
+	)
+	// The outer list is visited first, but its last item comes after the
+	// last item of the inner list in document order.
+	test_xpath_elements(t, doc, `//item[last()]`, 6, 8)
+	test_xpath_elements(t, doc, `//item[2]`, 6, 8)
+	test_xpath_elements(t, doc, `//item[position() = 2]`, 6, 8)
+	test_xpath_elements(t, doc, `/root//item[last()]`, 6, 8)
+	// A predicate on a parenthesized expression counts in document order
+	// (XPath 1.0 section 3.3).
+	test_xpath_elements(t, doc, `(//item[last()])[1]`, 6)
+	test_xpath_elements(t, doc, `(//item[2])[last()]`, 8)
+}
