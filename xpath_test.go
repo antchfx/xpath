@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 	"testing"
+	"unsafe"
 )
 
 var (
@@ -457,7 +458,7 @@ func selectNodes(root *TNode, expr string) []*TNode {
 	c := make(map[uint64]bool)
 	var list []*TNode
 	for _, n := range iterateNodes(t) {
-		m := getHashCode(createNavigator(n))
+		m := nodeID(createNavigator(n))
 		if _, ok := c[m]; ok {
 			continue
 		}
@@ -532,6 +533,13 @@ func (n *TNodeNavigator) NodeType() NodeType {
 		return ElementNode
 	}
 	return n.curr.Type
+}
+
+func (n *TNodeNavigator) Identity() uint64 {
+	if n.attr != -1 {
+		return uint64(uintptr(unsafe.Pointer(&n.curr.Attr[n.attr])))
+	}
+	return uint64(uintptr(unsafe.Pointer(n.curr)))
 }
 
 func (n *TNodeNavigator) LocalName() string {

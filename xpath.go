@@ -28,6 +28,12 @@ const (
 	allNode
 )
 
+// NodeIdentity is an optional interface for O(1) node identity.
+type NodeIdentity interface {
+	// Identity returns the node's document-wide unique index.
+	Identity() uint64
+}
+
 // NodeNavigator provides cursor model for navigating XML data.
 type NodeNavigator interface {
 	// NodeType returns the XPathNodeType of the current node.

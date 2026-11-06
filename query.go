@@ -157,10 +157,6 @@ type ancestorQuery struct {
 }
 
 func (a *ancestorQuery) Select(t iterator) NodeNavigator {
-	if a.table == nil {
-		a.table = make(map[uint64]bool)
-	}
-
 	for {
 		if a.iterator == nil {
 			node := a.Input.Select(t)
@@ -188,9 +184,7 @@ func (a *ancestorQuery) Select(t iterator) NodeNavigator {
 		}
 
 		for node := a.iterator(); node != nil; node = a.iterator() {
-			node_id := getHashCode(node)
-			if _, ok := a.table[node_id]; !ok {
-				a.table[node_id] = true
+			if firstVisit(&a.table, node) {
 				// Increase position for each matched node in current input context
 				a.pos++
 				return node
@@ -491,7 +485,7 @@ func (d *descendantQuery) Select(t iterator) NodeNavigator {
 		}
 
 		for node := d.iterator(); node != nil; node = d.iterator() {
-			if firstVisit(&d.table, d.Input, node) {
+			if firstVisit(&d.table, node) {
 				d.posit++
 				return node
 			}
@@ -592,7 +586,7 @@ func (f *followingQuery) Select(t iterator) NodeNavigator {
 		}
 
 		for node := f.iterator(); node != nil; node = f.iterator() {
-			if firstVisit(&f.table, f.Input, node) {
+			if firstVisit(&f.table, node) {
 				return node
 			}
 		}
@@ -689,7 +683,7 @@ func (p *precedingQuery) Select(t iterator) NodeNavigator {
 			}
 		}
 		for node := p.iterator(); node != nil; node = p.iterator() {
-			if firstVisit(&p.table, p.Input, node) {
+			if firstVisit(&p.table, node) {
 				return node
 			}
 		}
@@ -736,9 +730,6 @@ type parentQuery struct {
 }
 
 func (p *parentQuery) Select(t iterator) NodeNavigator {
-	if p.table == nil {
-		p.table = make(map[uint64]bool)
-	}
 	for {
 		node := p.Input.Select(t)
 		if node == nil {
@@ -746,11 +737,9 @@ func (p *parentQuery) Select(t iterator) NodeNavigator {
 		}
 		node = node.Copy()
 		if node.MoveToParent() && p.Predicate(node) {
-			node_id := getHashCode(node)
-			if _, ok := p.table[node_id]; ok {
+			if !firstVisit(&p.table, node) {
 				continue
 			}
-			p.table[node_id] = true
 			return node
 		}
 	}
@@ -1154,7 +1143,7 @@ func (b *booleanQuery) Select(t iterator) NodeNavigator {
 			}
 			for _, k := range m {
 				for _, j := range n {
-					if k == j {
+					if nodeID(k) == nodeID(j) {
 						list = append(list, k)
 					}
 				}
@@ -1340,7 +1329,7 @@ func (d *descendantOverDescendantQuery) Select(t iterator) NodeNavigator {
 			}
 			d.currentNode = node.Copy()
 			d.posit = 0
-			if d.MatchSelf && d.Predicate(d.currentNode) && firstVisit(&d.table, d.Input, d.currentNode) {
+			if d.MatchSelf && d.Predicate(d.currentNode) && firstVisit(&d.table, d.currentNode) {
 				d.posit = 1
 				return d.currentNode
 			}
@@ -1349,7 +1338,7 @@ func (d *descendantOverDescendantQuery) Select(t iterator) NodeNavigator {
 			continue
 		}
 		for ok := true; ok; ok = d.moveToFirstChild() {
-			if d.Predicate(d.currentNode) && firstVisit(&d.table, d.Input, d.currentNode) {
+			if d.Predicate(d.currentNode) && firstVisit(&d.table, d.currentNode) {
 				d.posit++
 				return d.currentNode
 			}
@@ -1391,9 +1380,6 @@ type mergeQuery struct {
 }
 
 func (m *mergeQuery) Select(t iterator) NodeNavigator {
-	if m.table == nil {
-		m.table = make(map[uint64]bool)
-	}
 	for {
 		if m.iterator == nil {
 			root := m.Input.Select(t)
@@ -1405,11 +1391,9 @@ func (m *mergeQuery) Select(t iterator) NodeNavigator {
 			t.Current().MoveTo(root)
 			var list []NodeNavigator
 			for node := m.Child.Select(t); node != nil; node = m.Child.Select(t) {
-				node_id := getHashCode(node)
-				if _, ok := m.table[node_id]; ok {
+				if !firstVisit(&m.table, node) {
 					continue
 				}
-				m.table[node_id] = true
 				list = append(list, node.Copy())
 			}
 			i := 0
@@ -1449,25 +1433,14 @@ func (m *mergeQuery) Properties() queryProp {
 	return queryProps.Position | queryProps.Count | queryProps.Cached | queryProps.Merge
 }
 
-var hashBufferPool = sync.Pool{
-	New: func() interface{} {
-		return &bytes.Buffer{}
-	},
-}
-
-// firstVisit records n in table and reports whether it was not there yet. The
-// axes of different input nodes can overlap, e.g. //div//a with nested div
-// elements, and a node-set must not contain a node twice. An input of the
-// context or root node is a single node, so its axis cannot repeat a node.
-func firstVisit(table *map[uint64]bool, input query, n NodeNavigator) bool {
-	switch input.(type) {
-	case *contextQuery, *absoluteQuery:
-		return true
-	}
+// firstVisit records n in table and reports whether it was not there yet.
+// An input axis can overlap across different context nodes (e.g. //div//a with
+// nested div elements), and a node-set must not contain a node twice.
+func firstVisit(table *map[uint64]bool, n NodeNavigator) bool {
 	if *table == nil {
 		*table = make(map[uint64]bool)
 	}
-	id := getHashCode(n)
+	id := nodeID(n)
 	if (*table)[id] {
 		return false
 	}
@@ -1475,13 +1448,25 @@ func firstVisit(table *map[uint64]bool, input query, n NodeNavigator) bool {
 	return true
 }
 
+// https://github.com/antchfx/xpath/issues/185
+func nodeID(n NodeNavigator) uint64 {
+	if p, ok := n.(NodeIdentity); ok {
+		return p.Identity()
+	}
+	// Fallback for implementations that do not implement NodeIdentity.
+	return getHashCode(n)
+}
+
+var hashBufferPool = sync.Pool{
+	New: func() interface{} {
+		return &bytes.Buffer{}
+	},
+}
+
 func getHashCode(n NodeNavigator) uint64 {
 	n = n.Copy()
 	buf := hashBufferPool.Get().(*bytes.Buffer)
 	defer func() {
-		if buf.Cap() > 1024 {
-			return
-		}
 		buf.Reset()
 		hashBufferPool.Put(buf)
 	}()
