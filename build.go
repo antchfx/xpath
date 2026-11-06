@@ -46,6 +46,12 @@ type builder struct {
 	pinStep bool
 }
 
+// isUniversalNodeTest reports whether an axis node carries the node() node test,
+// which is the only node test the "//" abbreviation expands to.
+func isUniversalNodeTest(n *axisNode) bool {
+	return n.typeTest == allNode && n.LocalName == "" && n.Prefix == "" && n.Prop == ""
+}
+
 // axisPredicate creates a predicate to predicating for this axis node.
 func axisPredicate(root *axisNode) func(NodeNavigator) bool {
 	nametest := root.LocalName != "" || root.Prefix != ""
@@ -90,7 +96,7 @@ func (b *builder) processAxis(root *axisNode, flags flag, props *builderProp) (q
 		inputFlags := flagsEnum.None
 		if (flags & flagsEnum.Filter) == 0 {
 			if root.AxisType == "child" && (root.Input.Type() == nodeAxis) {
-				if input := root.Input.(*axisNode); input.AxisType == "descendant-or-self" {
+				if input := root.Input.(*axisNode); input.AxisType == "descendant-or-self" && isUniversalNodeTest(input) {
 					var qyGrandInput query
 					if input.Input != nil {
 						qyGrandInput, err = b.processNode(input.Input, flagsEnum.SmartDesc, props)
