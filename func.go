@@ -59,6 +59,11 @@ func positionFunc() func(query, iterator) interface{} {
 // lastFunc is a XPath Node Set functions last().
 func lastFunc() func(query, iterator) interface{} {
 	return func(q query, t iterator) interface{} {
+		if p, ok := t.(positionIterator); ok {
+			if n, ok := getContextSize(p.input); ok {
+				return float64(n)
+			}
+		}
 		var (
 			count = 0
 			node  = t.Current().Copy()

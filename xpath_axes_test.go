@@ -246,6 +246,21 @@ func Test_following_position(t *testing.T) {
 	test_xpath_elements(t, employee_example, `//employee[@id=1]/following::*[position()>6]`, 15, 16)
 }
 
+func Test_following_last(t *testing.T) {
+	// last() is the number of nodes the step selects on the axis of the
+	// context node (XPath 1.0 section 2.4).
+	test_xpath_elements(t, employee_example, `//employee[@id=1]/following::*[last()]`, 16)
+	test_xpath_elements(t, employee_example, `//employee[@id=1]/following::*[last()-1]`, 15)
+	test_xpath_elements(t, employee_example, `//employee[@id=1]/following::*[position()>last()-2]`, 15, 16)
+	test_xpath_elements(t, employee_example, `//employee[@id=1]/following::employee[last()]`, 13)
+	test_xpath_count(t, employee_example, `//employee[@id=1]/following::*[last()=8]`, 8)
+	test_xpath_elements(t, employee_example, `//employee[@id=1]/following-sibling::*[last()]`, 13)
+	test_xpath_elements(t, employee_example, `//employee[@id=1]/following-sibling::*[last()-1]`, 8)
+	test_xpath_elements(t, employee_example, `//employee[@id=1]/following-sibling::*[position()<last()]`, 8)
+	test_xpath_elements(t, employee_example, `//employee[@id=2]/following-sibling::*[last()]`, 13)
+	test_xpath_elements(t, employee_example, `//employee/name/following-sibling::*[last()]`, 6, 11, 16)
+}
+
 func Test_following_sibling(t *testing.T) {
 	test_xpath_elements(t, employee_example, `//employee[@id=1]/following-sibling::*`, 8, 13)
 	test_xpath_elements(t, employee_example, `//employee[@id=1]/following-sibling::employee`, 8, 13)
