@@ -408,3 +408,16 @@ func TestUnionDocumentOrder(t *testing.T) {
 	test_xpath_values(t, employee_example, `//@from | //name`, "Opal Kole", "Max Miller", "CA", "Beccaa Moss")
 	test_xpath_values(t, employee_example, `//employee[2]/* | //employee[2]/@id`, "2", "Max Miller", "DBA Engineer", "maxmiller@email.com")
 }
+
+func TestUnionRemovesDuplicates(t *testing.T) {
+	// A node-set holds each node once, however many operands select it.
+	test_xpath_count(t, employee_example, `//email | //email`, 3)
+	test_xpath_count(t, employee_example, `//name | //employee/name`, 3)
+	test_xpath_count(t, employee_example, `//employee | //*`, 13)
+	test_xpath_count(t, employee_example, `. | .`, 1)
+	test_xpath_count(t, employee_example, `/empinfo | /*`, 1)
+	test_xpath_count(t, employee_example, `//email | //name | //email`, 6)
+	test_xpath_elements(t, employee_example, `//email | //employee/email`, 6, 11, 16)
+	test_xpath_elements(t, employee_example, `(//name | //name)[2]`, 9)
+	test_xpath_eval(t, employee_example, `count(//@id | //employee/@id)`, float64(3))
+}

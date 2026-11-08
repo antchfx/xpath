@@ -1271,7 +1271,7 @@ func (u *unionQuery) Select(t iterator) NodeNavigator {
 		// A union is a node-set; return it in document order. If only one
 		// operand selected nodes, keep that operand's order unchanged.
 		if len(list) > 0 {
-			sortAndDedupNodes(list)
+			list = sortAndDedupNodes(list)
 		}
 		var i int
 		u.iterator = func() NodeNavigator {
