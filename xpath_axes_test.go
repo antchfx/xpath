@@ -10,6 +10,11 @@ func Test_self(t *testing.T) {
 	test_xpath_elements(t, employee_example, `//name/self::*`, 4, 9, 14)
 }
 
+func Test_self_last(t *testing.T) {
+	test_xpath_elements(t, employee_example, `//name/self::*[last()]`, 4, 9, 14)
+	test_xpath_elements(t, employee_example, `//name/self::*[last()-1]`)
+}
+
 func Test_child(t *testing.T) {
 	test_xpath_elements(t, employee_example, `//child::employee/child::email`, 6, 11, 16)
 	test_xpath_elements(t, employee_example, `/empinfo/child::*`, 3, 8, 13)
@@ -27,6 +32,15 @@ func Test_descendant_or_self(t *testing.T) {
 	test_xpath_tags(t, employee_example.FirstChild, `self::*`, "empinfo")
 	test_xpath_elements(t, employee_example, `//employee/descendant-or-self::*`, 3, 4, 5, 6, 8, 9, 10, 11, 13, 14, 15, 16)
 	test_xpath_count(t, employee_example, `//descendant-or-self::employee`, 3)
+}
+
+func Test_descendant_last(t *testing.T) {
+	// last() is the number of nodes the step selects on the axis of the
+	// context node (XPath 1.0 section 2.4).
+	test_xpath_elements(t, employee_example, `//employee/descendant::*[last()]`, 6, 11, 16)
+	test_xpath_elements(t, employee_example, `//employee/descendant::*[last()-1]`, 5, 10, 15)
+	test_xpath_elements(t, employee_example, `/empinfo/descendant-or-self::*[last()]`, 16)
+	test_xpath_elements(t, employee_example, `//employee[@id=2]/descendant-or-self::*[last()-3]`, 8)
 }
 
 func Test_descendant_or_self_node_test(t *testing.T) {
@@ -127,9 +141,21 @@ func Test_ancestor_or_self(t *testing.T) {
 	test_xpath_elements(t, employee_example, `//name/ancestor-or-self::employee`, 3, 8, 13)
 }
 
+func Test_ancestor_last(t *testing.T) {
+	test_xpath_elements(t, employee_example, `//name/ancestor::*[last()]`, 2)
+	test_xpath_elements(t, employee_example, `//name/ancestor::*[last()-1]`, 3, 8, 13)
+	test_xpath_elements(t, employee_example, `//name/ancestor-or-self::*[last()]`, 2)
+	test_xpath_elements(t, employee_example, `//name/ancestor-or-self::*[last()-2]`, 4, 9, 14)
+}
+
 func Test_parent(t *testing.T) {
 	test_xpath_elements(t, employee_example, `//name/parent::*`, 3, 8, 13)
 	test_xpath_elements(t, employee_example, `//name/parent::employee`, 3, 8, 13)
+}
+
+func Test_parent_last(t *testing.T) {
+	test_xpath_elements(t, employee_example, `//name/parent::*[last()]`, 3, 8, 13)
+	test_xpath_elements(t, employee_example, `//name/parent::*[last()-1]`)
 }
 
 func Test_parent_no_duplicates(t *testing.T) {
@@ -212,6 +238,8 @@ func Test_attribute_position(t *testing.T) {
 	test_xpath_values(t, doc, `/root/item/@*[1]`, "1", "4", "6")
 	test_xpath_values(t, doc, `/root/item/@*[2]`, "2", "5")
 	test_xpath_values(t, doc, `/root/item/@b[1]`, "2", "5")
+	test_xpath_values(t, doc, `/root/item/@*[last()]`, "3", "5", "6")
+	test_xpath_values(t, doc, `/root/item/@*[last()-1]`, "2", "4")
 }
 
 func Test_attribute_of_attribute(t *testing.T) {
@@ -278,6 +306,14 @@ func Test_preceding_position(t *testing.T) {
 	test_xpath_elements(t, employee_example, `//employee[@id=3]/preceding::*[4]`, 8)
 	test_xpath_elements(t, employee_example, `//employee[@id=3]/preceding::*[position()<3]`, 11, 10)
 	test_xpath_elements(t, employee_example, `//employee[@id=3]/name/preceding::*[5]`, 6)
+}
+
+func Test_preceding_last(t *testing.T) {
+	test_xpath_elements(t, employee_example, `//employee[@id=3]/preceding::*[last()]`, 3)
+	test_xpath_elements(t, employee_example, `//employee[@id=3]/preceding::*[last()-1]`, 4)
+	test_xpath_elements(t, employee_example, `//employee[@id=3]/preceding-sibling::*[last()]`, 3)
+	test_xpath_elements(t, employee_example, `//employee[@id=3]/preceding-sibling::*[last()-1]`, 8)
+	test_xpath_elements(t, employee_example, `//employee/email/preceding-sibling::*[last()]`, 4, 9, 14)
 }
 
 func Test_preceding_sibling(t *testing.T) {
