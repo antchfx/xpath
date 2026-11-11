@@ -150,6 +150,8 @@ type ancestorQuery struct {
 	iterator func() NodeNavigator
 	table    map[uint64]bool
 	pos      int
+	context  NodeNavigator
+	size     int
 
 	Self      bool
 	Input     query
@@ -167,6 +169,8 @@ func (a *ancestorQuery) Select(t iterator) NodeNavigator {
 			a.pos = 0
 			first := true
 			node = node.Copy()
+			a.context = node.Copy()
+			a.size = -1
 			a.iterator = func() NodeNavigator {
 				if first {
 					first = false
@@ -225,11 +229,35 @@ func (a *ancestorQuery) position() int {
 	return a.pos
 }
 
+// contextSize returns the number of nodes the query selects on the
+// ancestor or ancestor-or-self axis of the current context node.
+func (a *ancestorQuery) contextSize() int {
+	if a.context == nil {
+		return 0
+	}
+	if a.size >= 0 {
+		return a.size
+	}
+	a.size = 0
+	node := a.context.Copy()
+	if a.Self && a.Predicate(node) {
+		a.size++
+	}
+	for node.MoveToParent() {
+		if a.Predicate(node) {
+			a.size++
+		}
+	}
+	return a.size
+}
+
 // attributeQuery is an XPath attribute node query.(@*)
 type attributeQuery struct {
 	name     string
 	posit    int
 	iterator func() NodeNavigator
+	context  NodeNavigator
+	size     int
 
 	Input     query
 	Predicate func(NodeNavigator) bool
@@ -248,6 +276,8 @@ func (a *attributeQuery) Select(t iterator) NodeNavigator {
 				continue
 			}
 			node = node.Copy()
+			a.context = node.Copy()
+			a.size = -1
 			a.iterator = func() NodeNavigator {
 				for {
 					onAttr := node.MoveToNextAttribute()
@@ -294,6 +324,25 @@ func (a *attributeQuery) Properties() queryProp {
 // position returns a position of current NodeNavigator.
 func (a *attributeQuery) position() int {
 	return a.posit
+}
+
+// contextSize returns the number of nodes the query selects on the
+// attribute axis of the current context node.
+func (a *attributeQuery) contextSize() int {
+	if a.context == nil {
+		return 0
+	}
+	if a.size >= 0 {
+		return a.size
+	}
+	a.size = 0
+	node := a.context.Copy()
+	for node.MoveToNextAttribute() {
+		if a.Predicate(node) {
+			a.size++
+		}
+	}
+	return a.size
 }
 
 // childQuery is an XPath child node query.(child::*)
@@ -437,6 +486,8 @@ type descendantQuery struct {
 	posit    int
 	level    int
 	table    map[uint64]bool
+	context  NodeNavigator
+	size     int
 
 	Self      bool
 	Input     query
@@ -452,6 +503,8 @@ func (d *descendantQuery) Select(t iterator) NodeNavigator {
 				return nil
 			}
 			node = node.Copy()
+			d.context = node.Copy()
+			d.size = -1
 			d.level = 0
 			first := true
 			d.iterator = func() NodeNavigator {
@@ -512,6 +565,39 @@ func (d *descendantQuery) position() int {
 
 func (d *descendantQuery) depth() int {
 	return d.level
+}
+
+// contextSize returns the number of nodes the query selects on the
+// descendant or descendant-or-self axis of the current context node.
+func (d *descendantQuery) contextSize() int {
+	if d.context == nil {
+		return 0
+	}
+	if d.size >= 0 {
+		return d.size
+	}
+	d.size = 0
+	node := d.context.Copy()
+	if d.Self && d.Predicate(node) {
+		d.size++
+	}
+	level := 0
+	for {
+		if node.MoveToChild() {
+			level++
+		} else {
+			for level > 0 && !node.MoveToNext() {
+				node.MoveToParent()
+				level--
+			}
+			if level == 0 {
+				return d.size
+			}
+		}
+		if d.Predicate(node) {
+			d.size++
+		}
+	}
 }
 
 func (d *descendantQuery) Clone() query {
@@ -677,6 +763,8 @@ type precedingQuery struct {
 	iterator  func() NodeNavigator
 	posit     int
 	table     map[uint64]bool
+	context   NodeNavigator
+	size      int
 	Input     query
 	Sibling   bool // The matching sibling node of current node.
 	Predicate func(NodeNavigator) bool
@@ -691,6 +779,8 @@ func (p *precedingQuery) Select(t iterator) NodeNavigator {
 				return nil
 			}
 			node = node.Copy()
+			p.context = node.Copy()
+			p.size = -1
 			if p.Sibling {
 				p.iterator = func() NodeNavigator {
 					for {
@@ -769,6 +859,52 @@ func (p *precedingQuery) position() int {
 	return p.posit
 }
 
+// contextSize returns the number of nodes the query selects on the
+// preceding or preceding-sibling axis of the current context node.
+func (p *precedingQuery) contextSize() int {
+	if p.context == nil {
+		return 0
+	}
+	if p.size >= 0 {
+		return p.size
+	}
+	p.size = 0
+	node := p.context.Copy()
+	if p.Sibling {
+		for node.MoveToPrevious() {
+			if p.Predicate(node) {
+				p.size++
+			}
+		}
+		return p.size
+	}
+	for {
+		for !node.MoveToPrevious() {
+			if !node.MoveToParent() {
+				return p.size
+			}
+		}
+		// Count node and its descendants.
+		level := 0
+		for {
+			if p.Predicate(node) {
+				p.size++
+			}
+			if node.MoveToChild() {
+				level++
+				continue
+			}
+			for level > 0 && !node.MoveToNext() {
+				node.MoveToParent()
+				level--
+			}
+			if level == 0 {
+				break
+			}
+		}
+	}
+}
+
 // parentQuery is an XPath parent node query.(parent::*)
 type parentQuery struct {
 	Input     query
@@ -818,6 +954,13 @@ func (p *parentQuery) Test(n NodeNavigator) bool {
 	return p.Predicate(n)
 }
 
+// contextSize returns the number of nodes the query selects on the parent
+// axis of the current context node. A context node has at most one parent,
+// and a predicate is only evaluated for a parent that was selected.
+func (p *parentQuery) contextSize() int {
+	return 1
+}
+
 // selfQuery is an Self node query.(self::*)
 type selfQuery struct {
 	Input     query
@@ -844,6 +987,13 @@ func (s *selfQuery) Evaluate(t iterator) interface{} {
 
 func (s *selfQuery) Test(n NodeNavigator) bool {
 	return s.Predicate(n)
+}
+
+// contextSize returns the number of nodes the query selects on the self
+// axis of the current context node, which is only evaluated for a node that
+// was selected.
+func (s *selfQuery) contextSize() int {
+	return 1
 }
 
 func (s *selfQuery) Clone() query {
