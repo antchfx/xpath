@@ -639,6 +639,26 @@ func Test_func_lang(t *testing.T) {
 	test_xpath_eval(t, doc, `boolean(/root/para[lang('en')])`, false)
 }
 
+func TestNormalizespaceFunc(t *testing.T) {
+	for _, tt := range []struct {
+		in   string
+		want string
+	}{
+		{"Hello world", "Hello world"},
+		{" \n  Hello \r \n\n  world  \t\n\t", "Hello world"},
+		{"1\n2\n3 4\n\n\n5", "1 2 3 4 5"},
+		{"          ", ""},
+		{"", ""},
+		{"Привет\t\t\t\tмир\n", "Привет мир"},
+		{"Привет    \u00a0   м\nир", "Привет \u00a0 м ир"},
+	} {
+		got := normalizespaceFunc(testQuery(tt.in))(nil, nil)
+		if tt.want != got {
+			t.Errorf("expected %q, got %q", tt.want, got)
+		}
+	}
+}
+
 func Benchmark_NormalizeSpaceFunc(b *testing.B) {
 	b.ReportAllocs()
 	const strForNormalization = "\t    \rloooooooonnnnnnngggggggg  \r \n tes  \u00a0 t strin \n\n \r g "

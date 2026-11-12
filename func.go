@@ -13,6 +13,7 @@ import (
 // Defined an interface of stringBuilder that compatible with
 // strings.Builder(go 1.10) and bytes.Buffer(< go 1.10)
 type stringBuilder interface {
+	WriteByte(b byte) error
 	WriteRune(r rune) (n int, err error)
 	WriteString(s string) (int, error)
 	Reset()
@@ -460,11 +461,6 @@ func matchesFunc(arg1, arg2 query) func(query, iterator) interface{} {
 	}
 }
 
-// isXMLSpace matches the XML S production used by XPath normalize-space.
-func isXMLSpace(r rune) bool {
-	return r == ' ' || r == '\t' || r == '\r' || r == '\n'
-}
-
 // normalizespaceFunc is XPath functions normalize-space(string?)
 func normalizespaceFunc(arg1 query) func(query, iterator) interface{} {
 	return func(_ query, t iterator) interface{} {
@@ -481,20 +477,23 @@ func normalizespaceFunc(arg1 query) func(query, iterator) interface{} {
 		default:
 			m = asString(t, typ)
 		}
-		var b = builderPool.Get().(stringBuilder)
+		b := builderPool.Get().(stringBuilder)
 		b.Grow(len(m))
 
-		runeStr := []rune(strings.Trim(m, " \t\r\n"))
-		l := len(runeStr)
-		for i := range runeStr {
-			r := runeStr[i]
-			isSpace := isXMLSpace(r)
-			if !(isSpace && (i+1 < l && isXMLSpace(runeStr[i+1]))) {
-				if isSpace {
-					r = ' '
-				}
-				b.WriteRune(r)
+		// Match the XML S production used by XPath normalize-space.
+		m = strings.Trim(m, " \t\r\n")
+
+		metSpace := false
+		for _, c := range []byte(m) { // it's faster to iterate over []byte
+			if c == ' ' || c == '\t' || c == '\r' || c == '\n' {
+				metSpace = true
+				continue
 			}
+			if metSpace {
+				b.WriteByte(' ')
+				metSpace = false
+			}
+			b.WriteByte(c)
 		}
 		result := b.String()
 		b.Reset()
