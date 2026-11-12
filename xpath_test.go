@@ -605,6 +605,7 @@ func (n *TNodeNavigator) Copy() NodeNavigator {
 
 func (n *TNodeNavigator) MoveToRoot() {
 	n.curr = n.root
+	n.attr = -1
 }
 
 func (n *TNodeNavigator) MoveToParent() bool {
@@ -628,6 +629,7 @@ func (n *TNodeNavigator) MoveToNextAttribute() bool {
 
 func (n *TNodeNavigator) MoveToChild() bool {
 	if n.attr != -1 {
+		n.attr = -1
 		return false
 	}
 	if node := n.curr.FirstChild; node != nil {
@@ -639,6 +641,7 @@ func (n *TNodeNavigator) MoveToChild() bool {
 
 func (n *TNodeNavigator) MoveToFirst() bool {
 	if n.attr != -1 || n.curr.PrevSibling == nil {
+		n.attr = -1
 		return false
 	}
 	for {
@@ -657,6 +660,7 @@ func (n *TNodeNavigator) String() string {
 
 func (n *TNodeNavigator) MoveToNext() bool {
 	if n.attr != -1 {
+		n.attr = -1
 		return false
 	}
 	if node := n.curr.NextSibling; node != nil {
@@ -668,6 +672,7 @@ func (n *TNodeNavigator) MoveToNext() bool {
 
 func (n *TNodeNavigator) MoveToPrevious() bool {
 	if n.attr != -1 {
+		n.attr = -1
 		return false
 	}
 	if node := n.curr.PrevSibling; node != nil {

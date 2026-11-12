@@ -1270,8 +1270,8 @@ func (u *unionQuery) Select(t iterator) NodeNavigator {
 		}
 		// A union is a node-set; return it in document order. If only one
 		// operand selected nodes, keep that operand's order unchanged.
-		if len(list) > 0 {
-			sortAndDedupNodes(list)
+		if len(list) > 1 {
+			list = sortAndDedupNodes(list)
 		}
 		var i int
 		u.iterator = func() NodeNavigator {
@@ -1426,51 +1426,44 @@ type mergeQuery struct {
 	Child query
 
 	iterator func() NodeNavigator
-	// table holds the nodes already returned. Different input nodes can
-	// select the same node, e.g. the shared parent in //b/parent::*[1],
-	// and a node-set must not contain it twice.
-	table map[uint64]bool
 }
 
 func (m *mergeQuery) Select(t iterator) NodeNavigator {
-	for {
-		if m.iterator == nil {
+	if m.iterator == nil {
+		var list []NodeNavigator
+		for {
 			root := m.Input.Select(t)
 			if root == nil {
-				return nil
+				break
 			}
 			m.Child.Evaluate(t)
 			root = root.Copy()
 			t.Current().MoveTo(root)
-			var list []NodeNavigator
 			for node := m.Child.Select(t); node != nil; node = m.Child.Select(t) {
-				if !firstVisit(&m.table, node) {
-					continue
-				}
 				list = append(list, node.Copy())
-			}
-			i := 0
-			m.iterator = func() NodeNavigator {
-				if i >= len(list) {
-					return nil
-				}
-				result := list[i]
-				i++
-				return result
 			}
 		}
 
-		if node := m.iterator(); node != nil {
-			return node
+		if len(list) > 1 {
+			list = sortAndDedupNodes(list)
 		}
-		m.iterator = nil
+
+		i := 0
+		m.iterator = func() NodeNavigator {
+			if i >= len(list) {
+				return nil
+			}
+			result := list[i]
+			i++
+			return result
+		}
 	}
+	return m.iterator()
 }
 
 func (m *mergeQuery) Evaluate(t iterator) interface{} {
 	m.Input.Evaluate(t)
 	m.iterator = nil
-	m.table = nil
 	return m
 }
 
@@ -1615,25 +1608,14 @@ func sortAndDedupNodes(nodes []NodeNavigator) []NodeNavigator {
 		keys[i] = getNodeOrderKey(node.Copy())
 	}
 	sort.Stable(nodesByOrder{nodes, keys})
-	keysEqual := func(a, b []int) bool {
-		if len(a) != len(b) {
-			return false
-		}
-		for k := range a {
-			if a[k] != b[k] {
-				return false
-			}
-		}
-		return true
-	}
-	w := 1
-	for i := 1; i < n; i++ {
-		if keysEqual(keys[i], keys[w-1]) {
+	var table map[uint64]bool
+	w := 0
+	for i := 0; i < n; i++ {
+		if !firstVisit(&table, nodes[i]) {
 			continue
 		}
 		if w != i {
 			nodes[w] = nodes[i]
-			keys[w] = keys[i]
 		}
 		w++
 	}

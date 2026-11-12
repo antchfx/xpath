@@ -276,7 +276,7 @@ func Test_preceding_position(t *testing.T) {
 	// preceding is a reverse axis, so positions count back from the context node.
 	test_xpath_elements(t, employee_example, `//employee[@id=3]/preceding::*[1]`, 11)
 	test_xpath_elements(t, employee_example, `//employee[@id=3]/preceding::*[4]`, 8)
-	test_xpath_elements(t, employee_example, `//employee[@id=3]/preceding::*[position()<3]`, 11, 10)
+	test_xpath_elements(t, employee_example, `//employee[@id=3]/preceding::*[position()<3]`, 10, 11)
 	test_xpath_elements(t, employee_example, `//employee[@id=3]/name/preceding::*[5]`, 6)
 }
 
