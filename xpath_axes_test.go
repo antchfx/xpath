@@ -212,6 +212,12 @@ func Test_attribute_position(t *testing.T) {
 	test_xpath_values(t, doc, `/root/item/@*[1]`, "1", "4", "6")
 	test_xpath_values(t, doc, `/root/item/@*[2]`, "2", "5")
 	test_xpath_values(t, doc, `/root/item/@b[1]`, "2", "5")
+
+	// last() counts the attributes of the context element, not the one
+	// attribute the iterator happens to be standing on.
+	test_xpath_values(t, doc, `/root/item[1]/@*[last()]`, "3")
+	test_xpath_values(t, doc, `/root/item/@*[last()]`, "3", "5", "6")
+	test_xpath_values(t, doc, `/root/item[1]/@*[position()=last()]`, "3")
 }
 
 func Test_attribute_of_attribute(t *testing.T) {

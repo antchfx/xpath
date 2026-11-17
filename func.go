@@ -70,6 +70,21 @@ func lastFunc() func(query, iterator) interface{} {
 			node  = t.Current().Copy()
 		)
 		test := predicate(q)
+		if node.NodeType() == AttributeNode {
+			// Attributes are not siblings: MoveToFirst/MoveToNext walk the
+			// parent's children, so the fallback would see one node and
+			// last() on the attribute axis would always be 1. Count the
+			// parent's attribute axis instead.
+			if !node.MoveToParent() {
+				return float64(0)
+			}
+			for node.MoveToNextAttribute() {
+				if test(node) {
+					count++
+				}
+			}
+			return float64(count)
+		}
 		node.MoveToFirst()
 		for {
 			if test(node) {
