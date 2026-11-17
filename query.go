@@ -866,6 +866,7 @@ type filterQuery struct {
 
 	posit    int
 	positmap map[int]int
+	ctx      NodeNavigator
 }
 
 // positionIterator is the iterator a positional predicate is evaluated with.
@@ -910,6 +911,12 @@ func (f *filterQuery) Select(t iterator) NodeNavigator {
 	if f.positmap == nil {
 		f.positmap = make(map[int]int)
 	}
+	// The predicate is evaluated with t.Current() moved to each node. Move it
+	// back afterwards, so the other operands of an expression like
+	// tag[@k] = @id are still evaluated against the original context node.
+	if f.ctx == nil || !f.ctx.MoveTo(t.Current()) {
+		f.ctx = t.Current().Copy()
+	}
 	for {
 
 		node := f.Input.Select(t)
@@ -919,7 +926,9 @@ func (f *filterQuery) Select(t iterator) NodeNavigator {
 		node = node.Copy()
 
 		t.Current().MoveTo(node)
-		if f.do(t) {
+		ok := f.do(t)
+		t.Current().MoveTo(f.ctx)
+		if ok {
 			// fix https://github.com/antchfx/htmlquery/issues/26
 			// Calculate and keep the each of matching node's position in the same depth.
 			level := getNodeDepth(f.Input)

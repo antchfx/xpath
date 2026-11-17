@@ -115,6 +115,41 @@ func TestNestedPredicates(t *testing.T) {
 	test_xpath_elements(t, employee_example, `//employee[.//name[@from = "CA"]]`, 8)
 }
 
+func TestNestedPredicateKeepsContextNode(t *testing.T) {
+	// In p[a[@x] = @id], @id is evaluated against p after a[@x] has
+	// evaluated its own predicate on each a.
+	/*
+		<r>
+			<p id="1"><a x="1">1</a><a>2</a></p>
+			<p id="2"><a>1</a><a x="2">2</a></p>
+			<p id="3"><a x="3">a</a></p>
+		</r>
+	*/
+	a := func(line int, x, text string) *TNode {
+		n := createElement(line, "a", createNode(text, TextNode))
+		if x != "" {
+			n.addAttribute("x", x)
+		}
+		return n
+	}
+	doc := createElement(0, "",
+		createElement(1, "r",
+			createElementAttr(2, "p", map[string]string{"id": "1"}, a(3, "1", "1"), a(4, "", "2")),
+			createElementAttr(5, "p", map[string]string{"id": "2"}, a(6, "", "1"), a(7, "2", "2")),
+			createElementAttr(8, "p", map[string]string{"id": "3"}, a(9, "3", "a")),
+		),
+	)
+	test_xpath_elements(t, doc, `//p[a[@x] = @id]`, 2, 5)
+	test_xpath_elements(t, doc, `//p[@id = a[@x]]`, 2, 5)
+	test_xpath_elements(t, doc, `//p[a[@x] != @id]`, 8)
+	test_xpath_elements(t, doc, `//p[a[@x]/@x = @id]`, 2, 5, 8)
+	test_xpath_elements(t, doc, `//p[string(a[@x]) = @id]`, 2, 5)
+	test_xpath_elements(t, doc, `//p[number(a[@x]) = @id]`, 2, 5)
+	test_xpath_elements(t, doc, `//p[contains(a[@x], @id)]`, 2, 5)
+	test_xpath_elements(t, doc, `//p[concat(a[@x], '-', @id) = '1-1']`, 2)
+	test_xpath_eval(t, doc, `count(//p[a[@x] = @id])`, float64(2))
+}
+
 func TestChainedPredicateOnGroupedExpression(t *testing.T) {
 	test_xpath_count(t, employee_example, `(//employee)[1][false()]`, 0)
 	test_xpath_count(t, employee_example, `(//employee)[2][false()]`, 0)
