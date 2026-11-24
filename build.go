@@ -267,13 +267,12 @@ func (b *builder) processFilter(root *filterNode, flags flag, props *builderProp
 		if (propsCond & builderProps.HasLast) != 0 {
 			// https://github.com/antchfx/xpath/issues/76
 			// https://github.com/antchfx/xpath/issues/78
-			if qyFunc, ok := cond.(*functionQuery); ok {
-				switch qyFunc.Input.(type) {
-				case *filterQuery:
-					cond = &lastFuncQuery{Input: qyFunc.Input}
-				case *groupQuery:
-					cond = &lastFuncQuery{Input: qyFunc.Input}
-				}
+			switch qyInput.(type) {
+			case *filterQuery, *groupQuery:
+				// In a[@x][last()], last() is the number of nodes [@x]
+				// keeps, for each context node once the step is merged
+				// below. In (//a)[last()], it is the size of the group.
+				qyInput = &bufferedQuery{Input: qyInput}
 			}
 		}
 	}
@@ -287,15 +286,17 @@ func (b *builder) processFilter(root *filterNode, flags flag, props *builderProp
 			)
 			// In a[@x][1], firstInput is the filter for [@x]. The position
 			// counts the nodes the step selects for each context node, so
-			// rewrite the step below the earlier predicates. last() is
-			// counted over the whole input by lastFuncQuery and is left
-			// as it is.
-			for (propsCond & builderProps.HasLast) == 0 {
-				f, ok := firstInput.(*filterQuery)
-				if !ok {
-					break
+			// rewrite the step below the earlier predicates.
+		unwrap:
+			for {
+				switch q := firstInput.(type) {
+				case *filterQuery:
+					firstInput = q.Input
+				case *bufferedQuery:
+					firstInput = q.Input
+				default:
+					break unwrap
 				}
-				firstInput = f.Input
 			}
 			switch axisQuery := firstInput.(type) {
 			case *ancestorQuery:

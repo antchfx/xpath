@@ -1305,41 +1305,61 @@ func (u *unionQuery) Properties() queryProp {
 	return queryProps.Merge
 }
 
-type lastFuncQuery struct {
-	buffer  []NodeNavigator
-	counted bool
+// bufferedQuery reads every node of Input before returning the first one,
+// so that last() in the predicate that filters it can ask for the context
+// size. Evaluate starts a new node-set, as a mergeQuery does for each
+// context node.
+type bufferedQuery struct {
+	buffer []NodeNavigator
+	read   bool
+	posit  int
 
 	Input query
 }
 
-func (q *lastFuncQuery) Select(t iterator) NodeNavigator {
-	return nil
-}
-
-func (q *lastFuncQuery) Evaluate(t iterator) interface{} {
-	if !q.counted {
-		for {
-			node := q.Input.Select(t)
-			if node == nil {
-				break
-			}
-			q.buffer = append(q.buffer, node.Copy())
-		}
-		q.counted = true
+func (q *bufferedQuery) fill(t iterator) {
+	if q.read {
+		return
 	}
-	return float64(len(q.buffer))
+	for node := q.Input.Select(t); node != nil; node = q.Input.Select(t) {
+		q.buffer = append(q.buffer, node.Copy())
+	}
+	q.read = true
 }
 
-func (q *lastFuncQuery) Clone() query {
-	return &lastFuncQuery{Input: q.Input.Clone()}
+func (q *bufferedQuery) Select(t iterator) NodeNavigator {
+	q.fill(t)
+	if q.posit >= len(q.buffer) {
+		return nil
+	}
+	q.posit++
+	return q.buffer[q.posit-1]
 }
 
-func (q *lastFuncQuery) ValueType() resultType {
-	return xpathResultType.Number
+func (q *bufferedQuery) Evaluate(t iterator) interface{} {
+	q.Input.Evaluate(t)
+	q.buffer, q.read, q.posit = nil, false, 0
+	return q
 }
 
-func (q *lastFuncQuery) Properties() queryProp {
-	return queryProps.Merge
+func (q *bufferedQuery) Clone() query {
+	return &bufferedQuery{Input: q.Input.Clone()}
+}
+
+func (q *bufferedQuery) ValueType() resultType {
+	return xpathResultType.NodeSet
+}
+
+func (q *bufferedQuery) Properties() queryProp {
+	return q.Input.Properties()
+}
+
+func (q *bufferedQuery) position() int {
+	return q.posit
+}
+
+func (q *bufferedQuery) contextSize() int {
+	return len(q.buffer)
 }
 
 type descendantOverDescendantQuery struct {

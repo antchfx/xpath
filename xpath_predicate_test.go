@@ -183,6 +183,41 @@ func TestPositionAfterAnotherPredicate(t *testing.T) {
 	test_xpath_elements(t, doc, `(//a[@x])[2]`, 5)
 }
 
+func TestLastAfterAnotherPredicate(t *testing.T) {
+	// In a[@x][last()], last() is the number of a elements with an x
+	// attribute for each context node, so every p contributes its last one.
+	doc := createElement(0, "", createElement(1, "r",
+		createElement(2, "p",
+			createElement(3, "a"),
+			createElementAttr(4, "a", map[string]string{"x": "1"}),
+			createElementAttr(5, "a", map[string]string{"x": "2"})),
+		createElement(6, "p",
+			createElementAttr(7, "a", map[string]string{"x": "3"}),
+			createElement(8, "a"),
+			createElementAttr(9, "a", map[string]string{"x": "4"}))))
+	test_xpath_elements(t, doc, `//a[@x][last()]`, 5, 9)
+	test_xpath_elements(t, doc, `/r/p/a[@x][last()]`, 5, 9)
+	test_xpath_elements(t, doc, `//a[@x][position()=last()]`, 5, 9)
+	test_xpath_elements(t, doc, `//a[@x][last()-1]`, 4, 7)
+	test_xpath_elements(t, doc, `//a[1][last()]`, 3, 7)
+	test_xpath_elements(t, doc, `//a[@x][@x][last()]`, 5, 9)
+	test_xpath_elements(t, doc, `//a[@x][last()][@x]`, 5, 9)
+	test_xpath_elements(t, doc, `//a[@x][last()][1]`, 5, 9)
+	test_xpath_count(t, doc, `//a[@x][last()]/@x`, 2)
+	test_xpath_eval(t, doc, `count(//a[@x][last()])`, float64(2))
+	// With a single context node, last() is over the whole node-set.
+	test_xpath_elements(t, doc, `/descendant::a[@x][last()]`, 9)
+	test_xpath_elements(t, doc, `(//a)[@x][last()]`, 9)
+	test_xpath_elements(t, doc, `(//a)[@x][position()=last()]`, 9)
+	test_xpath_elements(t, doc, `(//a[@x])[last()]`, 9)
+	test_xpath_elements(t, doc, `(//a)[position()=last()]`, 9)
+	test_xpath_elements(t, doc, `(//a)[last()-1]`, 8)
+	test_xpath_elements(t, doc, `(//a)[@x][last()-1]`, 7)
+	// Reverse axes count from the context node.
+	test_xpath_elements(t, doc, `//a/preceding-sibling::a[@x][last()]`, 4, 7)
+	test_xpath_elements(t, doc, `//a/ancestor::*[self::p or self::r][last()]`, 1)
+}
+
 func TestPositionalPredicateDocumentOrder(t *testing.T) {
 	// <root>
 	//   <list>
